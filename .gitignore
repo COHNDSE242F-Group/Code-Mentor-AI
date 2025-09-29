@@ -1,0 +1,13 @@
+# Python
+__pycache__/
+*.pyc
+.venv/
+env/
+
+# Node / React
+code-mentor-client/node_modules/
+code-mentor-client/build/
+
+# IDE
+.idea/
+.vscode/
