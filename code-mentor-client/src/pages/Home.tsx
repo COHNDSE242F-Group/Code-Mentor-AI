@@ -8,6 +8,7 @@ import {
   UserIcon,
   GraduationCapIcon,
   CodeIcon,
+  BarChartIcon,
 } from 'lucide-react';
 
 // ✅ Define props for custom icons
@@ -120,15 +121,379 @@ const Home: React.FC = () => {
         </div>
 
         {/* Role Selection */}
-        {/* ... (I didn’t remove your role cards, they stay the same) ... */}
-
+        <div className="text-center mb-12">
+          <h2 className="text-3xl font-bold mb-2">Choose Your Role</h2>
+          <p className="text-gray-600 mb-10">
+            Select the option that best describes how you'll use CodeMentorAI
+          </p>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            {/* Instructor Role */}
+            <div className="bg-white rounded-xl overflow-hidden shadow-sm border border-gray-100 hover:shadow-lg transition-all hover:border-blue-200 group">
+              <div className="h-2 bg-[#0D47A1]"></div>
+              <div className="p-6">
+                <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4 group-hover:bg-blue-200 transition-colors">
+                  <UsersIcon size={32} className="text-[#0D47A1]" />
+                </div>
+                <h3 className="text-xl font-bold mb-3">Instructor</h3>
+                <ul className="text-left space-y-2 mb-6">
+                  <li className="flex items-start">
+                    <CheckCircleIcon
+                      size={18}
+                      className="text-green-500 mr-2 mt-0.5 flex-shrink-0"
+                    />
+                    <span className="text-gray-600">
+                      Create and manage assignments
+                    </span>
+                  </li>
+                  <li className="flex items-start">
+                    <CheckCircleIcon
+                      size={18}
+                      className="text-green-500 mr-2 mt-0.5 flex-shrink-0"
+                    />
+                    <span className="text-gray-600">
+                      Review student submissions
+                    </span>
+                  </li>
+                  <li className="flex items-start">
+                    <CheckCircleIcon
+                      size={18}
+                      className="text-green-500 mr-2 mt-0.5 flex-shrink-0"
+                    />
+                    <span className="text-gray-600">
+                      Access performance analytics
+                    </span>
+                  </li>
+                </ul>
+                <Link
+                  to="/signup?role=instructor"
+                  className="block w-full py-2 bg-white border border-[#0D47A1] text-[#0D47A1] rounded-lg hover:bg-blue-50 transition-colors font-medium"
+                >
+                  Join as Instructor
+                </Link>
+              </div>
+            </div>
+            {/* Student Role */}
+            <div className="bg-white rounded-xl overflow-hidden shadow-sm border border-gray-100 hover:shadow-lg transition-all hover:border-blue-200 group transform translate-y-0 hover:-translate-y-1">
+              <div className="h-2 bg-[#FFC107]"></div>
+              <div className="p-6">
+                <div className="w-16 h-16 bg-yellow-100 rounded-full flex items-center justify-center mx-auto mb-4 group-hover:bg-yellow-200 transition-colors">
+                  <GraduationCapIcon size={32} className="text-[#FFC107]" />
+                </div>
+                <h3 className="text-xl font-bold mb-3">Student</h3>
+                <ul className="text-left space-y-2 mb-6">
+                  <li className="flex items-start">
+                    <CheckCircleIcon
+                      size={18}
+                      className="text-green-500 mr-2 mt-0.5 flex-shrink-0"
+                    />
+                    <span className="text-gray-600">Submit assignments</span>
+                  </li>
+                  <li className="flex items-start">
+                    <CheckCircleIcon
+                      size={18}
+                      className="text-green-500 mr-2 mt-0.5 flex-shrink-0"
+                    />
+                    <span className="text-gray-600">
+                      Get AI-powered feedback
+                    </span>
+                  </li>
+                  <li className="flex items-start">
+                    <CheckCircleIcon
+                      size={18}
+                      className="text-green-500 mr-2 mt-0.5 flex-shrink-0"
+                    />
+                    <span className="text-gray-600">Track your progress</span>
+                  </li>
+                </ul>
+                <Link
+                  to="/signup?role=student"
+                  className="block w-full py-2 bg-[#0D47A1] text-white rounded-lg hover:bg-blue-800 transition-colors font-medium"
+                >
+                  Join as Student
+                </Link>
+              </div>
+            </div>
+            {/* Personal User Role */}
+            <div className="bg-white rounded-xl overflow-hidden shadow-sm border border-gray-100 hover:shadow-lg transition-all hover:border-blue-200 group">
+              <div className="h-2 bg-gray-500"></div>
+              <div className="p-6">
+                <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4 group-hover:bg-gray-200 transition-colors">
+                  <UserIcon size={32} className="text-gray-700" />
+                </div>
+                <h3 className="text-xl font-bold mb-3">Personal</h3>
+                <ul className="text-left space-y-2 mb-6">
+                  <li className="flex items-start">
+                    <CheckCircleIcon
+                      size={18}
+                      className="text-green-500 mr-2 mt-0.5 flex-shrink-0"
+                    />
+                    <span className="text-gray-600">
+                      Practice coding skills
+                    </span>
+                  </li>
+                  <li className="flex items-start">
+                    <CheckCircleIcon
+                      size={18}
+                      className="text-green-500 mr-2 mt-0.5 flex-shrink-0"
+                    />
+                    <span className="text-gray-600">
+                      Get AI feedback on your code
+                    </span>
+                  </li>
+                  <li className="flex items-start">
+                    <CheckCircleIcon
+                      size={18}
+                      className="text-green-500 mr-2 mt-0.5 flex-shrink-0"
+                    />
+                    <span className="text-gray-600">
+                      Track your learning journey
+                    </span>
+                  </li>
+                </ul>
+                <Link
+                  to="/signup?role=personal"
+                  className="block w-full py-2 bg-white border border-gray-500 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors font-medium"
+                >
+                  Join for Personal Use
+                </Link>
+              </div>
+            </div>
+          </div>
+        </div>
         {/* Testimonials Section */}
-        {/* ... (your testimonials stay the same, with StarIcon, etc.) ... */}
-
+        <div className="mt-16 bg-white rounded-2xl p-8 shadow-sm border border-gray-100">
+          <h2 className="text-2xl font-bold text-center mb-10">
+            What Our Users Say
+          </h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            <div className="p-4">
+              <div className="flex text-yellow-400 mb-3">
+                {[...Array(5)].map((_, i) => (
+                  <StarIcon key={i} size={16} />
+                ))}
+              </div>
+              <p className="text-gray-600 italic mb-4">
+                "CodeMentorAI has transformed how I teach programming. The
+                automated feedback saves me hours of grading time."
+              </p>
+              <div className="flex items-center">
+                <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center text-[#0D47A1] font-medium mr-3">
+                  JM
+                </div>
+                <div>
+                  <p className="font-medium">Dr. Jane Mitchell</p>
+                  <p className="text-sm text-gray-500">
+                    Computer Science Professor
+                  </p>
+                </div>
+              </div>
+            </div>
+            <div className="p-4">
+              <div className="flex text-yellow-400 mb-3">
+                {[...Array(5)].map((_, i) => (
+                  <StarIcon key={i} size={16} />
+                ))}
+              </div>
+              <p className="text-gray-600 italic mb-4">
+                "As a student, I love getting immediate feedback on my code
+                instead of waiting days for my assignments to be graded."
+              </p>
+              <div className="flex items-center">
+                <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center text-[#0D47A1] font-medium mr-3">
+                  AK
+                </div>
+                <div>
+                  <p className="font-medium">Alex Kim</p>
+                  <p className="text-sm text-gray-500">
+                    Computer Engineering Student
+                  </p>
+                </div>
+              </div>
+            </div>
+            <div className="p-4">
+              <div className="flex text-yellow-400 mb-3">
+                {[...Array(5)].map((_, i) => (
+                  <StarIcon key={i} size={16} />
+                ))}
+              </div>
+              <p className="text-gray-600 italic mb-4">
+                "I've been using CodeMentorAI to improve my coding skills, and
+                the personalized feedback has been invaluable."
+              </p>
+              <div className="flex items-center">
+                <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center text-[#0D47A1] font-medium mr-3">
+                  RP
+                </div>
+                <div>
+                  <p className="font-medium">Rachel Patel</p>
+                  <p className="text-sm text-gray-500">Self-taught Developer</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
       </section>
-
       {/* Footer */}
-      {/* ... (your footer stays the same, just typed icons) ... */}
+      <footer className="bg-gray-800 text-white py-12">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
+            <div>
+              <h3 className="text-xl font-bold flex items-center mb-4">
+                <span className="bg-[#FFC107] text-[#0D47A1] p-1 rounded mr-2">
+                  CM
+                </span>
+                CodeMentorAI
+              </h3>
+              <p className="text-gray-400">
+                Revolutionizing the way programming is taught and learned
+                through AI-powered feedback.
+              </p>
+            </div>
+            <div>
+              <h4 className="font-medium mb-4">Product</h4>
+              <ul className="space-y-2">
+                <li>
+                  <a
+                    href="#"
+                    className="text-gray-400 hover:text-white transition-colors"
+                  >
+                    Features
+                  </a>
+                </li>
+                <li>
+                  <a
+                    href="#"
+                    className="text-gray-400 hover:text-white transition-colors"
+                  >
+                    Pricing
+                  </a>
+                </li>
+                <li>
+                  <a
+                    href="#"
+                    className="text-gray-400 hover:text-white transition-colors"
+                  >
+                    Testimonials
+                  </a>
+                </li>
+                <li>
+                  <a
+                    href="#"
+                    className="text-gray-400 hover:text-white transition-colors"
+                  >
+                    FAQ
+                  </a>
+                </li>
+              </ul>
+            </div>
+            <div>
+              <h4 className="font-medium mb-4">Resources</h4>
+              <ul className="space-y-2">
+                <li>
+                  <a
+                    href="#"
+                    className="text-gray-400 hover:text-white transition-colors"
+                  >
+                    Documentation
+                  </a>
+                </li>
+                <li>
+                  <a
+                    href="#"
+                    className="text-gray-400 hover:text-white transition-colors"
+                  >
+                    Tutorials
+                  </a>
+                </li>
+                <li>
+                  <a
+                    href="#"
+                    className="text-gray-400 hover:text-white transition-colors"
+                  >
+                    Blog
+                  </a>
+                </li>
+                <li>
+                  <a
+                    href="#"
+                    className="text-gray-400 hover:text-white transition-colors"
+                  >
+                    Support
+                  </a>
+                </li>
+              </ul>
+            </div>
+            <div>
+              <h4 className="font-medium mb-4">Company</h4>
+              <ul className="space-y-2">
+                <li>
+                  <a
+                    href="#"
+                    className="text-gray-400 hover:text-white transition-colors"
+                  >
+                    About
+                  </a>
+                </li>
+                <li>
+                  <a
+                    href="#"
+                    className="text-gray-400 hover:text-white transition-colors"
+                  >
+                    Careers
+                  </a>
+                </li>
+                <li>
+                  <a
+                    href="#"
+                    className="text-gray-400 hover:text-white transition-colors"
+                  >
+                    Privacy Policy
+                  </a>
+                </li>
+                <li>
+                  <a
+                    href="#"
+                    className="text-gray-400 hover:text-white transition-colors"
+                  >
+                    Terms of Service
+                  </a>
+                </li>
+              </ul>
+            </div>
+          </div>
+          <div className="mt-12 pt-8 border-t border-gray-700 flex flex-col md:flex-row justify-between items-center">
+            <p className="text-gray-400">
+              © 2023 CodeMentorAI. All rights reserved.
+            </p>
+            <div className="flex space-x-4 mt-4 md:mt-0">
+              <a
+                href="#"
+                className="text-gray-400 hover:text-white transition-colors"
+              >
+                <TwitterIcon size={20} />
+              </a>
+              <a
+                href="#"
+                className="text-gray-400 hover:text-white transition-colors"
+              >
+                <LinkedinIcon size={20} />
+              </a>
+              <a
+                href="#"
+                className="text-gray-400 hover:text-white transition-colors"
+              >
+                <GithubIcon size={20} />
+              </a>
+              <a
+                href="#"
+                className="text-gray-400 hover:text-white transition-colors"
+              >
+                <YoutubeIcon size={20} />
+              </a>
+            </div>
+          </div>
+        </div>
+      </footer>
     </div>
   );
 };
@@ -166,6 +531,55 @@ const TwitterIcon: React.FC<IconProps> = ({ size = 20 }) => (
   </svg>
 );
 
-// Repeat same typing for LinkedinIcon, GithubIcon, YoutubeIcon, BarChartIcon...
+const LinkedinIcon: React.FC<IconProps> = ({ size = 20 }) => (
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    width={size}
+    height={size}
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+  >
+    <path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"></path>
+    <rect x="2" y="9" width="4" height="12"></rect>
+    <circle cx="4" cy="4" r="2"></circle>
+  </svg>
+);
+
+const GithubIcon: React.FC<IconProps> = ({ size = 20 }) => (
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    width={size}
+    height={size}
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+  >
+    <path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"></path>
+  </svg>
+);
+
+const YoutubeIcon: React.FC<IconProps> = ({ size = 20 }) => (
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    width={size}
+    height={size}
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+  >
+    <path d="M22.54 6.42a2.78 2.78 0 0 0-1.94-1.94C18.88 4 12 4 12 4s-6.88 0-8.6.48a2.78 2.78 0 0 0-1.94 1.94A29.72 29.72 0 0 0 1 12a29.72 29.72 0 0 0 .46 5.58 2.78 2.78 0 0 0 1.94 1.94C5.12 20 12 20 12 20s6.88 0 8.6-.48a2.78 2.78 0 0 0 1.94-1.94A29.72 29.72 0 0 0 23 12a29.72 29.72 0 0 0-.46-5.58z"></path>
+    <polygon points="9.75 15.02 15.5 12 9.75 8.98 9.75 15.02"></polygon>
+  </svg>
+);
 
 export default Home;

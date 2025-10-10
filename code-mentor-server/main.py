@@ -1,14 +1,18 @@
 from fastapi import FastAPI
+from routers import routers
+from fastapi.middleware.cors import CORSMiddleware
 
 # Create FastAPI app
 app = FastAPI()
 
-# A simple GET endpoint
-@app.get("/")
-def read_root():
-    return {"message": "Hello, FastAPI!"}
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:3000"],  # React app origin
+    allow_credentials=True,
+    allow_methods=["*"],  # allow all methods (GET, POST, etc.)
+    allow_headers=["*"],  # allow all headers
+)
 
-# A GET endpoint with a path parameter
-@app.get("/items/{item_id}")
-def read_item(item_id: int, q: str | None = None):
-    return {"item_id": item_id, "query": q}
+# Include all routers
+for router in routers:
+    app.include_router(router)
