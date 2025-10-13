@@ -4,6 +4,9 @@ import Card from '../components/ui/Card';
 import { 
   SearchIcon, PaperclipIcon, SendIcon, SmileIcon, PlusIcon, PhoneIcon, VideoIcon 
 } from 'lucide-react';
+//import { Picker } from 'emoji-mart';
+//import 'emoji-mart/css/emoji-mart.css';
+
 
 interface Conversation {
   id: number;
@@ -23,6 +26,8 @@ interface Message {
   time: string;
   isMe: boolean;
 }
+
+//const [showEmojiPicker, setShowEmojiPicker] = useState(false);
 
 const UsersIcon = ({ size, className }: { size: number; className?: string }) => (
   <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
@@ -140,8 +145,11 @@ const Messaging: React.FC = () => {
               ))}
             </div>
             <div className="p-4 border-t border-gray-200">
-              <button className="flex items-center justify-center w-full px-4 py-2 bg-[#0D47A1] text-white rounded-md hover:bg-blue-800">
-                <PlusIcon size={16} className="mr-2" />
+              <button
+                className="flex items-center justify-center w-full px-4 py-2 bg-[#0D47A1] text-white rounded-md hover:bg-blue-800"
+                onClick={() => alert("New Message feature not implemented yet!")}
+            >
+               <PlusIcon size={16} className="mr-2" />
                 New Message
               </button>
             </div>

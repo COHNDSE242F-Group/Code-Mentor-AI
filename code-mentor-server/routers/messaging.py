@@ -1,6 +1,7 @@
 from fastapi import APIRouter
 from pydantic import BaseModel
-from typing import List
+from typing import List,Optional
+
 
 router = APIRouter()
 
@@ -11,7 +12,7 @@ class Conversation(BaseModel):
     time: str
     unread: int
     online: bool
-    avatar: str = None
+    avatar: Optional[str] = None
     isGroup: bool = False
 
 class Message(BaseModel):

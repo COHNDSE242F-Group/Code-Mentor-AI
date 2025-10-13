@@ -161,10 +161,12 @@ const SubmissionsList = () => {
             <tbody>
               {sortedSubmissions.map(submission => <tr key={submission.id} className="border-b border-gray-100 hover:bg-gray-50">
                   <td className="py-3 px-4">
-                    <div className="font-medium">{submission.student}</div>
+                    <Link to={`/submissions/${submission.id}`} className="font-medium text-[#0D47A1] hover:underline">
+                     {submission.student}
+                     </Link>
                     <div className="text-xs text-gray-500">
-                      {submission.studentId}
-                    </div>
+                        {submission.studentId}
+                     </div>
                   </td>
                   <td className="py-3 px-4 text-sm">{submission.assignment}</td>
                   <td className="py-3 px-4 text-sm text-gray-500">
