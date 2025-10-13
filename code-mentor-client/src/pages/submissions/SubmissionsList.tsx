@@ -1,5 +1,5 @@
 // @ts-nocheck
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import Card from '../../components/ui/Card';
 import { SearchIcon, FilterIcon, ChevronDownIcon, ChevronUpIcon, EyeIcon } from 'lucide-react';
@@ -16,7 +16,7 @@ const SubmissionsList = () => {
       .then(data => setSubmissions(data))
       .catch(err => console.error("Failed to fetch submissions:", err));
   }, []);
-  
+
   const requestSort = key => {
     let direction = 'asc';
     if (sortConfig.key === key && sortConfig.direction === 'asc') {
