@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+// @ts-nocheck
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import Card from '../../components/ui/Card';
 import { SearchIcon, FilterIcon, ChevronDownIcon, ChevronUpIcon, EyeIcon } from 'lucide-react';
@@ -7,79 +8,15 @@ const SubmissionsList = () => {
     key: 'submittedAt',
     direction: 'desc'
   });
-  const submissions = [{
-    id: 1,
-    student: 'Alex Johnson',
-    studentId: 'ST-2023-001',
-    assignment: 'Python Data Structures',
-    submittedAt: 'Oct 13, 2023 - 8:45 PM',
-    status: 'Pending',
-    score: null,
-    batch: 'Batch A'
-  }, {
-    id: 2,
-    student: 'Maria Garcia',
-    studentId: 'ST-2023-015',
-    assignment: 'JavaScript Arrays',
-    submittedAt: 'Oct 13, 2023 - 3:22 PM',
-    status: 'Graded',
-    score: 92,
-    batch: 'Batch B'
-  }, {
-    id: 3,
-    student: 'James Smith',
-    studentId: 'ST-2023-008',
-    assignment: 'SQL Queries',
-    submittedAt: 'Oct 12, 2023 - 11:05 AM',
-    status: 'Graded',
-    score: 85,
-    batch: 'Batch C'
-  }, {
-    id: 4,
-    student: 'Sarah Williams',
-    studentId: 'ST-2023-022',
-    assignment: 'Java Classes',
-    submittedAt: 'Oct 12, 2023 - 9:17 AM',
-    status: 'Pending',
-    score: null,
-    batch: 'Batch A'
-  }, {
-    id: 5,
-    student: 'David Lee',
-    studentId: 'ST-2023-011',
-    assignment: 'C++ Pointers',
-    submittedAt: 'Oct 11, 2023 - 2:40 PM',
-    status: 'Flagged',
-    score: null,
-    batch: 'Batch B'
-  }, {
-    id: 6,
-    student: 'Emily Chen',
-    studentId: 'ST-2023-019',
-    assignment: 'Python Loops',
-    submittedAt: 'Oct 11, 2023 - 10:12 AM',
-    status: 'Graded',
-    score: 78,
-    batch: 'Batch A'
-  }, {
-    id: 7,
-    student: 'Michael Brown',
-    studentId: 'ST-2023-005',
-    assignment: 'JavaScript DOM',
-    submittedAt: 'Oct 10, 2023 - 5:30 PM',
-    status: 'Graded',
-    score: 88,
-    batch: 'Batch C'
-  }, {
-    id: 8,
-    student: 'Sophia Martinez',
-    studentId: 'ST-2023-027',
-    assignment: 'SQL Joins',
-    submittedAt: 'Oct 10, 2023 - 1:15 PM',
-    status: 'Pending',
-    score: null,
-    batch: 'Batch B'
-  }];
+  const [submissions, setSubmissions] = useState([]);
+
+  useEffect(() => {
+    fetch("http://localhost:8000/submissions")
+      .then(res => res.json())
+      .then(data => setSubmissions(data))
+      .catch(err => console.error("Failed to fetch submissions:", err));
+  }, []);
+
   const requestSort = key => {
     let direction = 'asc';
     if (sortConfig.key === key && sortConfig.direction === 'asc') {
@@ -224,10 +161,12 @@ const SubmissionsList = () => {
             <tbody>
               {sortedSubmissions.map(submission => <tr key={submission.id} className="border-b border-gray-100 hover:bg-gray-50">
                   <td className="py-3 px-4">
-                    <div className="font-medium">{submission.student}</div>
+                    <Link to={`/submissions/${submission.id}`} className="font-medium text-[#0D47A1] hover:underline">
+                     {submission.student}
+                     </Link>
                     <div className="text-xs text-gray-500">
-                      {submission.studentId}
-                    </div>
+                        {submission.studentId}
+                     </div>
                   </td>
                   <td className="py-3 px-4 text-sm">{submission.assignment}</td>
                   <td className="py-3 px-4 text-sm text-gray-500">
