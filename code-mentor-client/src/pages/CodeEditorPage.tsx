@@ -1,9 +1,10 @@
-import React, { useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
+import React, { useEffect, useState, useRef } from "react";
+import { useParams, useNavigate } from "react-router-dom";
 import CodeEditor from "../components/CodeEditor";
 import LanguageSwitcher from "../components/LanguageSwitcher";
 import AiTutorChat from "../components/AiTutorChat";
 import ProblemDetails from "../components/ProblemDetails";
+import { fetchWithAuth } from "../utils/auth";
 import {
   PlayIcon,
   SendIcon,
@@ -16,44 +17,79 @@ import {
 
 const CodeEditorPage: React.FC = () => {
   const { problemId } = useParams();
-  const [selectedLanguage, setSelectedLanguage] = useState("javascript");
-  const [code, setCode] = useState(
+  const navigate = useNavigate();
+
+  // ---------------------------
+  // State variables
+  // ---------------------------
+  const [selectedLanguage, setSelectedLanguage] = useState<string>("javascript");
+  const [code, setCode] = useState<string>(
     "// Write your solution here\nconsole.log('Hello, world!');"
   );
-  const [consoleOutput, setConsoleOutput] = useState("");
-  const [activeTab, setActiveTab] = useState("description");
-  const [pasteDetected, setPasteDetected] = useState(false);
-  const [showHintButton, setShowHintButton] = useState(true);
-  const [loading, setLoading] = useState(false);
+  const [consoleOutput, setConsoleOutput] = useState<string>("");
+  const [activeTab, setActiveTab] = useState<string>("description");
+  const [pasteDetected, setPasteDetected] = useState<boolean>(false);
+  const [showHintButton, setShowHintButton] = useState<boolean>(true);
+  const [loading, setLoading] = useState<boolean>(false);
+
+  // Note: keystroke sending/detection is handled inside `CodeEditor`.
+
+  // ---------------------------
+  // Auth & Page Setup
+  // ---------------------------
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+    if (!token) navigate("/login");
+  }, [navigate]);
 
   useEffect(() => {
     document.title = `CodeMentorAI - ${problemId || "Code Editor"}`;
   }, [problemId]);
 
   // ---------------------------
-  // Run Code API
+  // Helper: Auth headers
+  // ---------------------------
+  const getAuthHeaders = (): HeadersInit => {
+    const token = localStorage.getItem("token");
+    return {
+      "Content-Type": "application/json",
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    };
+  };
+
+  // ---------------------------
+  // Handle Code Change (from CodeEditor)
+  // The editor component will call onChange(newCode, isPaste?)
+  // We simply update state and show the paste alert when informed.
+  // ---------------------------
+  const handleCodeChange = (newCode: string, isPaste?: boolean) => {
+    console.debug("handleCodeChange called isPaste=", isPaste, "len=", newCode.length);
+    setCode(newCode);
+    if (isPaste) {
+      console.info("Frontend reported paste via editor heuristic");
+      setPasteDetected(true);
+      setTimeout(() => setPasteDetected(false), 3000);
+    }
+  };
+
+  // ---------------------------
+  // Run Code
   // ---------------------------
   const handleRunCode = async () => {
     setLoading(true);
     setConsoleOutput(`> Running ${selectedLanguage} code...\n`);
 
     try {
-      const res = await fetch("http://localhost:8000/run", {
+      const res = await fetchWithAuth("http://localhost:8000/run", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          language: selectedLanguage,
-          code,
-          stdin: "",
-        }),
+        body: JSON.stringify({ language: selectedLanguage, code, stdin: "" }),
       });
 
       const data = await res.json();
-
       let output = "";
+
       if (data.stdout) output += data.stdout;
-      if (data.stderr) output +=
-        (data.stdout ? "\n" : "") + `Error: ${data.stderr}`;
+      if (data.stderr) output += `${data.stdout ? "\n" : ""}Error: ${data.stderr}`;
 
       setConsoleOutput((prev) => prev + output);
     } catch (err: any) {
@@ -63,28 +99,41 @@ const CodeEditorPage: React.FC = () => {
     }
   };
 
-  const handleSubmitCode = () => {
+  // ---------------------------
+  // Submit Code
+  // ---------------------------
+  const handleSubmitCode = async () => {
     setConsoleOutput(
       (prev) =>
         prev +
-        `\n> Submitting solution...\n> Validating...\n> All test cases passed!\n> Solution submitted successfully.`
+        "\n> Submitting solution...\n> Validating...\n> All test cases passed!\n> Solution submitted successfully."
     );
+
+    try {
+      const res = await fetchWithAuth("http://localhost:8000/keystroke-report", {
+        method: "GET",
+      });
+      const report = await res.json();
+      console.log("Keystroke report sent for submission:", report);
+    } catch (err) {
+      console.error("Failed to fetch keystroke report", err);
+    }
   };
 
-  const handlePasteDetected = () => {
-    setPasteDetected(true);
-    setTimeout(() => setPasteDetected(false), 3000);
-  };
+  // ---------------------------
+  // Hint Button
+  // ---------------------------
+  const handleAskForHint = () => setShowHintButton(false);
 
-  const handleAskForHint = () => {
-    setShowHintButton(false);
-  };
-
+  // ---------------------------
+  // JSX Layout
+  // ---------------------------
   return (
     <div className="relative flex flex-col h-screen bg-gray-900 text-white overflow-hidden">
       <div className="flex flex-1 overflow-hidden relative min-h-0">
-        {/* 🧭 FIXED LEFT SIDEBAR */}
+        {/* ==================== Left Sidebar ==================== */}
         <div className="flex h-full bg-[#1e1e2e] border-r border-[#313244] w-[320px] flex-shrink-0 min-h-0">
+          {/* Sidebar Icons */}
           <div className="w-14 bg-[#181825] border-r border-[#313244] flex flex-col items-center py-3 space-y-4">
             {[
               { tab: "description", icon: FileTextIcon, title: "Description" },
@@ -106,23 +155,20 @@ const CodeEditorPage: React.FC = () => {
             ))}
           </div>
 
+          {/* Problem Details */}
           <div className="flex-1 flex flex-col min-h-0">
             <div className="flex items-center justify-between px-4 py-3 bg-[#181825] border-b border-[#313244]">
               <h2 className="font-semibold text-sm text-slate-200">
                 Problem Details
               </h2>
             </div>
-
             <div className="flex-1 overflow-y-auto px-4 py-3 min-h-0">
-              <ProblemDetails
-                activeTab={activeTab}
-                setActiveTab={setActiveTab}
-              />
+              <ProblemDetails activeTab={activeTab} setActiveTab={setActiveTab} />
             </div>
           </div>
         </div>
 
-        {/* 🧩 MAIN EDITOR AREA */}
+        {/* ==================== Main Editor Area ==================== */}
         <div className="flex flex-col border-r border-slate-700 w-[800px] flex-shrink-0 min-h-0">
           {/* Toolbar */}
           <div className="flex items-center justify-between px-4 py-2 bg-slate-800 border-b border-slate-700">
@@ -149,8 +195,9 @@ const CodeEditorPage: React.FC = () => {
             </div>
           </div>
 
-          {/* Code Editor + Console */}
+          {/* Code Editor & Output */}
           <div className="flex-1 flex flex-col overflow-hidden relative min-h-0">
+            {/* Paste alert */}
             {pasteDetected && (
               <div className="absolute top-2 right-2 flex items-center bg-amber-700 text-white px-3 py-2 rounded-md z-10 animate-fade-in-out">
                 <AlertTriangleIcon size={16} className="mr-2" />
@@ -160,16 +207,23 @@ const CodeEditorPage: React.FC = () => {
               </div>
             )}
 
+            {/* Code editor */}
             <div className="flex-1 overflow-auto bg-gray-800 min-h-0">
               <CodeEditor
                 language={selectedLanguage}
                 value={code}
-                onChange={setCode}
-                onPaste={handlePasteDetected}
+                onChange={handleCodeChange}
                 disableRightClick
+                onServerPaste={(detected: boolean) => {
+                  if (detected) {
+                    setPasteDetected(true);
+                    setTimeout(() => setPasteDetected(false), 3000);
+                  }
+                }}
               />
             </div>
 
+            {/* Hint button */}
             {showHintButton && (
               <button
                 onClick={handleAskForHint}
@@ -180,23 +234,16 @@ const CodeEditorPage: React.FC = () => {
               </button>
             )}
 
-            {/* Console Output */}
+            {/* Console output */}
             <div className="h-32 border-t border-slate-700 overflow-auto p-2 font-mono bg-gray-900 text-white whitespace-pre-wrap">
               {consoleOutput}
             </div>
           </div>
         </div>
 
-        {/* 🤖 AI Tutor Chat - Full right panel, expands on hover */}
+        {/* ==================== AI Tutor Chat ==================== */}
         <div className="hidden lg:block">
-          <div
-            className="
-              fixed top-0 right-0 h-full
-              w-[400px] hover:w-[600px]
-              transition-all duration-300 ease-in-out
-              z-50 overflow-hidden shadow-xl bg-[#1e1e2e]
-            "
-          >
+          <div className="fixed top-0 right-0 h-full w-[400px] hover:w-[600px] transition-all duration-300 ease-in-out z-50 overflow-hidden shadow-xl bg-[#1e1e2e]">
             <AiTutorChat />
           </div>
         </div>
