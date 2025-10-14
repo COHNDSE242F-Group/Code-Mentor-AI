@@ -26,14 +26,14 @@ const TopBar = () => {
               </div>
             </> : <div className="flex items-center space-x-3">
               <div className="flex flex-col items-end">
-                <Link to="/login" className="px-4 py-2 text-[#0D47A1] hover:bg-blue-50 rounded-md transition-colors">
+                <Link to="#" className="px-4 py-2 text-[#0D47A1] hover:bg-blue-50 rounded-md transition-colors">
                   Log In
                 </Link>
-                <Link to="/forgot-password" className="text-xs text-gray-500 hover:text-[#0D47A1] mt-1 mr-1">
+                <Link to="#" className="text-xs text-gray-500 hover:text-[#0D47A1] mt-1 mr-1">
                   Forgot password?
                 </Link>
               </div>
-              <Link to="/signup" className="px-4 py-2 bg-[#0D47A1] text-white rounded-md hover:bg-blue-700 transition-colors">
+              <Link to="#" className="px-4 py-2 bg-[#0D47A1] text-white rounded-md hover:bg-blue-700 transition-colors">
                 Sign Up
               </Link>
             </div>}
