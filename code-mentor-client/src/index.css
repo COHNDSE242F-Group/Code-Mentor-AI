@@ -11,3 +11,27 @@ code {
   font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
     monospace;
 }
+
+/* Hide scrollbar for Chrome, Safari and Edge */
+.hide-scrollbar::-webkit-scrollbar {
+  width: 0px;
+  background: transparent;
+}
+
+/* Hide scrollbar for Firefox */
+.hide-scrollbar {
+  scrollbar-width: none;
+  -ms-overflow-style: none; /* IE and Edge */
+}
+
+.hljs {
+  border-radius: 8px;
+  padding: 0.75rem;
+  background-color: #1e1e2e;
+  color: #f8f8f2;
+  overflow-x: auto;
+}
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
