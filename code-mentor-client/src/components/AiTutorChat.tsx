@@ -30,6 +30,20 @@ const AiTutorChat: React.FC = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
+<<<<<<< HEAD
+=======
+  // ---------------------------
+  // Get auth headers
+  // ---------------------------
+  const getAuthHeaders = () => {
+    const token = localStorage.getItem("token");
+    return {
+      'Content-Type': 'application/json',
+      ...(token ? { Authorization: `Bearer ${token}` } : {})
+    };
+  };
+
+>>>>>>> main
   const handleSendMessage = async () => {
     if (!input.trim()) return;
 
@@ -47,7 +61,11 @@ const AiTutorChat: React.FC = () => {
     try {
       const response = await fetch('http://localhost:8000/ai-chat', {
         method: 'POST',
+<<<<<<< HEAD
         headers: { 'Content-Type': 'application/json' },
+=======
+        headers: getAuthHeaders(),
+>>>>>>> main
         body: JSON.stringify({
           message: input,
           history: messages.map(m => ({
@@ -103,7 +121,10 @@ const AiTutorChat: React.FC = () => {
                 msg.sender === 'user' ? 'bg-teal-600 text-white' : 'bg-[#313244] text-gray-200'
               }`}
             >
+<<<<<<< HEAD
               {/* Sender Info */}
+=======
+>>>>>>> main
               <div className="flex items-center mb-1">
                 {msg.sender === 'ai' ? (
                   <BotIcon size={14} className="mr-1.5 text-teal-400" />
@@ -115,6 +136,7 @@ const AiTutorChat: React.FC = () => {
                 </span>
               </div>
 
+<<<<<<< HEAD
               {/* Message Content */}
               {msg.sender === 'ai' ? (
               <ReactMarkdown
@@ -152,6 +174,41 @@ const AiTutorChat: React.FC = () => {
                   },
                 }}
               />
+=======
+              {msg.sender === 'ai' ? (
+                <ReactMarkdown
+                  children={msg.text}
+                  remarkPlugins={[remarkGfm]}
+                  rehypePlugins={[rehypeHighlight]}
+                  components={{
+                    p: ({ children, ...props }) => (
+                      <p {...props} className="text-sm text-gray-200 break-words whitespace-pre-wrap">
+                        {children}
+                      </p>
+                    ),
+                    code({ node, inline, className, children, ...props }: any) {
+                      if (inline) {
+                        return (
+                          <code
+                            {...props}
+                            className={`bg-gray-800 rounded px-1 py-0.5 text-sm ${className || ""}`}
+                          >
+                            {children}
+                          </code>
+                        );
+                      }
+                      return (
+                        <pre
+                          {...props}
+                          className="bg-gray-800 rounded p-2 my-2 overflow-x-auto text-sm"
+                        >
+                          <code className={className}>{children}</code>
+                        </pre>
+                      );
+                    },
+                  }}
+                />
+>>>>>>> main
               ) : (
                 <p className="text-sm">{msg.text}</p>
               )}
@@ -159,7 +216,10 @@ const AiTutorChat: React.FC = () => {
           </div>
         ))}
 
+<<<<<<< HEAD
         {/* AI Typing Indicator */}
+=======
+>>>>>>> main
         {loading && (
           <div className="flex justify-start">
             <div className="w-[80%] rounded-lg px-4 py-2 bg-[#313244] text-gray-200 animate-pulse">
