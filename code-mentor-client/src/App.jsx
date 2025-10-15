@@ -12,7 +12,7 @@ import Home from "./pages/Home";
 // import Dashboard from "./pages/Dashboard";
 import CreateAssignment from "./pages/assignments/CreateAssignment";
 import AssignmentList from "./pages/assignments/AssignmentList";
-// import AssignmentDetail from "./pages/assignments/AssignmentDetail";
+import AssignmentDetail from "./pages/assignments/AssignmentDetail";
 
 // // Submissions
 import SubmissionsList from "./pages/submissions/SubmissionsList";
@@ -75,10 +75,11 @@ function App() {
         <Route path="/account" element={<Layout><AccountDetails /></Layout>} />
         <Route path="/assignments/create" element={<Layout><CreateAssignment /></Layout>} />
         <Route path="/assignments" element={<Layout><AssignmentList /></Layout>} />
+         <Route path="/assignments/:id" element={<Layout><AssignmentDetail /></Layout>} />
         {/* <Route path="/dashboard" element={<Layout><Dashboard /></Layout>} />
         
         
-        <Route path="/assignments/:id" element={<Layout><AssignmentDetail /></Layout>} />
+       
         
         
         <Route path="/ai-evaluation" element={<Layout><AIEvaluationBuilder /></Layout>} />

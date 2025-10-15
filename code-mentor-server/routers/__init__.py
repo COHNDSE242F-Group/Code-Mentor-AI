@@ -12,6 +12,7 @@ from .messaging import router as messaging_router
 from .account_details import router as account_details_router
 from .create_assignment import router as create_assignment_router
 from .assignment_list import router as assignment_list_router
+from .assignment_details import router as assignment_details_router
 
 # Optional: create a list of all routers to iterate in main.py
 routers = [
@@ -25,5 +26,6 @@ routers = [
     messaging_router,
     account_details_router,
     create_assignment_router,
-    assignment_list_router
+    assignment_list_router,
+    assignment_details_router
 ]
