@@ -10,7 +10,7 @@ import Layout from "./components/layout/Layout";
 // Assignment Pages
 import Home from "./pages/Home";
 // import Dashboard from "./pages/Dashboard";
-//import CreateAssignment from "./pages/assignments/CreateAssignment";
+import CreateAssignment from "./pages/assignments/CreateAssignment";
 //import AssignmentList from "./pages/assignments/AssignmentList";
 // import AssignmentDetail from "./pages/assignments/AssignmentDetail";
 
@@ -73,8 +73,9 @@ function App() {
         <Route path="/submissions/:id" element={<Layout><SubmissionDetail /></Layout>} />
         <Route path="/messaging" element={<Layout><Messaging /></Layout>} />
         <Route path="/account" element={<Layout><AccountDetails /></Layout>} />
-        {/* <Route path="/dashboard" element={<Layout><Dashboard /></Layout>} />
         <Route path="/assignments/create" element={<Layout><CreateAssignment /></Layout>} />
+        {/* <Route path="/dashboard" element={<Layout><Dashboard /></Layout>} />
+        
         <Route path="/assignments" element={<Layout><AssignmentList /></Layout>} />
         <Route path="/assignments/:id" element={<Layout><AssignmentDetail /></Layout>} />
         
