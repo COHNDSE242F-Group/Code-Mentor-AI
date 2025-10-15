@@ -31,7 +31,7 @@ import Signup from "./pages/auth/Signup";
 import ForgotPassword from "./pages/auth/ForgotPassword";
 // import ResetPassword from "./pages/auth/ResetPassword";
 // import VerifyEmail from "./pages/auth/VerifyEmail";
-// import AccountDetails from "./pages/auth/AccountDetails";
+import AccountDetails from "./pages/auth/AccountDetails";
 
 function App() {
     useEffect(() => {
@@ -72,6 +72,7 @@ function App() {
         <Route path="/submissions" element={<Layout><SubmissionsList /></Layout>} />
         <Route path="/submissions/:id" element={<Layout><SubmissionDetail /></Layout>} />
         <Route path="/messaging" element={<Layout><Messaging /></Layout>} />
+        <Route path="/account" element={<Layout><AccountDetails /></Layout>} />
         {/* <Route path="/dashboard" element={<Layout><Dashboard /></Layout>} />
         <Route path="/assignments/create" element={<Layout><CreateAssignment /></Layout>} />
         <Route path="/assignments" element={<Layout><AssignmentList /></Layout>} />
@@ -83,7 +84,7 @@ function App() {
         <Route path="/reports" element={<Layout><Reports /></Layout>} />
         
         <Route path="/settings" element={<Layout><Settings /></Layout>} />
-        <Route path="/account" element={<Layout><AccountDetails /></Layout>} /> */}
+        */}
       </Routes>
     </Router>
   );
