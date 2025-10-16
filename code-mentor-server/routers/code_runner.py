@@ -1,8 +1,10 @@
-from fastapi import APIRouter, Header, HTTPException, Depends, Request
-from auth.auth import verify_token
-import logging
+from fastapi import APIRouter, HTTPException, Depends
 from pydantic import BaseModel
 import subprocess, tempfile, os
+import logging
+
+# Import your dependencies
+from auth.dependencies import role_required
 
 router = APIRouter()
 
@@ -10,35 +12,29 @@ router = APIRouter()
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("routers.code_runner")
 
+
 class CodeRequest(BaseModel):
     language: str
     code: str
     stdin: str = ""
 
-# Dummy function for token validation
-def get_current_user(request: Request, authorization: str | None = Header(None)):
-    client = request.client.host if request.client else "unknown"
-    if authorization is None:
-        logger.warning("/run auth failed: missing Authorization header; client=%s path=%s", client, request.url.path)
-        raise HTTPException(status_code=401, detail="Unauthorized: missing Authorization header")
-
-    if not authorization.startswith("Bearer "):
-        masked = authorization[:10] + "..." if len(authorization) > 10 else authorization
-        logger.warning("/run auth failed: malformed Authorization header=%s client=%s", masked, client)
-        raise HTTPException(status_code=401, detail="Unauthorized: malformed Authorization header")
-
-    token = authorization.split(" ", 1)[1]
-    try:
-        user_id = verify_token(token)
-        logger.debug("/run auth success: user_id=%s client=%s path=%s", user_id, client, request.url.path)
-        return user_id
-    except Exception as exc:
-        logger.exception("/run auth failed: token verification error; client=%s error=%s", client, str(exc))
-        raise HTTPException(status_code=401, detail=f"Invalid token: {str(exc)}")
 
 @router.post("/run")
-async def run_code(req: CodeRequest, token: str = Depends(get_current_user)):
-    # token is validated here
+async def run_code(
+    req: CodeRequest,
+    token_data: dict = Depends(role_required(["admin", "instructor", "student"]))  # Enforces role
+):
+    """
+    Execute Python or JavaScript code.
+    Only accessible by users with roles: admin, instructor, student.
+    """
+    user_id = token_data.get("user_id")
+    user_role = token_data.get("role")
+
+    # Log which user is running the code
+    logger.info("Code execution requested by user_id=%s role=%s language=%s", user_id, user_role, req.language)
+
+    # Create a temporary file for the code
     with tempfile.NamedTemporaryFile(delete=False, suffix=f".{req.language}") as f:
         f.write(req.code.encode())
         file_path = f.name

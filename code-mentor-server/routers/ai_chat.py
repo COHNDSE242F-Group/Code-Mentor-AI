@@ -5,6 +5,9 @@ from groq import Groq
 import traceback
 import os
 
+# === Import your JWT verification function ===
+from auth.auth import verify_token
+
 # === Initialize Groq client ===
 client = Groq(api_key=os.getenv("GROQ_API_KEY"))
 
@@ -18,37 +21,36 @@ class ChatRequest(BaseModel):
 class ChatResponse(BaseModel):
     reply: str
 
-# === Token Validation ===
-def get_current_user(authorization: str | None = Header(None)):
-    if authorization is None or not authorization.startswith("Bearer "):
-        raise HTTPException(status_code=401, detail="Unauthorized")
-    token = authorization.split(" ")[1]
-    # Replace this with real token/JWT validation
-    if token != "your_valid_token_here":
-        raise HTTPException(status_code=401, detail="Invalid token")
-    return token
-
 # === Main Chat Endpoint ===
 @router.post("/ai-chat", response_model=ChatResponse)
-async def ai_chat(req: ChatRequest, token: str = Depends(get_current_user)):
+async def ai_chat(req: ChatRequest, user: dict = Depends(verify_token)):
+    """
+    Handles AI chat requests.
+    Requires the user to be logged in (any role).
+    """
     try:
+        # user dict contains {"user_id": ..., "role": ...}
+        user_id = user.get("user_id")
+        role = user.get("role")
+        print(f"AI chat request by user_id={user_id}, role={role}")
+
+        # Build chat messages
         messages = [
             {"role": "system", "content": "You are a helpful AI tutor who assists students with code explanations and debugging."}
         ]
 
         # Include chat history if provided
-        if req.history:
-            for h in req.history:
-                role = h.get("role", "user")
-                content = h.get("content", "")
-                messages.append({"role": role, "content": content})
+        for h in req.history:
+            role_h = h.get("role", "user")
+            content = h.get("content", "")
+            messages.append({"role": role_h, "content": content})
 
         # Add the current user message
         messages.append({"role": "user", "content": req.message})
 
         print("📤 Messages sent to Groq:", messages)
 
-        # === Call Groq’s new API ===
+        # === Call Groq’s API ===
         completion = client.chat.completions.create(
             model="openai/gpt-oss-20b",
             messages=messages,
