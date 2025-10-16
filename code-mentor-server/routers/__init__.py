@@ -18,8 +18,7 @@ routers = [
     key_stroke_router,
     code_editor_router,
     user_router,
-    login_router
-    code_editor_router
+    login_router,
     forgot_password_router,
     submission_list_router,
     submission_details_router,
