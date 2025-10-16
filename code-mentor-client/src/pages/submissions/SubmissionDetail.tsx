@@ -1,9 +1,20 @@
 // @ts-nocheck
-import React from 'react';
-import { Link } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { useParams, Link } from 'react-router-dom';
 import Card from '../../components/ui/Card';
 import { ArrowLeftIcon, PlayIcon, AlertTriangleIcon, MessageCircleIcon, CheckCircleIcon } from 'lucide-react';
 const SubmissionDetail = () => {
+  const { submissionId } = useParams();
+  const [submission, setSubmission] = useState(null);
+
+  useEffect(() => {
+    fetch(`http://localhost:8000/submission/${submissionId}`)
+      .then(res => res.json())
+      .then(data => setSubmission(data));
+  }, [submissionId]);
+
+  if (!submission) return <div className="p-8 text-center">Loading...</div>;
+
   return <div className="w-full">
       <div className="mb-6">
         <Link to="/submissions" className="inline-flex items-center text-[#0D47A1] mb-4">
