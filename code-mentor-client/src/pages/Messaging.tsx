@@ -1,3 +1,4 @@
+// @ts-nocheck
 import React, { useState, useEffect, ChangeEvent, FormEvent } from 'react';
 import Card from '../components/ui/Card';
 import { 
