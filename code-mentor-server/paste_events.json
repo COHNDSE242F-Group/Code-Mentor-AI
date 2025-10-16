@@ -1,0 +1,37 @@
+[
+  {
+    "timestamp": "2025-10-13T07:12:51.081002",
+    "user_id": "demo_user",
+    "source": "server",
+    "delta_time": 0.0,
+    "code_length": 58
+  },
+  {
+    "timestamp": "2025-10-13T07:31:07.786462",
+    "user_id": "demo_user",
+    "source": "server",
+    "delta_time": 0.0,
+    "code_length": 58
+  },
+  {
+    "timestamp": "2025-10-13T07:31:07.813968",
+    "user_id": "demo_user",
+    "source": "server",
+    "delta_time": 0.028,
+    "code_length": 6059
+  },
+  {
+    "timestamp": "2025-10-13T07:31:07.844230",
+    "user_id": "demo_user",
+    "source": "server",
+    "delta_time": 0.03,
+    "code_length": 58
+  },
+  {
+    "timestamp": "2025-10-13T07:31:08.007482",
+    "user_id": "demo_user",
+    "source": "server",
+    "delta_time": 0.023,
+    "code_length": 6059
+  }
+]
