@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef } from "react";
+import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import CodeEditor from "../components/CodeEditor";
 import LanguageSwitcher from "../components/LanguageSwitcher";
@@ -32,8 +32,6 @@ const CodeEditorPage: React.FC = () => {
   const [showHintButton, setShowHintButton] = useState<boolean>(true);
   const [loading, setLoading] = useState<boolean>(false);
 
-  // Note: keystroke sending/detection is handled inside `CodeEditor`.
-
   // ---------------------------
   // Auth & Page Setup
   // ---------------------------
@@ -58,15 +56,23 @@ const CodeEditorPage: React.FC = () => {
   };
 
   // ---------------------------
-  // Handle Code Change (from CodeEditor)
-  // The editor component will call onChange(newCode, isPaste?)
-  // We simply update state and show the paste alert when informed.
+  // Ensure user is logged in
+  // ---------------------------
+  const ensureLoggedIn = (): boolean => {
+    const token = localStorage.getItem("token");
+    if (!token) {
+      navigate("/login");
+      return false;
+    }
+    return true;
+  };
+
+  // ---------------------------
+  // Handle Code Change
   // ---------------------------
   const handleCodeChange = (newCode: string, isPaste?: boolean) => {
-    console.debug("handleCodeChange called isPaste=", isPaste, "len=", newCode.length);
     setCode(newCode);
     if (isPaste) {
-      console.info("Frontend reported paste via editor heuristic");
       setPasteDetected(true);
       setTimeout(() => setPasteDetected(false), 3000);
     }
@@ -76,6 +82,8 @@ const CodeEditorPage: React.FC = () => {
   // Run Code
   // ---------------------------
   const handleRunCode = async () => {
+    if (!ensureLoggedIn()) return;
+
     setLoading(true);
     setConsoleOutput(`> Running ${selectedLanguage} code...\n`);
 
@@ -87,7 +95,6 @@ const CodeEditorPage: React.FC = () => {
 
       const data = await res.json();
       let output = "";
-
       if (data.stdout) output += data.stdout;
       if (data.stderr) output += `${data.stdout ? "\n" : ""}Error: ${data.stderr}`;
 
@@ -103,6 +110,8 @@ const CodeEditorPage: React.FC = () => {
   // Submit Code
   // ---------------------------
   const handleSubmitCode = async () => {
+    if (!ensureLoggedIn()) return;
+
     setConsoleOutput(
       (prev) =>
         prev +
@@ -135,8 +144,7 @@ const CodeEditorPage: React.FC = () => {
         <div className="flex h-full bg-[#1e1e2e] border-r border-[#313244] w-[320px] flex-shrink-0 min-h-0">
           {/* Sidebar Icons */}
           <div className="w-14 bg-[#181825] border-r border-[#313244] flex flex-col items-center py-3 space-y-4">
-            {[
-              { tab: "description", icon: FileTextIcon, title: "Description" },
+            {[{ tab: "description", icon: FileTextIcon, title: "Description" },
               { tab: "examples", icon: ListIcon, title: "Examples" },
               { tab: "solution", icon: Code2Icon, title: "Solution" },
             ].map(({ tab, icon: Icon, title }) => (
