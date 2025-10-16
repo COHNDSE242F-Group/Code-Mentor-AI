@@ -21,13 +21,24 @@ const ForgotPassword = () => {
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async(e: React.FormEvent) => {
     e.preventDefault();
     if (validateForm()) {
-      // In a real app, we would call an API to send password reset email
-      console.log('Password reset requested for:', email);
-      // Show success message
-      setIsSubmitted(true);
+      try {
+        const response = await fetch("http://localhost:8000/forgot-password", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email }),
+        });
+        if (response.ok) {
+          setIsSubmitted(true);
+        } else {
+          const data = await response.json();
+          setErrors({ email: data.message || "Failed to send reset email" });
+        }
+      } catch (error) {
+        setErrors({ email: "Server error. Please try again later." });
+      }
     }
   };
   return <div className="min-h-screen bg-gray-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
