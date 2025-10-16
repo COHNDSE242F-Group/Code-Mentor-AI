@@ -10,8 +10,7 @@ from .login import router as login_router
 from .forgot_password import router as forgot_password_router    
 from .submission_list import router as submission_list_router
 from .submission_details import router as submission_details_router
-from .messaging import router as messaging_router 
->>>>>>> aa7b04ee493701f3a959c1ac2c0dc42aa0b1a0b1
+from .messaging import router as messaging_router
 
 # Optional: create a list of all routers to iterate in main.py
 routers = [
