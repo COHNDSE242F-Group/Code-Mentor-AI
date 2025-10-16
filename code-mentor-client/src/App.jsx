@@ -34,22 +34,6 @@ import ForgotPassword from "./pages/auth/ForgotPassword";
 import AccountDetails from "./pages/auth/AccountDetails";
 
 function App() {
-    useEffect(() => {
-    const fetchDemoToken = async () => {
-      try {
-        const res = await fetch("http://localhost:8000/demo-token");
-        if (!res.ok) throw new Error("Failed to fetch token");
-        const data = await res.json();
-        localStorage.setItem("token", data.token);
-        console.log("Demo token stored in localStorage:", data.token);
-      } catch (err) {
-        console.error("Error fetching demo token:", err);
-      }
-    };
-
-    fetchDemoToken();
-  }, []);
-
   return (
     <Router>
       <Routes>
