@@ -11,6 +11,10 @@ from .forgot_password import router as forgot_password_router
 from .submission_list import router as submission_list_router
 from .submission_details import router as submission_details_router
 from .messaging import router as messaging_router 
+from .account_details import router as account_details_router
+from .create_assignment import router as create_assignment_router
+from .assignment_list import router as assignment_list_router
+from .assignment_details import router as assignment_details_router
 
 routers = [
     code_runner_router,
@@ -22,5 +26,9 @@ routers = [
     forgot_password_router,
     submission_list_router,
     submission_details_router,
-    messaging_router
+    messaging_router,
+    account_details_router,
+    create_assignment_router,
+    assignment_list_router,
+    assignment_details_router
 ]

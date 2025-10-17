@@ -1,5 +1,5 @@
-// @ts-nocheck
 import React, { useState, useRef } from 'react';
+import { useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { UserIcon, MailIcon, PhoneIcon, MapPinIcon, CameraIcon, SaveIcon } from 'lucide-react';
 import Card from '../../components/ui/Card';
@@ -13,57 +13,85 @@ interface UserProfile {
   avatarUrl: string | null;
 }
 const AccountDetails = () => {
-  const [profile, setProfile] = useState<UserProfile>({
-    name: 'John Doe',
-    email: 'john.doe@example.com',
-    phone: '+1 (555) 123-4567',
-    role: 'Programming Instructor',
-    address: '123 Main St, Anytown, CA 12345',
-    bio: 'Computer Science instructor with 10+ years of experience teaching programming fundamentals, data structures, and algorithms.',
-    avatarUrl: null
-  });
+  const [profile, setProfile] = useState<UserProfile | null>(null);
   const [isEditing, setIsEditing] = useState(false);
-  const [formData, setFormData] = useState<UserProfile>(profile);
+  const [formData, setFormData] = useState<UserProfile | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [successMessage, setSuccessMessage] = useState('');
+  const [errorMessage, setErrorMessage] = useState('');
   const fileInputRef = useRef<HTMLInputElement>(null);
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    const {
-      name,
-      value
-    } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: value
-    }));
+    const { name, value } = e.target;
+    setFormData(prev => {
+      if (!prev) return null;
+      return {
+        ...prev,
+        [name]: value ?? ""
+      };
+    });
   };
+  // Fetch profile from backend
+  useEffect(() => {
+    async function fetchProfile() {
+      try {
+        const res = await fetch('http://localhost:8000/account/profile');
+        if (!res.ok) throw new Error('Failed to fetch profile');
+        const data = await res.json();
+        setProfile(data);
+        setFormData(data);
+      } catch (err) {
+        setErrorMessage('Could not load profile.');
+      }
+    }
+    fetchProfile();
+  }, []);
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      // In a real app, you would upload this file to a server and get back a URL
-      // For demo purposes, we'll use a local object URL
       const imageUrl = URL.createObjectURL(file);
-      setFormData(prev => ({
-        ...prev,
-        avatarUrl: imageUrl
-      }));
+      setFormData(prev => {
+        if (!prev) return null;
+        return {
+          ...prev,
+          avatarUrl: imageUrl,
+          name: prev.name ?? "",
+          email: prev.email ?? "",
+          phone: prev.phone ?? "",
+          role: prev.role ?? "",
+          address: prev.address ?? "",
+          bio: prev.bio ?? ""
+        };
+      });
     }
   };
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSaving(true);
-    // Simulate API call
-    setTimeout(() => {
-      setProfile(formData);
+    setErrorMessage('');
+    try {
+      const res = await fetch('http://localhost:8000/account/profile', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(formData)
+      });
+      if (!res.ok) throw new Error('Failed to update profile');
+      const updated = await res.json();
+      setProfile(updated);
+      setFormData(updated);
       setIsEditing(false);
-      setIsSaving(false);
       setSuccessMessage('Profile updated successfully!');
-      // Clear success message after 3 seconds
-      setTimeout(() => {
-        setSuccessMessage('');
-      }, 3000);
-    }, 1000);
+      setTimeout(() => setSuccessMessage(''), 3000);
+    } catch (err) {
+      setErrorMessage('Could not update profile.');
+    }
+    setIsSaving(false);
   };
+  if (errorMessage) {
+    return <div className="w-full max-w-4xl mx-auto text-center py-20 text-red-600">{errorMessage}</div>;
+  }
+  if (!formData) {
+    return <div className="w-full max-w-4xl mx-auto text-center py-20">Loading profile...</div>;
+  }
   return <div className="w-full max-w-4xl mx-auto">
       <div className="mb-6">
         <h1 className="text-2xl font-bold text-gray-800">Account Details</h1>
@@ -93,8 +121,8 @@ const AccountDetails = () => {
                     <input type="file" ref={fileInputRef} className="hidden" accept="image/*" onChange={handleFileChange} />
                   </div>}
               </div>
-              <h2 className="mt-4 text-xl font-bold">{profile.name}</h2>
-              <p className="text-gray-500">{profile.role}</p>
+              <h2 className="mt-4 text-xl font-bold">{profile ? profile.name : ""}</h2>
+              <p className="text-gray-500">{profile ? profile.role : ""}</p>
               {!isEditing && <button type="button" onClick={() => setIsEditing(true)} className="mt-4 px-4 py-2 border border-[#0D47A1] text-[#0D47A1] rounded-md hover:bg-blue-50">
                   Edit Profile
                 </button>}
@@ -188,21 +216,11 @@ const AccountDetails = () => {
                   Last updated 3 months ago
                 </p>
               </div>
-              <Link to="/settings" className="mt-2 md:mt-0 text-[#0D47A1] hover:text-blue-800 font-medium">
+              <Link to="/change-password" className="mt-2 md:mt-0 text-[#0D47A1] hover:text-blue-800 font-medium">
                 Change password
               </Link>
             </div>
-            <div className="flex flex-col md:flex-row justify-between md:items-center pb-4 border-b border-gray-200">
-              <div>
-                <h3 className="font-medium">Two-factor authentication</h3>
-                <p className="text-sm text-gray-500">
-                  Secure your account with 2FA
-                </p>
-              </div>
-              <button className="mt-2 md:mt-0 px-4 py-2 border border-gray-300 rounded-md bg-white text-gray-700 hover:bg-gray-50">
-                Enable
-              </button>
-            </div>
+            {/* 2FA section removed as not needed */}
             <div className="flex flex-col md:flex-row justify-between md:items-center">
               <div>
                 <h3 className="font-medium">Active sessions</h3>
