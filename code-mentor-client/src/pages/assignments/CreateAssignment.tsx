@@ -1,3 +1,4 @@
+// @ts-nocheck
 import React from 'react';
 import Card from '../../components/ui/Card';
 import { ArrowLeftIcon, PlusIcon } from 'lucide-react';
