@@ -8,7 +8,7 @@ from fastapi import Depends
 # Neon Database Configuration
 # ===========================
 DB_USER = "neondb_owner"              # from Neon GUI
-DB_PASSWORD = "npg_k5qcgEu0LSBP"      # from Neon GUI
+DB_PASSWORD = "npg_k5qcgEu0LSBP"     # from Neon GUI
 DB_HOST = "ep-steep-glitter-a1pg3spu-pooler.ap-southeast-1.aws.neon.tech"
 DB_NAME = "code_mentor_db"
 

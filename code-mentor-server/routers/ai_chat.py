@@ -6,7 +6,7 @@ import traceback
 import os
 
 # === Import your JWT verification function ===
-from auth.auth import verify_token
+from auth.dependencies import login_required
 
 # === Initialize Groq client ===
 client = Groq(api_key=os.getenv("GROQ_API_KEY"))
@@ -23,7 +23,7 @@ class ChatResponse(BaseModel):
 
 # === Main Chat Endpoint ===
 @router.post("/ai-chat", response_model=ChatResponse)
-async def ai_chat(req: ChatRequest, user: dict = Depends(verify_token)):
+async def ai_chat(req: ChatRequest, user: dict = Depends(login_required)):
     """
     Handles AI chat requests.
     Requires the user to be logged in (any role).
