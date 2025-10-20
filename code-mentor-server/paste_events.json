@@ -33,5 +33,187 @@
     "source": "server",
     "delta_time": 0.023,
     "code_length": 6059
+  },
+  {
+    "timestamp": "2025-10-17T06:53:19.755917",
+    "user_id": 2,
+    "source": "server",
+    "delta_time": 0.0,
+    "code_length": 58
+  },
+  {
+    "timestamp": "2025-10-17T15:40:24.837198",
+    "user_id": 2,
+    "source": "server",
+    "delta_time": 0.0,
+    "code_length": 58
+  },
+  {
+    "timestamp": "2025-10-17T15:40:34.605793",
+    "user_id": 2,
+    "source": "client",
+    "delta_time": 2.061,
+    "code_length": 10234
+  },
+  {
+    "timestamp": "2025-10-17T15:40:48.655019",
+    "user_id": 2,
+    "source": "server",
+    "delta_time": 0.051,
+    "code_length": 10234
+  },
+  {
+    "timestamp": "2025-10-17T16:53:14.744821",
+    "user_id": 2,
+    "source": "server",
+    "delta_time": 0.0,
+    "code_length": 58
+  },
+  {
+    "timestamp": "2025-10-17T16:53:41.328298",
+    "user_id": 2,
+    "source": "client",
+    "delta_time": 26.567,
+    "code_length": 410
+  },
+  {
+    "timestamp": "2025-10-17T16:53:44.348596",
+    "user_id": 2,
+    "source": "client",
+    "delta_time": 3.02,
+    "code_length": 410
+  },
+  {
+    "timestamp": "2025-10-17T16:54:57.831146",
+    "user_id": 2,
+    "source": "server",
+    "delta_time": 0.0,
+    "code_length": 58
+  },
+  {
+    "timestamp": "2025-10-17T16:55:18.263984",
+    "user_id": 2,
+    "source": "client",
+    "delta_time": 20.425,
+    "code_length": 410
+  },
+  {
+    "timestamp": "2025-10-17T16:55:19.861903",
+    "user_id": 2,
+    "source": "client",
+    "delta_time": 1.598,
+    "code_length": 410
+  },
+  {
+    "timestamp": "2025-10-17T17:06:56.182920",
+    "user_id": 2,
+    "source": "server",
+    "delta_time": 0.0,
+    "code_length": 58
+  },
+  {
+    "timestamp": "2025-10-17T17:07:13.419426",
+    "user_id": 2,
+    "source": "client",
+    "delta_time": 17.184,
+    "code_length": 1350
+  },
+  {
+    "timestamp": "2025-10-17T17:07:53.612555",
+    "user_id": 2,
+    "source": "client",
+    "delta_time": 40.193,
+    "code_length": 1350
+  },
+  {
+    "timestamp": "2025-10-17T17:11:47.149268",
+    "user_id": 2,
+    "source": "client",
+    "delta_time": 31.015,
+    "code_length": 1350
+  },
+  {
+    "timestamp": "2025-10-17T17:15:59.866717",
+    "user_id": 2,
+    "source": "client",
+    "delta_time": 79.425,
+    "code_length": 1351
+  },
+  {
+    "timestamp": "2025-10-18T01:13:38.939846",
+    "user_id": 2,
+    "source": "server",
+    "delta_time": 0.0,
+    "code_length": 58
+  },
+  {
+    "timestamp": "2025-10-18T01:25:52.753323",
+    "user_id": 2,
+    "source": "server",
+    "delta_time": 0.0,
+    "code_length": 58
+  },
+  {
+    "timestamp": "2025-10-18T01:27:28.704940",
+    "user_id": 2,
+    "source": "server",
+    "delta_time": 0.0,
+    "code_length": 58
+  },
+  {
+    "timestamp": "2025-10-18T01:33:42.248453",
+    "user_id": 2,
+    "source": "server",
+    "delta_time": 0.0,
+    "code_length": 58
+  },
+  {
+    "timestamp": "2025-10-18T01:35:13.650727",
+    "user_id": 2,
+    "source": "server",
+    "delta_time": 0.0,
+    "code_length": 58
+  },
+  {
+    "timestamp": "2025-10-19T04:30:33.895944",
+    "user_id": 2,
+    "source": "server",
+    "delta_time": 0.0,
+    "code_length": 58
+  },
+  {
+    "timestamp": "2025-10-19T04:36:30.737065",
+    "user_id": 2,
+    "source": "server",
+    "delta_time": 0.0,
+    "code_length": 58
+  },
+  {
+    "timestamp": "2025-10-19T05:29:20.408324",
+    "user_id": 2,
+    "source": "server",
+    "delta_time": 0.0,
+    "code_length": 58
+  },
+  {
+    "timestamp": "2025-10-19T05:59:55.490784",
+    "user_id": 2,
+    "source": "server",
+    "delta_time": 0.0,
+    "code_length": 58
+  },
+  {
+    "timestamp": "2025-10-19T06:08:22.442788",
+    "user_id": 2,
+    "source": "server",
+    "delta_time": 0.0,
+    "code_length": 57
+  },
+  {
+    "timestamp": "2025-10-19T06:09:53.049548",
+    "user_id": 2,
+    "source": "server",
+    "delta_time": 0.0,
+    "code_length": 58
   }
 ]

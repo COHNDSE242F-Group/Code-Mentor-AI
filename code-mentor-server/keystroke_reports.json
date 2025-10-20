@@ -1,1 +1,1324 @@
-{}
+{
+  "user_2": [
+    {
+      "timestamp": "2025-10-17T06:53:19.755917",
+      "action": "paste",
+      "code_length": 58,
+      "delta_time": 0.0
+    },
+    {
+      "timestamp": "2025-10-17T06:53:19.769720",
+      "action": "typing",
+      "code_length": 58,
+      "delta_time": 0.014
+    },
+    {
+      "timestamp": "2025-10-17T06:54:00.911339",
+      "action": "typing",
+      "code_length": 59,
+      "delta_time": 41.142
+    },
+    {
+      "timestamp": "2025-10-17T06:54:00.915048",
+      "action": "typing",
+      "code_length": 59,
+      "delta_time": 0.004
+    },
+    {
+      "timestamp": "2025-10-17T06:54:06.764374",
+      "action": "typing",
+      "code_length": 57,
+      "delta_time": 5.849
+    },
+    {
+      "timestamp": "2025-10-17T06:54:06.767376",
+      "action": "typing",
+      "code_length": 57,
+      "delta_time": 0.003
+    },
+    {
+      "timestamp": "2025-10-17T06:54:07.302031",
+      "action": "typing",
+      "code_length": 58,
+      "delta_time": 0.535
+    },
+    {
+      "timestamp": "2025-10-17T06:54:07.307381",
+      "action": "typing",
+      "code_length": 58,
+      "delta_time": 0.005
+    },
+    {
+      "timestamp": "2025-10-17T06:54:08.968911",
+      "action": "typing",
+      "code_length": 57,
+      "delta_time": 1.662
+    },
+    {
+      "timestamp": "2025-10-17T06:54:08.973208",
+      "action": "typing",
+      "code_length": 57,
+      "delta_time": 0.004
+    },
+    {
+      "timestamp": "2025-10-17T06:54:14.954593",
+      "action": "typing",
+      "code_length": 58,
+      "delta_time": 5.981
+    },
+    {
+      "timestamp": "2025-10-17T06:54:14.958596",
+      "action": "typing",
+      "code_length": 58,
+      "delta_time": 0.004
+    },
+    {
+      "timestamp": "2025-10-17T06:54:17.147115",
+      "action": "typing",
+      "code_length": 4588,
+      "delta_time": 2.189
+    },
+    {
+      "timestamp": "2025-10-17T06:54:17.151776",
+      "action": "typing",
+      "code_length": 4588,
+      "delta_time": 0.005
+    },
+    {
+      "timestamp": "2025-10-17T06:54:23.542194",
+      "action": "typing",
+      "code_length": 58,
+      "delta_time": 6.39
+    },
+    {
+      "timestamp": "2025-10-17T06:54:23.551427",
+      "action": "typing",
+      "code_length": 58,
+      "delta_time": 0.009
+    },
+    {
+      "timestamp": "2025-10-17T06:54:23.925824",
+      "action": "typing",
+      "code_length": 57,
+      "delta_time": 0.374
+    },
+    {
+      "timestamp": "2025-10-17T06:54:23.931372",
+      "action": "typing",
+      "code_length": 57,
+      "delta_time": 0.006
+    },
+    {
+      "timestamp": "2025-10-17T06:54:33.605119",
+      "action": "typing",
+      "code_length": 58,
+      "delta_time": 9.674
+    },
+    {
+      "timestamp": "2025-10-17T06:54:33.609120",
+      "action": "typing",
+      "code_length": 58,
+      "delta_time": 0.004
+    },
+    {
+      "timestamp": "2025-10-17T06:55:28.798536",
+      "action": "typing",
+      "code_length": 59,
+      "delta_time": 55.189
+    },
+    {
+      "timestamp": "2025-10-17T06:55:28.803747",
+      "action": "typing",
+      "code_length": 59,
+      "delta_time": 0.005
+    },
+    {
+      "timestamp": "2025-10-17T06:55:33.363817",
+      "action": "typing",
+      "code_length": 58,
+      "delta_time": 4.56
+    },
+    {
+      "timestamp": "2025-10-17T06:55:33.374502",
+      "action": "typing",
+      "code_length": 58,
+      "delta_time": 0.011
+    },
+    {
+      "timestamp": "2025-10-17T06:55:38.474304",
+      "action": "typing",
+      "code_length": 59,
+      "delta_time": 5.1
+    },
+    {
+      "timestamp": "2025-10-17T06:55:38.480651",
+      "action": "typing",
+      "code_length": 59,
+      "delta_time": 0.006
+    },
+    {
+      "timestamp": "2025-10-17T06:55:52.622045",
+      "action": "typing",
+      "code_length": 4589,
+      "delta_time": 14.141
+    },
+    {
+      "timestamp": "2025-10-17T06:55:52.629534",
+      "action": "typing",
+      "code_length": 4589,
+      "delta_time": 0.007
+    },
+    {
+      "timestamp": "2025-10-17T06:55:55.363628",
+      "action": "typing",
+      "code_length": 58,
+      "delta_time": 2.734
+    },
+    {
+      "timestamp": "2025-10-17T06:55:55.373231",
+      "action": "typing",
+      "code_length": 58,
+      "delta_time": 0.01
+    },
+    {
+      "timestamp": "2025-10-17T06:56:41.052837",
+      "action": "typing",
+      "code_length": 59,
+      "delta_time": 45.68
+    },
+    {
+      "timestamp": "2025-10-17T06:56:41.057828",
+      "action": "typing",
+      "code_length": 59,
+      "delta_time": 0.005
+    },
+    {
+      "timestamp": "2025-10-17T06:56:43.288152",
+      "action": "typing",
+      "code_length": 58,
+      "delta_time": 2.23
+    },
+    {
+      "timestamp": "2025-10-17T06:56:43.296464",
+      "action": "typing",
+      "code_length": 58,
+      "delta_time": 0.008
+    },
+    {
+      "timestamp": "2025-10-17T06:57:40.114231",
+      "action": "typing",
+      "code_length": 59,
+      "delta_time": 56.818
+    },
+    {
+      "timestamp": "2025-10-17T06:57:40.119928",
+      "action": "typing",
+      "code_length": 59,
+      "delta_time": 0.006
+    },
+    {
+      "timestamp": "2025-10-17T06:57:41.427940",
+      "action": "typing",
+      "code_length": 58,
+      "delta_time": 1.308
+    },
+    {
+      "timestamp": "2025-10-17T06:57:41.435493",
+      "action": "typing",
+      "code_length": 58,
+      "delta_time": 0.008
+    },
+    {
+      "timestamp": "2025-10-17T07:05:59.842718",
+      "action": "typing",
+      "code_length": 59,
+      "delta_time": 498.407
+    },
+    {
+      "timestamp": "2025-10-17T07:05:59.857508",
+      "action": "typing",
+      "code_length": 59,
+      "delta_time": 0.015
+    },
+    {
+      "timestamp": "2025-10-17T07:06:03.575954",
+      "action": "typing",
+      "code_length": 58,
+      "delta_time": 3.718
+    },
+    {
+      "timestamp": "2025-10-17T07:06:03.584326",
+      "action": "typing",
+      "code_length": 58,
+      "delta_time": 0.008
+    },
+    {
+      "timestamp": "2025-10-17T07:06:04.778697",
+      "action": "typing",
+      "code_length": 59,
+      "delta_time": 1.194
+    },
+    {
+      "timestamp": "2025-10-17T07:06:04.789807",
+      "action": "typing",
+      "code_length": 59,
+      "delta_time": 0.011
+    },
+    {
+      "timestamp": "2025-10-17T07:06:06.476159",
+      "action": "typing",
+      "code_length": 58,
+      "delta_time": 1.686
+    },
+    {
+      "timestamp": "2025-10-17T07:06:06.485836",
+      "action": "typing",
+      "code_length": 58,
+      "delta_time": 0.01
+    },
+    {
+      "timestamp": "2025-10-17T07:06:08.097650",
+      "action": "typing",
+      "code_length": 59,
+      "delta_time": 1.612
+    },
+    {
+      "timestamp": "2025-10-17T07:06:08.109812",
+      "action": "typing",
+      "code_length": 59,
+      "delta_time": 0.012
+    },
+    {
+      "timestamp": "2025-10-17T07:06:09.059667",
+      "action": "typing",
+      "code_length": 4589,
+      "delta_time": 0.95
+    },
+    {
+      "timestamp": "2025-10-17T07:06:09.070347",
+      "action": "typing",
+      "code_length": 4589,
+      "delta_time": 0.011
+    },
+    {
+      "timestamp": "2025-10-17T07:06:11.891537",
+      "action": "typing",
+      "code_length": 59,
+      "delta_time": 2.821
+    },
+    {
+      "timestamp": "2025-10-17T07:06:11.901549",
+      "action": "typing",
+      "code_length": 59,
+      "delta_time": 0.01
+    },
+    {
+      "timestamp": "2025-10-17T07:06:14.356443",
+      "action": "typing",
+      "code_length": 58,
+      "delta_time": 2.455
+    },
+    {
+      "timestamp": "2025-10-17T07:06:14.364595",
+      "action": "typing",
+      "code_length": 58,
+      "delta_time": 0.008
+    },
+    {
+      "timestamp": "2025-10-17T07:07:57.885618",
+      "action": "typing",
+      "code_length": 59,
+      "delta_time": 103.521
+    },
+    {
+      "timestamp": "2025-10-17T07:07:57.897268",
+      "action": "typing",
+      "code_length": 59,
+      "delta_time": 0.012
+    },
+    {
+      "timestamp": "2025-10-17T07:08:02.701642",
+      "action": "typing",
+      "code_length": 60,
+      "delta_time": 4.804
+    },
+    {
+      "timestamp": "2025-10-17T07:08:02.714672",
+      "action": "typing",
+      "code_length": 60,
+      "delta_time": 0.013
+    },
+    {
+      "timestamp": "2025-10-17T07:08:10.895693",
+      "action": "typing",
+      "code_length": 61,
+      "delta_time": 8.181
+    },
+    {
+      "timestamp": "2025-10-17T07:08:10.904238",
+      "action": "typing",
+      "code_length": 61,
+      "delta_time": 0.009
+    },
+    {
+      "timestamp": "2025-10-17T07:08:17.756564",
+      "action": "typing",
+      "code_length": 63,
+      "delta_time": 6.852
+    },
+    {
+      "timestamp": "2025-10-17T07:08:17.765161",
+      "action": "typing",
+      "code_length": 63,
+      "delta_time": 0.009
+    },
+    {
+      "timestamp": "2025-10-17T07:08:22.230372",
+      "action": "typing",
+      "code_length": 58,
+      "delta_time": 4.465
+    },
+    {
+      "timestamp": "2025-10-17T07:08:22.239021",
+      "action": "typing",
+      "code_length": 58,
+      "delta_time": 0.009
+    },
+    {
+      "timestamp": "2025-10-17T07:18:02.243211",
+      "action": "typing",
+      "code_length": 59,
+      "delta_time": 580.004
+    },
+    {
+      "timestamp": "2025-10-17T07:18:02.269419",
+      "action": "typing",
+      "code_length": 59,
+      "delta_time": 0.026
+    },
+    {
+      "timestamp": "2025-10-17T07:18:04.914005",
+      "action": "typing",
+      "code_length": 60,
+      "delta_time": 2.645
+    },
+    {
+      "timestamp": "2025-10-17T07:18:04.928656",
+      "action": "typing",
+      "code_length": 60,
+      "delta_time": 0.015
+    },
+    {
+      "timestamp": "2025-10-17T07:18:07.622617",
+      "action": "typing",
+      "code_length": 61,
+      "delta_time": 2.694
+    },
+    {
+      "timestamp": "2025-10-17T07:18:07.634917",
+      "action": "typing",
+      "code_length": 61,
+      "delta_time": 0.012
+    },
+    {
+      "timestamp": "2025-10-17T07:18:09.674810",
+      "action": "typing",
+      "code_length": 63,
+      "delta_time": 2.04
+    },
+    {
+      "timestamp": "2025-10-17T07:18:09.688039",
+      "action": "typing",
+      "code_length": 63,
+      "delta_time": 0.013
+    },
+    {
+      "timestamp": "2025-10-17T07:18:25.917554",
+      "action": "typing",
+      "code_length": 64,
+      "delta_time": 16.23
+    },
+    {
+      "timestamp": "2025-10-17T07:18:25.922554",
+      "action": "typing",
+      "code_length": 64,
+      "delta_time": 0.005
+    },
+    {
+      "timestamp": "2025-10-17T07:18:27.344714",
+      "action": "typing",
+      "code_length": 155,
+      "delta_time": 1.422
+    },
+    {
+      "timestamp": "2025-10-17T07:18:27.352492",
+      "action": "typing",
+      "code_length": 155,
+      "delta_time": 0.008
+    },
+    {
+      "timestamp": "2025-10-17T07:18:38.591609",
+      "action": "typing",
+      "code_length": 154,
+      "delta_time": 11.239
+    },
+    {
+      "timestamp": "2025-10-17T07:18:38.607919",
+      "action": "typing",
+      "code_length": 154,
+      "delta_time": 0.016
+    },
+    {
+      "timestamp": "2025-10-17T07:18:40.327029",
+      "action": "typing",
+      "code_length": 149,
+      "delta_time": 1.719
+    },
+    {
+      "timestamp": "2025-10-17T07:18:40.337911",
+      "action": "typing",
+      "code_length": 149,
+      "delta_time": 0.011
+    },
+    {
+      "timestamp": "2025-10-17T07:18:45.137115",
+      "action": "typing",
+      "code_length": 64,
+      "delta_time": 4.799
+    },
+    {
+      "timestamp": "2025-10-17T07:18:45.147244",
+      "action": "typing",
+      "code_length": 64,
+      "delta_time": 0.01
+    },
+    {
+      "timestamp": "2025-10-17T07:18:46.354223",
+      "action": "typing",
+      "code_length": 63,
+      "delta_time": 1.207
+    },
+    {
+      "timestamp": "2025-10-17T07:18:46.368076",
+      "action": "typing",
+      "code_length": 63,
+      "delta_time": 0.014
+    },
+    {
+      "timestamp": "2025-10-17T07:18:51.925674",
+      "action": "typing",
+      "code_length": 67,
+      "delta_time": 5.558
+    },
+    {
+      "timestamp": "2025-10-17T07:18:51.938692",
+      "action": "typing",
+      "code_length": 67,
+      "delta_time": 0.013
+    },
+    {
+      "timestamp": "2025-10-17T07:18:52.439005",
+      "action": "typing",
+      "code_length": 66,
+      "delta_time": 0.5
+    },
+    {
+      "timestamp": "2025-10-17T07:18:52.451293",
+      "action": "typing",
+      "code_length": 66,
+      "delta_time": 0.012
+    },
+    {
+      "timestamp": "2025-10-17T07:18:53.603378",
+      "action": "typing",
+      "code_length": 65,
+      "delta_time": 1.152
+    },
+    {
+      "timestamp": "2025-10-17T07:18:53.613113",
+      "action": "typing",
+      "code_length": 65,
+      "delta_time": 0.01
+    },
+    {
+      "timestamp": "2025-10-17T07:18:56.134275",
+      "action": "typing",
+      "code_length": 58,
+      "delta_time": 2.521
+    },
+    {
+      "timestamp": "2025-10-17T07:18:56.149839",
+      "action": "typing",
+      "code_length": 58,
+      "delta_time": 0.016
+    },
+    {
+      "timestamp": "2025-10-17T07:18:58.875319",
+      "action": "typing",
+      "code_length": 57,
+      "delta_time": 2.725
+    },
+    {
+      "timestamp": "2025-10-17T07:18:58.895262",
+      "action": "typing",
+      "code_length": 57,
+      "delta_time": 0.02
+    },
+    {
+      "timestamp": "2025-10-17T07:19:00.176173",
+      "action": "typing",
+      "code_length": 58,
+      "delta_time": 1.281
+    },
+    {
+      "timestamp": "2025-10-17T07:19:00.187306",
+      "action": "typing",
+      "code_length": 58,
+      "delta_time": 0.011
+    },
+    {
+      "timestamp": "2025-10-17T07:19:25.765613",
+      "action": "typing",
+      "code_length": 59,
+      "delta_time": 25.578
+    },
+    {
+      "timestamp": "2025-10-17T07:19:25.777932",
+      "action": "typing",
+      "code_length": 59,
+      "delta_time": 0.012
+    },
+    {
+      "timestamp": "2025-10-17T07:19:26.348065",
+      "action": "typing",
+      "code_length": 60,
+      "delta_time": 0.57
+    },
+    {
+      "timestamp": "2025-10-17T07:19:26.363498",
+      "action": "typing",
+      "code_length": 60,
+      "delta_time": 0.015
+    },
+    {
+      "timestamp": "2025-10-17T07:19:27.653640",
+      "action": "typing",
+      "code_length": 65,
+      "delta_time": 1.29
+    },
+    {
+      "timestamp": "2025-10-17T07:19:27.662043",
+      "action": "typing",
+      "code_length": 65,
+      "delta_time": 0.008
+    },
+    {
+      "timestamp": "2025-10-17T07:20:11.958773",
+      "action": "typing",
+      "code_length": 67,
+      "delta_time": 44.297
+    },
+    {
+      "timestamp": "2025-10-17T07:20:11.971751",
+      "action": "typing",
+      "code_length": 67,
+      "delta_time": 0.013
+    },
+    {
+      "timestamp": "2025-10-17T07:20:18.538582",
+      "action": "typing",
+      "code_length": 68,
+      "delta_time": 6.567
+    },
+    {
+      "timestamp": "2025-10-17T07:20:18.553093",
+      "action": "typing",
+      "code_length": 68,
+      "delta_time": 0.015
+    },
+    {
+      "timestamp": "2025-10-17T07:20:24.516751",
+      "action": "typing",
+      "code_length": 57,
+      "delta_time": 5.964
+    },
+    {
+      "timestamp": "2025-10-17T07:20:24.526524",
+      "action": "typing",
+      "code_length": 57,
+      "delta_time": 0.01
+    },
+    {
+      "timestamp": "2025-10-17T15:40:24.837198",
+      "action": "paste",
+      "code_length": 58,
+      "delta_time": 0.0
+    },
+    {
+      "timestamp": "2025-10-17T15:40:24.851361",
+      "action": "typing",
+      "code_length": 58,
+      "delta_time": 0.014
+    },
+    {
+      "timestamp": "2025-10-17T15:40:31.809119",
+      "action": "typing",
+      "code_length": 57,
+      "delta_time": 6.958
+    },
+    {
+      "timestamp": "2025-10-17T15:40:31.813993",
+      "action": "typing",
+      "code_length": 57,
+      "delta_time": 0.005
+    },
+    {
+      "timestamp": "2025-10-17T15:40:32.539949",
+      "action": "typing",
+      "code_length": 58,
+      "delta_time": 0.726
+    },
+    {
+      "timestamp": "2025-10-17T15:40:32.545126",
+      "action": "typing",
+      "code_length": 58,
+      "delta_time": 0.005
+    },
+    {
+      "timestamp": "2025-10-17T15:40:34.605793",
+      "action": "paste",
+      "code_length": 10234,
+      "delta_time": 2.061
+    },
+    {
+      "timestamp": "2025-10-17T15:40:41.187308",
+      "action": "typing",
+      "code_length": 58,
+      "delta_time": 6.582
+    },
+    {
+      "timestamp": "2025-10-17T15:40:41.193234",
+      "action": "typing",
+      "code_length": 58,
+      "delta_time": 0.006
+    },
+    {
+      "timestamp": "2025-10-17T15:40:44.855827",
+      "action": "typing",
+      "code_length": 57,
+      "delta_time": 3.663
+    },
+    {
+      "timestamp": "2025-10-17T15:40:44.863567",
+      "action": "typing",
+      "code_length": 57,
+      "delta_time": 0.008
+    },
+    {
+      "timestamp": "2025-10-17T15:40:48.598513",
+      "action": "typing",
+      "code_length": 58,
+      "delta_time": 3.735
+    },
+    {
+      "timestamp": "2025-10-17T15:40:48.604511",
+      "action": "typing",
+      "code_length": 58,
+      "delta_time": 0.006
+    },
+    {
+      "timestamp": "2025-10-17T15:40:48.655019",
+      "action": "paste",
+      "code_length": 10234,
+      "delta_time": 0.051
+    },
+    {
+      "timestamp": "2025-10-17T15:41:01.085214",
+      "action": "typing",
+      "code_length": 58,
+      "delta_time": 12.43
+    },
+    {
+      "timestamp": "2025-10-17T15:41:01.090864",
+      "action": "typing",
+      "code_length": 58,
+      "delta_time": 0.006
+    },
+    {
+      "timestamp": "2025-10-17T15:41:02.860033",
+      "action": "typing",
+      "code_length": 57,
+      "delta_time": 1.769
+    },
+    {
+      "timestamp": "2025-10-17T15:41:02.865651",
+      "action": "typing",
+      "code_length": 57,
+      "delta_time": 0.006
+    },
+    {
+      "timestamp": "2025-10-17T16:53:14.744821",
+      "action": "paste",
+      "code_length": 58,
+      "delta_time": 0.0
+    },
+    {
+      "timestamp": "2025-10-17T16:53:14.761355",
+      "action": "typing",
+      "code_length": 58,
+      "delta_time": 0.017
+    },
+    {
+      "timestamp": "2025-10-17T16:53:41.328298",
+      "action": "paste",
+      "code_length": 410,
+      "delta_time": 26.567
+    },
+    {
+      "timestamp": "2025-10-17T16:53:44.348596",
+      "action": "paste",
+      "code_length": 410,
+      "delta_time": 3.02
+    },
+    {
+      "timestamp": "2025-10-17T16:54:57.831146",
+      "action": "paste",
+      "code_length": 58,
+      "delta_time": 0.0
+    },
+    {
+      "timestamp": "2025-10-17T16:54:57.839394",
+      "action": "typing",
+      "code_length": 58,
+      "delta_time": 0.008
+    },
+    {
+      "timestamp": "2025-10-17T16:55:18.263984",
+      "action": "paste",
+      "code_length": 410,
+      "delta_time": 20.425
+    },
+    {
+      "timestamp": "2025-10-17T16:55:19.861903",
+      "action": "paste",
+      "code_length": 410,
+      "delta_time": 1.598
+    },
+    {
+      "timestamp": "2025-10-17T16:55:30.592467",
+      "action": "typing",
+      "code_length": 58,
+      "delta_time": 10.731
+    },
+    {
+      "timestamp": "2025-10-17T16:55:30.598463",
+      "action": "typing",
+      "code_length": 58,
+      "delta_time": 0.006
+    },
+    {
+      "timestamp": "2025-10-17T16:55:31.188321",
+      "action": "typing",
+      "code_length": 57,
+      "delta_time": 0.59
+    },
+    {
+      "timestamp": "2025-10-17T16:55:31.194675",
+      "action": "typing",
+      "code_length": 57,
+      "delta_time": 0.006
+    },
+    {
+      "timestamp": "2025-10-17T17:06:56.182920",
+      "action": "paste",
+      "code_length": 58,
+      "delta_time": 0.0
+    },
+    {
+      "timestamp": "2025-10-17T17:06:56.235084",
+      "action": "typing",
+      "code_length": 58,
+      "delta_time": 0.052
+    },
+    {
+      "timestamp": "2025-10-17T17:07:13.419426",
+      "action": "paste",
+      "code_length": 1350,
+      "delta_time": 17.184
+    },
+    {
+      "timestamp": "2025-10-17T17:07:53.612555",
+      "action": "paste",
+      "code_length": 1350,
+      "delta_time": 40.193
+    },
+    {
+      "timestamp": "2025-10-17T17:11:16.115460",
+      "action": "typing",
+      "code_length": 58,
+      "delta_time": 202.503
+    },
+    {
+      "timestamp": "2025-10-17T17:11:16.134583",
+      "action": "typing",
+      "code_length": 58,
+      "delta_time": 0.019
+    },
+    {
+      "timestamp": "2025-10-17T17:11:47.149268",
+      "action": "paste",
+      "code_length": 1350,
+      "delta_time": 31.015
+    },
+    {
+      "timestamp": "2025-10-17T17:13:22.560719",
+      "action": "typing",
+      "code_length": 58,
+      "delta_time": 95.411
+    },
+    {
+      "timestamp": "2025-10-17T17:13:22.570498",
+      "action": "typing",
+      "code_length": 58,
+      "delta_time": 0.01
+    },
+    {
+      "timestamp": "2025-10-17T17:13:23.384514",
+      "action": "typing",
+      "code_length": 57,
+      "delta_time": 0.814
+    },
+    {
+      "timestamp": "2025-10-17T17:13:23.396416",
+      "action": "typing",
+      "code_length": 57,
+      "delta_time": 0.012
+    },
+    {
+      "timestamp": "2025-10-17T17:14:09.546831",
+      "action": "typing",
+      "code_length": 58,
+      "delta_time": 46.15
+    },
+    {
+      "timestamp": "2025-10-17T17:14:09.558045",
+      "action": "typing",
+      "code_length": 58,
+      "delta_time": 0.011
+    },
+    {
+      "timestamp": "2025-10-17T17:14:40.435610",
+      "action": "typing",
+      "code_length": 57,
+      "delta_time": 30.878
+    },
+    {
+      "timestamp": "2025-10-17T17:14:40.441597",
+      "action": "typing",
+      "code_length": 57,
+      "delta_time": 0.006
+    },
+    {
+      "timestamp": "2025-10-17T17:15:59.866717",
+      "action": "paste",
+      "code_length": 1351,
+      "delta_time": 79.425
+    },
+    {
+      "timestamp": "2025-10-18T01:13:38.939846",
+      "action": "paste",
+      "code_length": 58,
+      "delta_time": 0.0
+    },
+    {
+      "timestamp": "2025-10-18T01:13:38.952666",
+      "action": "typing",
+      "code_length": 58,
+      "delta_time": 0.013
+    },
+    {
+      "timestamp": "2025-10-18T01:25:52.753323",
+      "action": "paste",
+      "code_length": 58,
+      "delta_time": 0.0
+    },
+    {
+      "timestamp": "2025-10-18T01:25:52.777893",
+      "action": "typing",
+      "code_length": 58,
+      "delta_time": 0.025
+    },
+    {
+      "timestamp": "2025-10-18T01:27:28.704940",
+      "action": "paste",
+      "code_length": 58,
+      "delta_time": 0.0
+    },
+    {
+      "timestamp": "2025-10-18T01:27:28.731155",
+      "action": "typing",
+      "code_length": 58,
+      "delta_time": 0.026
+    },
+    {
+      "timestamp": "2025-10-18T01:27:46.162423",
+      "action": "typing",
+      "code_length": 57,
+      "delta_time": 17.431
+    },
+    {
+      "timestamp": "2025-10-18T01:27:46.169360",
+      "action": "typing",
+      "code_length": 57,
+      "delta_time": 0.007
+    },
+    {
+      "timestamp": "2025-10-18T01:33:42.248453",
+      "action": "paste",
+      "code_length": 58,
+      "delta_time": 0.0
+    },
+    {
+      "timestamp": "2025-10-18T01:33:42.271639",
+      "action": "typing",
+      "code_length": 58,
+      "delta_time": 0.023
+    },
+    {
+      "timestamp": "2025-10-18T01:33:51.895546",
+      "action": "typing",
+      "code_length": 57,
+      "delta_time": 9.624
+    },
+    {
+      "timestamp": "2025-10-18T01:33:51.903278",
+      "action": "typing",
+      "code_length": 57,
+      "delta_time": 0.008
+    },
+    {
+      "timestamp": "2025-10-18T01:35:13.650727",
+      "action": "paste",
+      "code_length": 58,
+      "delta_time": 0.0
+    },
+    {
+      "timestamp": "2025-10-18T01:35:13.668997",
+      "action": "typing",
+      "code_length": 58,
+      "delta_time": 0.018
+    },
+    {
+      "timestamp": "2025-10-18T01:35:13.727187",
+      "action": "typing",
+      "code_length": 57,
+      "delta_time": 0.058
+    },
+    {
+      "timestamp": "2025-10-18T01:35:13.737211",
+      "action": "typing",
+      "code_length": 57,
+      "delta_time": 0.01
+    },
+    {
+      "timestamp": "2025-10-19T04:30:33.895944",
+      "action": "paste",
+      "code_length": 58,
+      "delta_time": 0.0
+    },
+    {
+      "timestamp": "2025-10-19T04:30:33.909374",
+      "action": "typing",
+      "code_length": 58,
+      "delta_time": 0.013
+    },
+    {
+      "timestamp": "2025-10-19T04:30:42.987096",
+      "action": "typing",
+      "code_length": 57,
+      "delta_time": 9.078
+    },
+    {
+      "timestamp": "2025-10-19T04:30:42.994119",
+      "action": "typing",
+      "code_length": 57,
+      "delta_time": 0.007
+    },
+    {
+      "timestamp": "2025-10-19T04:36:30.737065",
+      "action": "paste",
+      "code_length": 58,
+      "delta_time": 0.0
+    },
+    {
+      "timestamp": "2025-10-19T04:36:30.752072",
+      "action": "typing",
+      "code_length": 58,
+      "delta_time": 0.015
+    },
+    {
+      "timestamp": "2025-10-19T04:36:33.942694",
+      "action": "typing",
+      "code_length": 57,
+      "delta_time": 3.191
+    },
+    {
+      "timestamp": "2025-10-19T04:36:33.949173",
+      "action": "typing",
+      "code_length": 57,
+      "delta_time": 0.006
+    },
+    {
+      "timestamp": "2025-10-19T04:36:38.079243",
+      "action": "typing",
+      "code_length": 57,
+      "delta_time": 4.13
+    },
+    {
+      "timestamp": "2025-10-19T04:36:38.087543",
+      "action": "typing",
+      "code_length": 57,
+      "delta_time": 0.008
+    },
+    {
+      "timestamp": "2025-10-19T05:29:20.408324",
+      "action": "paste",
+      "code_length": 58,
+      "delta_time": 0.0
+    },
+    {
+      "timestamp": "2025-10-19T05:29:20.421223",
+      "action": "typing",
+      "code_length": 58,
+      "delta_time": 0.013
+    },
+    {
+      "timestamp": "2025-10-19T05:29:24.527540",
+      "action": "typing",
+      "code_length": 57,
+      "delta_time": 4.106
+    },
+    {
+      "timestamp": "2025-10-19T05:29:24.537688",
+      "action": "typing",
+      "code_length": 57,
+      "delta_time": 0.01
+    },
+    {
+      "timestamp": "2025-10-19T05:30:08.103159",
+      "action": "typing",
+      "code_length": 57,
+      "delta_time": 43.565
+    },
+    {
+      "timestamp": "2025-10-19T05:30:08.114459",
+      "action": "typing",
+      "code_length": 57,
+      "delta_time": 0.011
+    },
+    {
+      "timestamp": "2025-10-19T05:59:55.490784",
+      "action": "paste",
+      "code_length": 58,
+      "delta_time": 0.0
+    },
+    {
+      "timestamp": "2025-10-19T05:59:55.513099",
+      "action": "typing",
+      "code_length": 58,
+      "delta_time": 0.022
+    },
+    {
+      "timestamp": "2025-10-19T05:59:57.426464",
+      "action": "typing",
+      "code_length": 57,
+      "delta_time": 1.913
+    },
+    {
+      "timestamp": "2025-10-19T05:59:57.435619",
+      "action": "typing",
+      "code_length": 57,
+      "delta_time": 0.009
+    },
+    {
+      "timestamp": "2025-10-19T06:00:17.367275",
+      "action": "typing",
+      "code_length": 58,
+      "delta_time": 19.932
+    },
+    {
+      "timestamp": "2025-10-19T06:00:17.382771",
+      "action": "typing",
+      "code_length": 58,
+      "delta_time": 0.015
+    },
+    {
+      "timestamp": "2025-10-19T06:00:17.702809",
+      "action": "typing",
+      "code_length": 57,
+      "delta_time": 0.32
+    },
+    {
+      "timestamp": "2025-10-19T06:00:17.716594",
+      "action": "typing",
+      "code_length": 57,
+      "delta_time": 0.014
+    },
+    {
+      "timestamp": "2025-10-19T06:00:22.997276",
+      "action": "typing",
+      "code_length": 58,
+      "delta_time": 5.281
+    },
+    {
+      "timestamp": "2025-10-19T06:00:23.008861",
+      "action": "typing",
+      "code_length": 58,
+      "delta_time": 0.012
+    },
+    {
+      "timestamp": "2025-10-19T06:00:23.213576",
+      "action": "typing",
+      "code_length": 57,
+      "delta_time": 0.205
+    },
+    {
+      "timestamp": "2025-10-19T06:00:23.224003",
+      "action": "typing",
+      "code_length": 57,
+      "delta_time": 0.01
+    },
+    {
+      "timestamp": "2025-10-19T06:04:28.672210",
+      "action": "typing",
+      "code_length": 58,
+      "delta_time": 245.448
+    },
+    {
+      "timestamp": "2025-10-19T06:04:28.716904",
+      "action": "typing",
+      "code_length": 58,
+      "delta_time": 0.045
+    },
+    {
+      "timestamp": "2025-10-19T06:04:29.269840",
+      "action": "typing",
+      "code_length": 57,
+      "delta_time": 0.553
+    },
+    {
+      "timestamp": "2025-10-19T06:04:29.283232",
+      "action": "typing",
+      "code_length": 57,
+      "delta_time": 0.013
+    },
+    {
+      "timestamp": "2025-10-19T06:04:50.131107",
+      "action": "typing",
+      "code_length": 57,
+      "delta_time": 20.848
+    },
+    {
+      "timestamp": "2025-10-19T06:04:50.146904",
+      "action": "typing",
+      "code_length": 57,
+      "delta_time": 0.016
+    },
+    {
+      "timestamp": "2025-10-19T06:05:11.960551",
+      "action": "typing",
+      "code_length": 57,
+      "delta_time": 21.814
+    },
+    {
+      "timestamp": "2025-10-19T06:05:11.973657",
+      "action": "typing",
+      "code_length": 57,
+      "delta_time": 0.013
+    },
+    {
+      "timestamp": "2025-10-19T06:05:15.159749",
+      "action": "typing",
+      "code_length": 57,
+      "delta_time": 3.186
+    },
+    {
+      "timestamp": "2025-10-19T06:05:15.171881",
+      "action": "typing",
+      "code_length": 57,
+      "delta_time": 0.012
+    },
+    {
+      "timestamp": "2025-10-19T06:05:18.238433",
+      "action": "typing",
+      "code_length": 57,
+      "delta_time": 3.067
+    },
+    {
+      "timestamp": "2025-10-19T06:05:18.254561",
+      "action": "typing",
+      "code_length": 57,
+      "delta_time": 0.016
+    },
+    {
+      "timestamp": "2025-10-19T06:08:22.442788",
+      "action": "paste",
+      "code_length": 57,
+      "delta_time": 0.0
+    },
+    {
+      "timestamp": "2025-10-19T06:08:22.463427",
+      "action": "typing",
+      "code_length": 57,
+      "delta_time": 0.021
+    },
+    {
+      "timestamp": "2025-10-19T06:08:50.181667",
+      "action": "typing",
+      "code_length": 57,
+      "delta_time": 27.718
+    },
+    {
+      "timestamp": "2025-10-19T06:08:50.196128",
+      "action": "typing",
+      "code_length": 57,
+      "delta_time": 0.014
+    },
+    {
+      "timestamp": "2025-10-19T06:09:53.049548",
+      "action": "paste",
+      "code_length": 58,
+      "delta_time": 0.0
+    },
+    {
+      "timestamp": "2025-10-19T06:09:53.061393",
+      "action": "typing",
+      "code_length": 58,
+      "delta_time": 0.012
+    },
+    {
+      "timestamp": "2025-10-19T06:09:53.323471",
+      "action": "typing",
+      "code_length": 57,
+      "delta_time": 0.262
+    },
+    {
+      "timestamp": "2025-10-19T06:09:53.333921",
+      "action": "typing",
+      "code_length": 57,
+      "delta_time": 0.01
+    },
+    {
+      "timestamp": "2025-10-19T06:10:18.398356",
+      "action": "typing",
+      "code_length": 57,
+      "delta_time": 25.064
+    },
+    {
+      "timestamp": "2025-10-19T06:10:18.407798",
+      "action": "typing",
+      "code_length": 57,
+      "delta_time": 0.009
+    }
+  ]
+}

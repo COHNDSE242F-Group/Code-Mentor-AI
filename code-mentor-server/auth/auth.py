@@ -11,7 +11,7 @@ from passlib.context import CryptContext
 # ==========================
 SECRET_KEY = "YOUR_VERY_STRONG_SECRET_KEY_HERE"  # change in production
 ALGORITHM = "HS256"
-ACCESS_TOKEN_EXPIRE_MINUTES = 60
+ACCESS_TOKEN_EXPIRE_MINUTES = 10000
 
 # Password hashing context
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")

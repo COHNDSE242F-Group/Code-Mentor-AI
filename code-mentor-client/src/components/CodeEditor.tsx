@@ -1,4 +1,4 @@
-import React, { useRef, useEffect, useState } from "react";
+import React, { useRef, useEffect, useState, useImperativeHandle, forwardRef } from "react";
 import Editor from "@monaco-editor/react";
 import debounce from "lodash.debounce";
 import { fetchWithAuth } from "../utils/auth";
@@ -12,26 +12,39 @@ interface CodeEditorProps {
   onServerPaste?: (detected: boolean) => void;
 }
 
-const CodeEditor: React.FC<CodeEditorProps> = ({
-  language,
-  value,
-  onChange,
-  disableRightClick = false,
-  onServerPaste,
-}) => {
-  const [lastCode, setLastCode] = useState(value);
-  const lastChangeTime = useRef<number>(Date.now());
-  const lastLineCount = useRef<number>(value.split("\n").length);
-  const keystrokeTimeout = useRef<NodeJS.Timeout | null>(null);
-  const editorInstance = useRef<any | null>(null);
-  // timestamp of last native paste sent to server (ms)
-  const pasteCooldownRef = useRef<number>(0);
+const CodeEditor = forwardRef<any, CodeEditorProps>(
+  (
+    { language, value, onChange, disableRightClick = false, onServerPaste },
+    ref
+  ) => {
+    const [lastCode, setLastCode] = useState(value);
+    const lastChangeTime = useRef<number>(Date.now());
+    const lastLineCount = useRef<number>(value.split("\n").length);
+    const keystrokeTimeout = useRef<NodeJS.Timeout | null>(null);
+    const editorInstance = useRef<any | null>(null);
+    const pasteCooldownRef = useRef<number>(0);
 
-  const languageMap: Record<string, string> = {
-    python: "python",
-    javascript: "javascript",
-    c: "c",
-  };
+    const languageMap: Record<string, string> = {
+      python: "python",
+      javascript: "javascript",
+      c: "c",
+    };
+
+    // 🔹 Expose undo & editor actions to parent via ref
+    useImperativeHandle(ref, () => ({
+      trigger: (source: string, command: string, payload?: any) => {
+        if (editorInstance.current) {
+          editorInstance.current.trigger(source, command, payload);
+        }
+      },
+      getValue: () => editorInstance.current?.getValue(),
+      setValue: (newCode: string) =>
+        editorInstance.current?.setValue(newCode),
+      sendPasteEvent: () => {
+        const code = editorInstance.current?.getValue() || "";
+        sendKeystroke("paste", code);
+      },
+    }));
 
   // -----------------------------
   // Context Menu (Right Click)
@@ -48,30 +61,14 @@ const CodeEditor: React.FC<CodeEditorProps> = ({
     codeContent: string
   ) => {
     console.debug(`sendKeystroke called action=${action} code_len=${codeContent.length}`);
-    try {
-      const res = await fetchWithAuth("http://localhost:8000/keystroke", {
-        method: "POST",
-        body: JSON.stringify({ action, code: codeContent }),
-      });
 
-      // Log response status and body (if any) to help debugging
-      console.debug("keystroke response status=", res.status);
-      if (res.headers.get("content-type")?.includes("application/json")) {
-        try {
-          const data = await res.json();
-          console.debug("keystroke response json=", data);
-          // If backend signals a paste (dev heuristic), notify parent via callback
-          if (data && data.alert && typeof onServerPaste === "function") {
-            console.info("Server signaled paste via /keystroke");
-            onServerPaste(true);
-          }
-        } catch (err) {
-          console.warn("Failed to parse /keystroke response JSON", err);
-        }
-      }
-    } catch (err) {
+    // Fire-and-forget fetch
+    fetchWithAuth("http://localhost:8000/keystroke", {
+      method: "POST",
+      body: JSON.stringify({ action, code: codeContent, language }),
+    }).catch((err) => {
       console.error("Failed to send keystroke event", err);
-    }
+    });
   };
 
   const sendTypingEvent = useRef(
@@ -100,39 +97,44 @@ const CodeEditor: React.FC<CodeEditorProps> = ({
   // Smarter Paste Detection Logic (Synced with CodeEditorPage)
   // -----------------------------
   const detectPasteHeuristically = (oldCode: string, newCode: string): boolean => {
-    const now = Date.now();
-    const timeDiff = now - lastChangeTime.current;
-    const charDiff = Math.abs(newCode.length - oldCode.length);
-    const absDiff = charDiff;
-    const newLineCount = newCode.split("\n").length;
-    const lineDiff = Math.abs(newLineCount - lastLineCount.current);
+    console.log("Heuristic paste detection running...");
+    const newlyAddedCode = getNewlyAddedText(oldCode, newCode);
+    console.log(newlyAddedCode);
 
-    // Quick large insert detection
-    const fastChange = timeDiff < 120 && absDiff > 10;
-    if (absDiff < 10) return false; // too small
-
-    // Detect structural paste (brackets, quotes, etc.)
-    const addedPart =
-      newCode.length > oldCode.length
-        ? newCode.slice(oldCode.length)
-        : newCode;
-    const structuredPattern = /[{}\[\]();'"=+\-\s,]{3,}/;
-    const multipleNewLines = lineDiff > 2;
-    const looksStructured =
-      structuredPattern.test(addedPart) || multipleNewLines;
-
-    // Update trackers
-    lastChangeTime.current = now;
-    lastLineCount.current = newLineCount;
-
-    // If a native paste was recently sent, skip heuristic to avoid duplicates
-    if (Date.now() - pasteCooldownRef.current < 800) {
-      console.debug("Skipping heuristic because native paste recently fired");
-      return false;
+    if (newlyAddedCode.length < 10) {
+      console.log("Heuristic paste detection result:");
+      return false; // Too small to be a paste
     }
 
-    console.debug("detectPasteHeuristically", { timeDiff, absDiff, lineDiff, looksStructured });
-    return fastChange && looksStructured;
+    // Detect structural paste (brackets, quotes, etc.)
+    const structuredPattern = /.*[A-Za-z0-9]*[,\ /<"\s].*/;
+    const looksStructured =
+      structuredPattern.test(newlyAddedCode);
+    
+    console.log("Heuristic paste detection result:", looksStructured);
+    
+    return looksStructured;
+  };
+
+  const getNewlyAddedText = (oldCode: string, newCode: string) => {
+    let start = 0;
+    while (start < oldCode.length && start < newCode.length && oldCode[start] === newCode[start]) {
+      start++;
+    }
+
+    let endOld = oldCode.length - 1;
+    let endNew = newCode.length - 1;
+
+    while (
+      endOld >= start &&
+      endNew >= start &&
+      oldCode[endOld] === newCode[endNew]
+    ) {
+      endOld--;
+      endNew--;
+    }
+
+    return newCode.slice(start, endNew + 1);
   };
 
   // -----------------------------
@@ -141,22 +143,15 @@ const CodeEditor: React.FC<CodeEditorProps> = ({
   const handleChange = (newValue: string | undefined) => {
     const currentCode = newValue || "";
     const isPaste = detectPasteHeuristically(lastCode, currentCode);
+    setLastCode(currentCode);
 
     if (isPaste) {
-      console.info("Editor heuristic detected paste: len", currentCode.length - lastCode.length);
-      sendKeystroke("paste", currentCode);
       onChange(currentCode, true);
+      sendKeystroke("paste", currentCode); // fire-and-forget paste
     } else {
-      console.debug("Editor heuristic: typing event");
-      if (keystrokeTimeout.current) clearTimeout(keystrokeTimeout.current);
-      keystrokeTimeout.current = setTimeout(() => {
-        sendKeystroke("typing", currentCode);
-      }, 500);
       onChange(currentCode, false);
-      sendTypingEvent(currentCode);
+      sendKeystroke("typing", currentCode); // debounced typing only
     }
-
-    setLastCode(currentCode);
   };
 
   // -----------------------------
@@ -209,6 +204,6 @@ const CodeEditor: React.FC<CodeEditorProps> = ({
       />
     </div>
   );
-};
+});
 
 export default CodeEditor;
