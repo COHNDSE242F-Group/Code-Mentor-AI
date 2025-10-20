@@ -6,12 +6,25 @@ import { SearchIcon, FilterIcon, ChevronDownIcon, ChevronUpIcon, EyeIcon } from 
 
 
 
+interface Assignment {
+  assignment_id: number;
+  assignment_name: string;
+  due_date: string;
+  batch_id: number;
+  instructor_id: number;
+}
+interface Student {
+  student_id: number;
+  student_name: string;
+  email: string;
+  contact_no: string | null;
+  batch_id: number;
+}
 
 interface Submission {
   id: number;
-  student: string;
-  studentId: string;
-  assignment: string;
+  student: Student; // Update to match the API response
+  assignment: Assignment; // Update to match the API response
   submittedAt: string;
   status: string;
   score: number | null;
@@ -24,13 +37,32 @@ const SubmissionsList = () => {
     direction: 'desc'
   });
    const [submissions, setSubmissions] = useState<Submission[]>([]);
-
-  useEffect(() => {
-    fetch("http://localhost:8000/submissions")
-      .then(res => res.json())
-      .then(data => setSubmissions(data))
-      .catch(err => console.error("Failed to fetch submissions:", err));
-  }, []);
+const [loading, setLoading] = useState(true);
+ useEffect(() => {
+  setLoading(true); // Set loading to true before fetching data
+  fetch("http://localhost:8000/submission")
+    .then((res) => {
+      if (!res.ok) {
+        throw new Error("Failed to fetch submissions");
+      }
+      return res.json();
+    })
+    .then((data) => {
+      if (Array.isArray(data)) {
+        setSubmissions(data); // Ensure data is an array
+      } else {
+        console.error("API response is not an array:", data);
+        setSubmissions([]); // Fallback to an empty array
+      }
+    })
+    .catch((err) => {
+      console.error("Failed to fetch submissions:", err);
+      setSubmissions([]); // Fallback to an empty array
+    })
+    .finally(() => {
+      setLoading(false); // Ensure loading is set to false after fetch
+    });
+}, []);
 
   const requestSort = (key: string) => {
   let direction = 'asc';
@@ -59,12 +91,20 @@ const SubmissionsList = () => {
   }
   return 0;
 });
-const getSortIcon = (name: string) => {
+ const getSortIcon = (name: string) => {
     if (sortConfig.key === name) {
       return sortConfig.direction === 'asc' ? <ChevronUpIcon size={16} /> : <ChevronDownIcon size={16} />;
     }
     return null;
   };
+
+  if (loading) {
+    return <div>Loading...</div>;
+  }
+
+  if (!submissions || submissions.length === 0) {
+    return <div>No submissions found.</div>;
+  }
 
   return <div className="w-full">
       <div className="mb-6">
@@ -184,16 +224,15 @@ const getSortIcon = (name: string) => {
             </thead>
             <tbody>
               {sortedSubmissions.map(submission => <tr key={submission.id} className="border-b border-gray-100 hover:bg-gray-50">
-                  <td className="py-3 px-4">
-                    <Link to={`/submissions/${submission.id}`} className="font-medium text-[#0D47A1] hover:underline">
-                     {submission.student}
-                     </Link>
-                    <div className="text-xs text-gray-500">
-                        {submission.studentId}
-                     </div>
-                  </td>
-                  <td className="py-3 px-4 text-sm">{submission.assignment}</td>
-                  <td className="py-3 px-4 text-sm text-gray-500">
+                 <td className="py-3 px-4">
+              <Link to={`/submissions/${submission.id}`} className="font-medium text-[#0D47A1] hover:underline">
+             {submission.student.student_name} {/* Access student_name */}
+          </Link>
+             <div className="text-xs text-gray-500">
+            {submission.student.student_id} {/* Access student_id */}
+          </div>
+            </td>
+                <td className="py-3 px-4 text-sm">{submission.assignment.assignment_name}</td>                  <td className="py-3 px-4 text-sm text-gray-500">
                     {submission.submittedAt}
                   </td>
                   <td className="py-3 px-4">
