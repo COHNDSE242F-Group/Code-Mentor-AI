@@ -1,14 +1,29 @@
-// @ts-nocheck
+
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import Card from '../../components/ui/Card';
 import { SearchIcon, FilterIcon, ChevronDownIcon, ChevronUpIcon, EyeIcon } from 'lucide-react';
+
+
+
+
+interface Submission {
+  id: number;
+  student: string;
+  studentId: string;
+  assignment: string;
+  submittedAt: string;
+  status: string;
+  score: number | null;
+  batch: string;
+}
+
 const SubmissionsList = () => {
   const [sortConfig, setSortConfig] = useState({
     key: 'submittedAt',
     direction: 'desc'
   });
-  const [submissions, setSubmissions] = useState([]);
+   const [submissions, setSubmissions] = useState<Submission[]>([]);
 
   useEffect(() => {
     fetch("http://localhost:8000/submissions")
@@ -17,31 +32,40 @@ const SubmissionsList = () => {
       .catch(err => console.error("Failed to fetch submissions:", err));
   }, []);
 
-  const requestSort = key => {
-    let direction = 'asc';
-    if (sortConfig.key === key && sortConfig.direction === 'asc') {
-      direction = 'desc';
-    }
-    setSortConfig({
-      key,
-      direction
-    });
-  };
-  const sortedSubmissions = [...submissions].sort((a, b) => {
-    if (a[sortConfig.key] < b[sortConfig.key]) {
-      return sortConfig.direction === 'asc' ? -1 : 1;
-    }
-    if (a[sortConfig.key] > b[sortConfig.key]) {
-      return sortConfig.direction === 'asc' ? 1 : -1;
-    }
-    return 0;
+  const requestSort = (key: string) => {
+  let direction = 'asc';
+  if (sortConfig.key === key && sortConfig.direction === 'asc') {
+    direction = 'desc';
+  }
+  setSortConfig({
+    key,
+    direction,
   });
-  const getSortIcon = name => {
+};
+
+  const sortedSubmissions = [...submissions].sort((a: Submission, b: Submission) => {
+  const aValue = a[sortConfig.key as keyof Submission];
+  const bValue = b[sortConfig.key as keyof Submission];
+
+  // Handle null or undefined values
+  if (aValue == null) return 1; // Place `null` or `undefined` values at the end
+  if (bValue == null) return -1;
+
+  if (aValue < bValue) {
+    return sortConfig.direction === 'asc' ? -1 : 1;
+  }
+  if (aValue > bValue) {
+    return sortConfig.direction === 'asc' ? 1 : -1;
+  }
+  return 0;
+});
+const getSortIcon = (name: string) => {
     if (sortConfig.key === name) {
       return sortConfig.direction === 'asc' ? <ChevronUpIcon size={16} /> : <ChevronDownIcon size={16} />;
     }
     return null;
   };
+
   return <div className="w-full">
       <div className="mb-6">
         <h1 className="text-2xl font-bold text-gray-800">Submissions</h1>
@@ -215,33 +239,26 @@ const SubmissionsList = () => {
       </Card>
     </div>;
 };
-const ClockIcon = ({
-  size,
-  className
-}) => <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+const ClockIcon = ({ size, className }: { size: number; className?: string }) => (
+  <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
     <circle cx="12" cy="12" r="10" />
     <polyline points="12 6 12 12 16 14" />
-  </svg>;
-const AlertCircleIcon = ({
-  size,
-  className
-}) => <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+  </svg>
+);
+
+const AlertCircleIcon = ({ size, className }: { size: number; className?: string }) => (
+  <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
     <circle cx="12" cy="12" r="10" />
     <line x1="12" y1="8" x2="12" y2="12" />
     <line x1="12" y1="16" x2="12.01" y2="16" />
-  </svg>;
-const AlertTriangleIcon = ({
-  size,
-  className
-}) => <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+  </svg>
+);
+const AlertTriangleIcon = ({ size, className }: { size: number; className?: string })  => <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
     <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
     <line x1="12" y1="9" x2="12" y2="13" />
     <line x1="12" y1="17" x2="12.01" y2="17" />
   </svg>;
-const CheckCircleIcon = ({
-  size,
-  className
-}) => <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+const CheckCircleIcon = ({size, className }: { size: number; className?: string }) => <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
     <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
     <polyline points="22 4 12 14.01 9 11.01" />
   </svg>;

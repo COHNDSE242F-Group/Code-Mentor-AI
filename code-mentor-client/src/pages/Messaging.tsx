@@ -1,12 +1,10 @@
-// @ts-nocheck
+
 import React, { useState, useEffect, ChangeEvent, FormEvent } from 'react';
 import Card from '../components/ui/Card';
 import { 
   SearchIcon, PaperclipIcon, SendIcon, SmileIcon, PlusIcon, PhoneIcon, VideoIcon 
 } from 'lucide-react';
-//import { Picker } from 'emoji-mart';
-//import 'emoji-mart/css/emoji-mart.css';
-
+import EmojiPicker from 'emoji-picker-react';
 
 interface Conversation {
   id: number;
@@ -27,7 +25,7 @@ interface Message {
   isMe: boolean;
 }
 
-//const [showEmojiPicker, setShowEmojiPicker] = useState(false);
+
 
 const UsersIcon = ({ size, className }: { size: number; className?: string }) => (
   <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
@@ -43,6 +41,7 @@ const Messaging: React.FC = () => {
   const [activeConversation, setActiveConversation] = useState<Conversation | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
   const [newMessage, setNewMessage] = useState('');
+  const [showEmojiPicker, setShowEmojiPicker] = useState(false);
 
   // Fetch conversations
   useEffect(() => {
@@ -82,6 +81,9 @@ const Messaging: React.FC = () => {
     } catch (err) {
       console.error(err);
     }
+  };
+  const handleEmojiClick = (emojiData: any) => {
+    setNewMessage((prev) => prev + emojiData.emoji); // Add the selected emoji to the message
   };
 
   return (
@@ -220,17 +222,33 @@ const Messaging: React.FC = () => {
                         onChange={(e: ChangeEvent<HTMLTextAreaElement>) => setNewMessage(e.target.value)}
                       />
                     </div>
-                    <button type="button" className="p-2 text-gray-500 hover:text-gray-700">
-                      <SmileIcon size={20} />
-                    </button>
-                    <button type="submit" className="ml-2 p-2 bg-[#0D47A1] text-white rounded-full hover:bg-blue-800">
+                    <div className="relative">
+                      <button
+                        type="button"
+                        className="p-2 text-gray-500 hover:text-gray-700"
+                        onClick={() => setShowEmojiPicker(!showEmojiPicker)} // Toggle emoji picker
+                      >
+                        <SmileIcon size={20} />
+                      </button>
+                      {showEmojiPicker && (
+                        <div className="absolute bottom-12 right-0 z-10">
+                          <EmojiPicker onEmojiClick={handleEmojiClick} />
+                        </div>
+                      )}
+                    </div>
+                    <button
+                      type="submit"
+                      className="ml-2 p-2 bg-[#0D47A1] text-white rounded-full hover:bg-blue-800"
+                    >
                       <SendIcon size={18} />
                     </button>
                   </div>
                 </form>
               </>
             ) : (
-              <div className="flex-1 flex items-center justify-center text-gray-400">Select a conversation</div>
+              <div className="flex-1 flex items-center justify-center text-gray-400">
+                Select a conversation
+              </div>
             )}
           </div>
         </div>
