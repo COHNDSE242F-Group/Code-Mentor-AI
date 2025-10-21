@@ -43,48 +43,61 @@ const Messaging: React.FC = () => {
   const [newMessage, setNewMessage] = useState('');
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
 
-  // Fetch conversations
-  useEffect(() => {
-    fetch('http://localhost:8000/conversations')
-      .then(res => res.json())
-      .then(data => setConversations(data))
-      .catch(err => console.error(err));
-  }, []);
+useEffect(() => {
+  const userId = 7; // Replace with the actual logged-in user's ID
+  fetch(`http://localhost:8000/conversations?user_id=${userId}`)
+    .then(res => res.json())
+    .then(data => {
+      console.log("Fetched conversations:", data); // Log the data
+      const formattedData = data.map((conversation: any) => ({
+        id: conversation.conversation_id,
+        name: conversation.name || "Unnamed Conversation", // Fallback for missing names
+        lastMessage: '', // Add logic to fetch or compute the last message
+        time: conversation.created_at,
+        unread: 0, // Add logic to compute unread messages
+        online: false, // Add logic to determine online status
+      }));
+      setConversations(formattedData);
+    })
+    .catch(err => console.error(err));
+}, []);
+useEffect(() => {
+  if (!activeConversation) return;
+  fetch(`http://localhost:8000/conversations/${activeConversation.id}/messages`) // Use `id` here
+    .then(res => res.json())
+    .then(data => setMessages(data))
+    .catch(err => console.error(err));
+}, [activeConversation]);
 
-  // Fetch messages when active conversation changes
-  useEffect(() => {
-    if (!activeConversation) return;
-    fetch(`http://localhost:8000/conversations/${activeConversation.id}/messages`)
-      .then(res => res.json())
-      .then(data => setMessages(data))
-      .catch(err => console.error(err));
-  }, [activeConversation]);
+const handleSendMessage = async (e: FormEvent) => {
+  e.preventDefault();
+  if (!activeConversation || !newMessage.trim()) return;
 
-  const handleSendMessage = async (e: FormEvent) => {
-    e.preventDefault();
-    if (!activeConversation || !newMessage.trim()) return;
-
-    const payload = {
-      text: newMessage,
-      sender: 'Me', // You can replace with logged-in user
-    };
-
-    try {
-      const res = await fetch(`http://localhost:8000/conversations/${activeConversation.id}/messages`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
-      });
-      const savedMessage = await res.json();
-      setMessages(prev => [...prev, savedMessage]);
-      setNewMessage('');
-    } catch (err) {
-      console.error(err);
-    }
+  const payload = {
+    text: newMessage,
+    sender_id: 5, // Replace with the logged-in user's ID
   };
+
+  try {
+    const res = await fetch(`http://localhost:8000/conversations/${activeConversation.id}/messages`, { // Use `id` here
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
+    const savedMessage = await res.json();
+    setMessages(prev => [...prev, savedMessage]);
+    setNewMessage('');
+  } catch (err) {
+    console.error(err);
+  }
+};
   const handleEmojiClick = (emojiData: any) => {
     setNewMessage((prev) => prev + emojiData.emoji); // Add the selected emoji to the message
   };
+  const handleConversationClick = (conversation: Conversation) => {
+  console.log("Selected conversation:", conversation); // Log the selected conversation
+  setActiveConversation(conversation);
+};
 
   return (
     <div className="w-full">
@@ -113,7 +126,7 @@ const Messaging: React.FC = () => {
                   className={`flex items-center p-4 border-b border-gray-100 cursor-pointer ${
                     activeConversation?.id === conversation.id ? 'bg-blue-50' : 'hover:bg-gray-50'
                   }`}
-                  onClick={() => setActiveConversation(conversation)}
+                  onClick={() => handleConversationClick(conversation)}
                 >
                   <div className="relative mr-3">
                     {conversation.avatar ? (
@@ -163,9 +176,9 @@ const Messaging: React.FC = () => {
               <>
                 <div className="p-4 border-b border-gray-200 flex justify-between items-center">
                   <div className="flex items-center">
-                    <div className="w-10 h-10 rounded-full bg-[#0D47A1] flex items-center justify-center text-white mr-3">
-                      {activeConversation.name.charAt(0)}
-                    </div>
+                    <div className="w-10 h-10 rounded-full bg-[#0D47A1] flex items-center justify-center text-white">
+  {activeConversation.name ? activeConversation.name.charAt(0) : "?"}
+</div>
                     <div>
                       <h3 className="font-medium">{activeConversation.name}</h3>
                       <p className={`text-xs ${activeConversation.online ? 'text-green-500' : 'text-gray-500'}`}>
