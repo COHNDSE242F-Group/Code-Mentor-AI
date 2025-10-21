@@ -15,6 +15,8 @@ from .account_details import router as account_details_router
 from .create_assignment import router as create_assignment_router
 from .assignment_list import router as assignment_list_router
 from .assignment_details import router as assignment_details_router
+from .code_submit import router as code_submit_router
+from .assignment import router as assignment_router
 
 routers = [
     code_runner_router,
@@ -30,5 +32,7 @@ routers = [
     account_details_router,
     create_assignment_router,
     assignment_list_router,
-    assignment_details_router
+    assignment_details_router,
+    code_submit_router,
+    assignment_router
 ]
