@@ -52,7 +52,8 @@ useEffect(() => {
       const formattedData = data.map((conversation: any) => ({
         id: conversation.conversation_id,
         name: conversation.name || "Unnamed Conversation", // Fallback for missing names
-        lastMessage: '', // Add logic to fetch or compute the last message
+        messages: conversation.messages || [], // Fetch messages from JSON
+        participants: conversation.participants || [], // Fetch participants from JSON
         time: conversation.created_at,
         unread: 0, // Add logic to compute unread messages
         online: false, // Add logic to determine online status
@@ -61,6 +62,7 @@ useEffect(() => {
     })
     .catch(err => console.error(err));
 }, []);
+
 useEffect(() => {
   if (!activeConversation) return;
   fetch(`http://localhost:8000/conversations/${activeConversation.id}/messages`) // Use `id` here
@@ -75,11 +77,11 @@ const handleSendMessage = async (e: FormEvent) => {
 
   const payload = {
     text: newMessage,
-    sender_id: 5, // Replace with the logged-in user's ID
+    sender_id: 7, // Replace with the logged-in user's ID
   };
 
   try {
-    const res = await fetch(`http://localhost:8000/conversations/${activeConversation.id}/messages`, { // Use `id` here
+    const res = await fetch(`http://localhost:8000/conversations/${activeConversation.id}/messages`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload),
