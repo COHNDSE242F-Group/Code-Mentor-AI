@@ -1,5 +1,7 @@
 import React, { useEffect, useState } from "react";
 import Card from "../components/ui/Card";
+import { useNavigate } from "react-router-dom";
+
 import {
   PlusIcon,
   SearchIcon,
@@ -30,6 +32,7 @@ interface Student {
 }
 
 const BatchManagement: React.FC = () => {
+   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<"batches" | "students">("batches");
   const [batches, setBatches] = useState<Batch[]>([]);
   const [students, setStudents] = useState<Student[]>([]);
@@ -197,10 +200,15 @@ const BatchManagement: React.FC = () => {
                   <option key={batch.id}>{batch.name}</option>
                 ))}
               </select>
-              <button className="inline-flex items-center px-4 py-2 bg-[#0D47A1] text-white rounded-md hover:bg-blue-800">
-                <PlusIcon size={16} className="mr-2" />
-                Add Student
-              </button>
+
+              
+<button
+  onClick={() => navigate("/addstudent")}
+  className="inline-flex items-center px-4 py-2 bg-[#0D47A1] text-white rounded-md hover:bg-blue-800"
+>
+  <PlusIcon size={16} className="mr-2" />
+  Add Student
+</button>
             </div>
           </div>
 
