@@ -5,3 +5,5 @@ from .batch import Batch
 from .assignment import Assignment
 from .student import Student
 from .submission import Submission
+from .conceptual_map import ConceptualMap
+from .topic_map import TopicMap
