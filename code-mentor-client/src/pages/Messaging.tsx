@@ -1,12 +1,10 @@
-// @ts-nocheck
+
 import React, { useState, useEffect, ChangeEvent, FormEvent } from 'react';
 import Card from '../components/ui/Card';
 import { 
   SearchIcon, PaperclipIcon, SendIcon, SmileIcon, PlusIcon, PhoneIcon, VideoIcon 
 } from 'lucide-react';
-//import { Picker } from 'emoji-mart';
-//import 'emoji-mart/css/emoji-mart.css';
-
+import EmojiPicker from 'emoji-picker-react';
 
 interface Conversation {
   id: number;
@@ -27,7 +25,7 @@ interface Message {
   isMe: boolean;
 }
 
-//const [showEmojiPicker, setShowEmojiPicker] = useState(false);
+
 
 const UsersIcon = ({ size, className }: { size: number; className?: string }) => (
   <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
@@ -43,47 +41,108 @@ const Messaging: React.FC = () => {
   const [activeConversation, setActiveConversation] = useState<Conversation | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
   const [newMessage, setNewMessage] = useState('');
+  const [showEmojiPicker, setShowEmojiPicker] = useState(false);
+  const [showNewMessageModal, setShowNewMessageModal] = useState(false);
+const [users, setUsers] = useState<{ id: number; name: string; role: string }[]>([]);
 
-  // Fetch conversations
-  useEffect(() => {
-    fetch('http://localhost:8000/conversations')
-      .then(res => res.json())
-      .then(data => setConversations(data))
-      .catch(err => console.error(err));
-  }, []);
+useEffect(() => {
+  const userId = 7; // Replace with the actual logged-in user's ID
+  fetch(`http://localhost:8000/conversations?user_id=${userId}`)
+    .then(res => res.json())
+    .then(data => {
+      console.log("Fetched conversations:", data); // Log the data
+      const formattedData = data.map((conversation: any) => ({
+        id: conversation.conversation_id,
+        name: conversation.name || "Unnamed Conversation", // Fallback for missing names
+        messages: conversation.messages || [], // Fetch messages from JSON
+        participants: conversation.participants || [], // Fetch participants from JSON
+        time: conversation.created_at,
+        unread: 0, // Add logic to compute unread messages
+        online: false, // Add logic to determine online status
+      }));
+      setConversations(formattedData);
+    })
+    .catch(err => console.error(err));
+}, []);
 
-  // Fetch messages when active conversation changes
-  useEffect(() => {
-    if (!activeConversation) return;
-    fetch(`http://localhost:8000/conversations/${activeConversation.id}/messages`)
-      .then(res => res.json())
-      .then(data => setMessages(data))
-      .catch(err => console.error(err));
-  }, [activeConversation]);
+useEffect(() => {
+  if (!activeConversation) return;
+  fetch(`http://localhost:8000/conversations/${activeConversation.id}/messages`) // Use `id` here
+    .then(res => res.json())
+    .then(data => setMessages(data))
+    .catch(err => console.error(err));
+}, [activeConversation]);
 
-  const handleSendMessage = async (e: FormEvent) => {
-    e.preventDefault();
-    if (!activeConversation || !newMessage.trim()) return;
+const handleSendMessage = async (e: FormEvent) => {
+  e.preventDefault();
+  if (!activeConversation || !newMessage.trim()) return;
 
-    const payload = {
-      text: newMessage,
-      sender: 'Me', // You can replace with logged-in user
-    };
-
-    try {
-      const res = await fetch(`http://localhost:8000/conversations/${activeConversation.id}/messages`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
-      });
-      const savedMessage = await res.json();
-      setMessages(prev => [...prev, savedMessage]);
-      setNewMessage('');
-    } catch (err) {
-      console.error(err);
-    }
+  const payload = {
+    text: newMessage,
+    sender_id: 7, // Replace with the logged-in user's ID
   };
 
+  try {
+    const res = await fetch(`http://localhost:8000/conversations/${activeConversation.id}/messages`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
+    const savedMessage = await res.json();
+    setMessages(prev => [...prev, savedMessage]);
+    setNewMessage('');
+  } catch (err) {
+    console.error(err);
+  }
+};
+  const handleEmojiClick = (emojiData: any) => {
+    setNewMessage((prev) => prev + emojiData.emoji); // Add the selected emoji to the message
+  };
+  const handleConversationClick = (conversation: Conversation) => {
+  console.log("Selected conversation:", conversation); // Log the selected conversation
+  setActiveConversation(conversation);
+};
+//fetch users when clcik new msg
+useEffect(() => {
+  if (showNewMessageModal) {
+    fetch("http://localhost:8000/users")
+      .then(res => res.json())
+      .then(data => setUsers(data))
+      .catch(err => console.error(err));
+  }
+}, [showNewMessageModal]);
+
+
+const handleUserSelect = (user: { id: number; name: string; role: string }) => {
+  console.log("Selected user:", user);
+  setShowNewMessageModal(false);
+  // Logic to initiate a conversation with the selected user
+};
+const NewMessageModal = () => (
+  <div className="fixed inset-0 bg-gray-800 bg-opacity-50 flex items-center justify-center">
+    <div className="bg-white rounded-lg p-6 w-96">
+      <h2 className="text-xl font-bold mb-4">Select a User</h2>
+      <ul className="space-y-2">
+        {users.map(user => (
+          <li
+            key={user.id}
+            className="p-2 border rounded cursor-pointer hover:bg-gray-100"
+            onClick={() => handleUserSelect(user)}
+          >
+            {user.name} ({user.role})
+          </li>
+        ))}
+      </ul>
+      <button
+        className="mt-4 px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600"
+        onClick={() => setShowNewMessageModal(false)}
+      >
+        Cancel
+      </button>
+    </div>
+  </div>
+);
+{showNewMessageModal && <NewMessageModal />}
   return (
     <div className="w-full">
       <div className="mb-6">
@@ -111,7 +170,7 @@ const Messaging: React.FC = () => {
                   className={`flex items-center p-4 border-b border-gray-100 cursor-pointer ${
                     activeConversation?.id === conversation.id ? 'bg-blue-50' : 'hover:bg-gray-50'
                   }`}
-                  onClick={() => setActiveConversation(conversation)}
+                  onClick={() => handleConversationClick(conversation)}
                 >
                   <div className="relative mr-3">
                     {conversation.avatar ? (
@@ -146,12 +205,12 @@ const Messaging: React.FC = () => {
             </div>
             <div className="p-4 border-t border-gray-200">
               <button
-                className="flex items-center justify-center w-full px-4 py-2 bg-[#0D47A1] text-white rounded-md hover:bg-blue-800"
-                onClick={() => alert("New Message feature not implemented yet!")}
-            >
-               <PlusIcon size={16} className="mr-2" />
-                New Message
-              </button>
+                  className="flex items-center justify-center w-full px-4 py-2 bg-[#0D47A1] text-white rounded-md hover:bg-blue-800"
+                 onClick={() => setShowNewMessageModal(true)}
+                  >
+                <PlusIcon size={16} className="mr-2" />
+                     New Message
+                  </button>
             </div>
           </div>
 
@@ -161,9 +220,9 @@ const Messaging: React.FC = () => {
               <>
                 <div className="p-4 border-b border-gray-200 flex justify-between items-center">
                   <div className="flex items-center">
-                    <div className="w-10 h-10 rounded-full bg-[#0D47A1] flex items-center justify-center text-white mr-3">
-                      {activeConversation.name.charAt(0)}
-                    </div>
+                    <div className="w-10 h-10 rounded-full bg-[#0D47A1] flex items-center justify-center text-white">
+                {activeConversation.name ? activeConversation.name.charAt(0) : "?"}
+                  </div>
                     <div>
                       <h3 className="font-medium">{activeConversation.name}</h3>
                       <p className={`text-xs ${activeConversation.online ? 'text-green-500' : 'text-gray-500'}`}>
@@ -220,23 +279,41 @@ const Messaging: React.FC = () => {
                         onChange={(e: ChangeEvent<HTMLTextAreaElement>) => setNewMessage(e.target.value)}
                       />
                     </div>
-                    <button type="button" className="p-2 text-gray-500 hover:text-gray-700">
-                      <SmileIcon size={20} />
-                    </button>
-                    <button type="submit" className="ml-2 p-2 bg-[#0D47A1] text-white rounded-full hover:bg-blue-800">
+                    <div className="relative">
+                      <button
+                        type="button"
+                        className="p-2 text-gray-500 hover:text-gray-700"
+                        onClick={() => setShowEmojiPicker(!showEmojiPicker)} // Toggle emoji picker
+                      >
+                        <SmileIcon size={20} />
+                      </button>
+                      {showEmojiPicker && (
+                        <div className="absolute bottom-12 right-0 z-10">
+                          <EmojiPicker onEmojiClick={handleEmojiClick} />
+                        </div>
+                      )}
+                    </div>
+                    <button
+                      type="submit"
+                      className="ml-2 p-2 bg-[#0D47A1] text-white rounded-full hover:bg-blue-800"
+                    >
                       <SendIcon size={18} />
                     </button>
                   </div>
                 </form>
               </>
             ) : (
-              <div className="flex-1 flex items-center justify-center text-gray-400">Select a conversation</div>
+              <div className="flex-1 flex items-center justify-center text-gray-400">
+                Select a conversation
+              </div>
             )}
           </div>
         </div>
       </Card>
     </div>
+    
   );
+  
 };
 
 export default Messaging;
