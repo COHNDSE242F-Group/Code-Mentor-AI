@@ -67,3 +67,24 @@ async def add_message(conversation_id: int, sender_id: int, text: str):
         session.add(conversation)
         await session.commit()
         return new_message
+
+@router.get("/users", response_model=List[dict])
+async def get_users():
+    async with async_session() as session:
+        # Fetch instructors
+        instructors_result = await session.execute(select(Instructor))
+        instructors = instructors_result.scalars().all()
+
+        # Fetch students
+        students_result = await session.execute(select(Student))
+        students = students_result.scalars().all()
+
+        # Combine and format the results
+        users = [
+            {"id": instructor.instructor_id, "name": instructor.instructor_name, "role": "Instructor"}
+            for instructor in instructors
+        ] + [
+            {"id": student.student_id, "name": student.student_name, "role": "Student"}
+            for student in students
+        ]
+        return users

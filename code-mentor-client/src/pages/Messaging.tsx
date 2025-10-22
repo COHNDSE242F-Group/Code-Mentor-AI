@@ -42,6 +42,8 @@ const Messaging: React.FC = () => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [newMessage, setNewMessage] = useState('');
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
+  const [showNewMessageModal, setShowNewMessageModal] = useState(false);
+const [users, setUsers] = useState<{ id: number; name: string; role: string }[]>([]);
 
 useEffect(() => {
   const userId = 7; // Replace with the actual logged-in user's ID
@@ -100,7 +102,47 @@ const handleSendMessage = async (e: FormEvent) => {
   console.log("Selected conversation:", conversation); // Log the selected conversation
   setActiveConversation(conversation);
 };
+//fetch users when clcik new msg
+useEffect(() => {
+  if (showNewMessageModal) {
+    fetch("http://localhost:8000/users")
+      .then(res => res.json())
+      .then(data => setUsers(data))
+      .catch(err => console.error(err));
+  }
+}, [showNewMessageModal]);
 
+
+const handleUserSelect = (user: { id: number; name: string; role: string }) => {
+  console.log("Selected user:", user);
+  setShowNewMessageModal(false);
+  // Logic to initiate a conversation with the selected user
+};
+const NewMessageModal = () => (
+  <div className="fixed inset-0 bg-gray-800 bg-opacity-50 flex items-center justify-center">
+    <div className="bg-white rounded-lg p-6 w-96">
+      <h2 className="text-xl font-bold mb-4">Select a User</h2>
+      <ul className="space-y-2">
+        {users.map(user => (
+          <li
+            key={user.id}
+            className="p-2 border rounded cursor-pointer hover:bg-gray-100"
+            onClick={() => handleUserSelect(user)}
+          >
+            {user.name} ({user.role})
+          </li>
+        ))}
+      </ul>
+      <button
+        className="mt-4 px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600"
+        onClick={() => setShowNewMessageModal(false)}
+      >
+        Cancel
+      </button>
+    </div>
+  </div>
+);
+{showNewMessageModal && <NewMessageModal />}
   return (
     <div className="w-full">
       <div className="mb-6">
@@ -163,12 +205,12 @@ const handleSendMessage = async (e: FormEvent) => {
             </div>
             <div className="p-4 border-t border-gray-200">
               <button
-                className="flex items-center justify-center w-full px-4 py-2 bg-[#0D47A1] text-white rounded-md hover:bg-blue-800"
-                onClick={() => alert("New Message feature not implemented yet!")}
-            >
-               <PlusIcon size={16} className="mr-2" />
-                New Message
-              </button>
+                  className="flex items-center justify-center w-full px-4 py-2 bg-[#0D47A1] text-white rounded-md hover:bg-blue-800"
+                 onClick={() => setShowNewMessageModal(true)}
+                  >
+                <PlusIcon size={16} className="mr-2" />
+                     New Message
+                  </button>
             </div>
           </div>
 
@@ -179,8 +221,8 @@ const handleSendMessage = async (e: FormEvent) => {
                 <div className="p-4 border-b border-gray-200 flex justify-between items-center">
                   <div className="flex items-center">
                     <div className="w-10 h-10 rounded-full bg-[#0D47A1] flex items-center justify-center text-white">
-  {activeConversation.name ? activeConversation.name.charAt(0) : "?"}
-</div>
+                {activeConversation.name ? activeConversation.name.charAt(0) : "?"}
+                  </div>
                     <div>
                       <h3 className="font-medium">{activeConversation.name}</h3>
                       <p className={`text-xs ${activeConversation.online ? 'text-green-500' : 'text-gray-500'}`}>
@@ -269,7 +311,9 @@ const handleSendMessage = async (e: FormEvent) => {
         </div>
       </Card>
     </div>
+    
   );
+  
 };
 
 export default Messaging;
