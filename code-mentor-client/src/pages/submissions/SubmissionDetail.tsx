@@ -1,4 +1,4 @@
-// @ts-nocheck
+
 import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import Card from '../../components/ui/Card';
@@ -31,7 +31,7 @@ const SubmissionDetail = () => {
               <span className="font-medium text-gray-700 mx-1">
                 Alex Johnson
               </span>
-              <span>on Oct 13, 2023 at 8:45 PM</span>
+              <span>on Oct 13, 2025 at 8:45 PM</span>
             </div>
           </div>
           <div className="flex space-x-2">

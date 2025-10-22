@@ -10,10 +10,12 @@ import StudentLayout from "./components/layout/StudentLayout";
 
 // Assignment Pages
 import Home from "./pages/Home";
-// import Dashboard from "./pages/Dashboard";
+import Dashboard from "./pages/Dashboard";
 import CreateAssignment from "./pages/assignments/CreateAssignment";
 import AssignmentList from "./pages/assignments/AssignmentList";
 import AssignmentDetail from "./pages/assignments/AssignmentDetail";
+import AddStudent from "./pages/AddStudent";
+import EditStudent from "./pages/EditStudent";
 
 // // Submissions
 import SubmissionsList from "./pages/submissions/SubmissionsList";
@@ -21,17 +23,17 @@ import SubmissionDetail from "./pages/submissions/SubmissionDetail";
 
 // // Other Pages
 //import AIEvaluationBuilder from "./pages/AIEvaluationBuilder";
-// import BatchManagement from "./pages/BatchManagement";
-// import Reports from "./pages/Reports";
+ import BatchManagement from "./pages/BatchManagement";
+ import Reports from "./pages/Reports";
 import Messaging from "./pages/Messaging";
 // import Settings from "./pages/Settings";
 
 // Auth Pages
-import Login from "./pages/auth/Login";
+import Login from "./pages/auth/Login"; 
 import Signup from "./pages/auth/Signup";
 import ForgotPassword from "./pages/auth/ForgotPassword";
-// import ResetPassword from "./pages/auth/ResetPassword";
-// import VerifyEmail from "./pages/auth/VerifyEmail";
+ //import ResetPassword from "./pages/auth/ResetPassword";
+//import VerifyEmail from "./pages/auth/VerifyEmail";
 import AccountDetails from "./pages/auth/AccountDetails";
 import Progress from "./pages/Progress";
 import StudentDashboard from "./pages/StudentDashboard";
@@ -45,11 +47,15 @@ function App() {
 
         {/* Auth routes without layout */}
         <Route path="/login" element={<Login />} />
-        <Route path="/signup" element={<Signup />} />
+        <Route path=
+        
+        "/signup" element={<Signup />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />
+        
 
-        {/*<Route path="/reset-password" element={<ResetPassword />} />
-        <Route path="/verify-email" element={<VerifyEmail />} /> */}
+        {/*<Route path="/reset-password" element={<ResetPassword />}
+        <Route path="/verify-email" element={<VerifyEmail />} /> />
+         */}
 
         {/* Code editor page */}
         <Route path="/code-editor" element={<CodeEditorPage />} />
@@ -66,6 +72,15 @@ function App() {
         <Route path="/assignments" element={<Layout><AssignmentList /></Layout>} />
         <Route path="/assignments/:id" element={<Layout><AssignmentDetail /></Layout>} />
         {/* <Route path="/dashboard" element={<Layout><Dashboard /></Layout>} />
+         <Route path="/assignments/:id" element={<Layout><AssignmentDetail /></Layout>} />
+          <Route path="/dashboard" element={<Layout><Dashboard /></Layout>} />
+          <Route path="/reports" element={<Layout><Reports /></Layout>} />
+           <Route path="/batches" element={<Layout><BatchManagement /></Layout>} />
+
+           <Route path="/addstudent" element={<AddStudent />} />
+    <Route path="/students/:id/edit" element={<Layout><EditStudent /></Layout>} />
+
+        {/*
         
         
        

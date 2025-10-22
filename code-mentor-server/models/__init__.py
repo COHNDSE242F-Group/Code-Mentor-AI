@@ -1,4 +1,6 @@
 from .user import User
+from .student import Student
+from .message import Conversation
 from .university import University
 from .instructor import Instructor
 from .batch import Batch
@@ -7,3 +9,5 @@ from .student import Student
 from .submission import Submission
 from .conceptual_map import ConceptualMap
 from .topic_map import TopicMap
+from .submission import Submission
+from .admin import Admin

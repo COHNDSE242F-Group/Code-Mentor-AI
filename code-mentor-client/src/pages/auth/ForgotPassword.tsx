@@ -1,4 +1,4 @@
-// @ts-nocheck
+
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { MailIcon, ArrowLeftIcon } from 'lucide-react';
