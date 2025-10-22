@@ -1,4 +1,5 @@
 from .user import User
+from .message import Conversation
 from .university import University
 from .instructor import Instructor
 from .batch import Batch
