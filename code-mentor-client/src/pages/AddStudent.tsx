@@ -7,9 +7,9 @@ interface StudentRow {
   username: string;
   password: string;
   email: string;
+  contact_no: string;
+  index_no: string;
   batch: string;
-  enrolled: string;
-  status: string;
 }
 
 const AddStudent: React.FC = () => {
@@ -20,9 +20,9 @@ const AddStudent: React.FC = () => {
       username: "",
       password: "",
       email: "",
+      contact_no: "",
+      index_no: "",
       batch: "",
-      enrolled: "",
-      status: "Active",
     },
   ]);
 
@@ -36,9 +36,9 @@ const AddStudent: React.FC = () => {
         username: "",
         password: "",
         email: "",
+        contact_no: "",
+        index_no: "",
         batch: "",
-        enrolled: "",
-        status: "Active",
       },
     ]);
   };
@@ -48,7 +48,7 @@ const AddStudent: React.FC = () => {
     setStudents(students.filter((s) => s.id !== id));
   };
 
-  // Update cell value
+  // Update field values
   const handleChange = (id: number, field: keyof StudentRow, value: string) => {
     setStudents(
       students.map((s) =>
@@ -57,7 +57,7 @@ const AddStudent: React.FC = () => {
     );
   };
 
-  // Save data to backend (loop one by one)
+  // Save data to backend
   const handleSave = async () => {
     try {
       for (const student of students) {
@@ -65,7 +65,6 @@ const AddStudent: React.FC = () => {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            // Include JWT token if your backend requires admin login
             Authorization: `Bearer ${localStorage.getItem("token")}`,
           },
           body: JSON.stringify({
@@ -73,9 +72,9 @@ const AddStudent: React.FC = () => {
             password: student.password,
             student_name: student.name,
             email: student.email,
-            contact_no: null,  // optional field
-            index_no: null,    // optional field
-            batch_id: parseInt(student.batch) || 1, // adjust as needed
+            contact_no: student.contact_no || null,
+            index_no: student.index_no || null,
+            batch_id: parseInt(student.batch) || 1,
           }),
         });
 
@@ -93,9 +92,9 @@ const AddStudent: React.FC = () => {
           username: "",
           password: "",
           email: "",
+          contact_no: "",
+          index_no: "",
           batch: "",
-          enrolled: "",
-          status: "Active",
         },
       ]);
     } catch (error) {
@@ -115,44 +114,23 @@ const AddStudent: React.FC = () => {
         <table className="min-w-full border-collapse">
           <thead>
             <tr className="bg-gray-100 border-b">
-              <th className="py-3 px-4 text-left text-sm font-semibold text-gray-600">
-                NAME
-              </th>
-              <th className="py-3 px-4 text-left text-sm font-semibold text-gray-600">
-                USERNAME
-              </th>
-              <th className="py-3 px-4 text-left text-sm font-semibold text-gray-600">
-                PASSWORD
-              </th>
-              <th className="py-3 px-4 text-left text-sm font-semibold text-gray-600">
-                EMAIL
-              </th>
-              <th className="py-3 px-4 text-left text-sm font-semibold text-gray-600">
-                BATCH (ID)
-              </th>
-              <th className="py-3 px-4 text-left text-sm font-semibold text-gray-600">
-                ENROLLED
-              </th>
-              <th className="py-3 px-4 text-left text-sm font-semibold text-gray-600">
-                STATUS
-              </th>
-              <th className="py-3 px-4 text-center text-sm font-semibold text-gray-600">
-                ACTIONS
-              </th>
+              <th className="py-3 px-4 text-left text-sm font-semibold text-gray-600">NAME</th>
+              <th className="py-3 px-4 text-left text-sm font-semibold text-gray-600">USERNAME</th>
+              <th className="py-3 px-4 text-left text-sm font-semibold text-gray-600">PASSWORD</th>
+              <th className="py-3 px-4 text-left text-sm font-semibold text-gray-600">EMAIL</th>
+              <th className="py-3 px-4 text-left text-sm font-semibold text-gray-600">CONTACT NO</th>
+              <th className="py-3 px-4 text-left text-sm font-semibold text-gray-600">INDEX NO</th>
+              <th className="py-3 px-4 text-left text-sm font-semibold text-gray-600">BATCH (ID)</th>
+              <th className="py-3 px-4 text-center text-sm font-semibold text-gray-600">ACTIONS</th>
             </tr>
           </thead>
           <tbody>
             {students.map((student) => (
-              <tr
-                key={student.id}
-                className="border-b hover:bg-gray-50 transition"
-              >
+              <tr key={student.id} className="border-b hover:bg-gray-50 transition">
                 <td className="py-2 px-4">
                   <input
                     value={student.name}
-                    onChange={(e) =>
-                      handleChange(student.id, "name", e.target.value)
-                    }
+                    onChange={(e) => handleChange(student.id, "name", e.target.value)}
                     className="border rounded-md px-2 py-1 w-full"
                     placeholder="Name"
                   />
@@ -160,9 +138,7 @@ const AddStudent: React.FC = () => {
                 <td className="py-2 px-4">
                   <input
                     value={student.username}
-                    onChange={(e) =>
-                      handleChange(student.id, "username", e.target.value)
-                    }
+                    onChange={(e) => handleChange(student.id, "username", e.target.value)}
                     className="border rounded-md px-2 py-1 w-full"
                     placeholder="Username"
                   />
@@ -171,9 +147,7 @@ const AddStudent: React.FC = () => {
                   <input
                     type="password"
                     value={student.password}
-                    onChange={(e) =>
-                      handleChange(student.id, "password", e.target.value)
-                    }
+                    onChange={(e) => handleChange(student.id, "password", e.target.value)}
                     className="border rounded-md px-2 py-1 w-full"
                     placeholder="Password"
                   />
@@ -181,44 +155,34 @@ const AddStudent: React.FC = () => {
                 <td className="py-2 px-4">
                   <input
                     value={student.email}
-                    onChange={(e) =>
-                      handleChange(student.id, "email", e.target.value)
-                    }
+                    onChange={(e) => handleChange(student.id, "email", e.target.value)}
                     className="border rounded-md px-2 py-1 w-full"
                     placeholder="Email"
                   />
                 </td>
                 <td className="py-2 px-4">
                   <input
-                    value={student.batch}
-                    onChange={(e) =>
-                      handleChange(student.id, "batch", e.target.value)
-                    }
+                    value={student.contact_no}
+                    onChange={(e) => handleChange(student.id, "contact_no", e.target.value)}
                     className="border rounded-md px-2 py-1 w-full"
-                    placeholder="Batch ID"
+                    placeholder="Contact Number"
                   />
                 </td>
                 <td className="py-2 px-4">
                   <input
-                    type="date"
-                    value={student.enrolled}
-                    onChange={(e) =>
-                      handleChange(student.id, "enrolled", e.target.value)
-                    }
+                    value={student.index_no}
+                    onChange={(e) => handleChange(student.id, "index_no", e.target.value)}
                     className="border rounded-md px-2 py-1 w-full"
+                    placeholder="Index Number"
                   />
                 </td>
                 <td className="py-2 px-4">
-                  <select
-                    value={student.status}
-                    onChange={(e) =>
-                      handleChange(student.id, "status", e.target.value)
-                    }
+                  <input
+                    value={student.batch}
+                    onChange={(e) => handleChange(student.id, "batch", e.target.value)}
                     className="border rounded-md px-2 py-1 w-full"
-                  >
-                    <option>Active</option>
-                    <option>Inactive</option>
-                  </select>
+                    placeholder="Batch ID"
+                  />
                 </td>
                 <td className="py-2 px-4 text-center">
                   <button

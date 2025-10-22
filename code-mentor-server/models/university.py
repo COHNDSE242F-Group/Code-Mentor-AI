@@ -14,6 +14,7 @@ class University(Base):
     batches = relationship("Batch", back_populates="university")
     instructors = relationship("Instructor", back_populates="university")
     students = relationship("Student", back_populates="university")
+    admins = relationship("Admin", back_populates="university")
 
     def __repr__(self):
         return f"<University(id={self.university_id}, name={self.university_name})>"

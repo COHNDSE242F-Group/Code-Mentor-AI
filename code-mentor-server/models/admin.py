@@ -1,17 +1,14 @@
-from sqlalchemy import Column, Integer, String, ForeignKey
+from sqlalchemy import Column, Integer, ForeignKey, String
 from sqlalchemy.orm import relationship
 from database import Base
 
 class Admin(Base):
     __tablename__ = "admin"
 
-    admin_id = Column(Integer, primary_key=True, index=True)
-    uni_id = Column(Integer, ForeignKey("university.university_id"), nullable=False)
-    email = Column(String(255), nullable=False, unique=True)
-    contact_no = Column(String(20), nullable=True)
-
-    # Relationship with University
-    university = relationship("University", back_populates="admins")
-
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("user.user_id"), nullable=False)
+    
+    # link back to User
+    user = relationship("User", back_populates="admin")
     def __repr__(self):
-        return f"<Admin(id={self.admin_id}, email={self.email})>"
+        return f"<Admin(id={self.id}, user_id={self.user_id})>"

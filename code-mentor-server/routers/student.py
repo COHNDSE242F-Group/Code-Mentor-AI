@@ -59,36 +59,47 @@ async def create_student(
 
     async with async_session() as session:
         # Get the admin's uni_id
-        result = await session.execute(select(Admin).where(Admin.admin_id == admin_user_id))
+        result = await session.execute(
+            select(Admin).where(Admin.admin_id == admin_user_id)
+        )
         admin = result.scalar_one_or_none()
         if not admin:
             raise HTTPException(status_code=404, detail="Admin not found")
 
-        uni_id = admin.uni_id  # Automatically use admin's university
+        uni_id = admin.uni_id
 
-        async with session.begin():  # Transaction ensures atomicity
-            # Create the linked user
+        # ✅ No 'async with session.begin()' — just add and commit manually
+        try:
+            # Create user
             new_user = User(
                 username=student_data.username,
                 password=student_data.password,
                 role="student"
             )
             session.add(new_user)
-            await session.flush()  # Assigns new_user.user_id without committing
+            await session.flush()  # assigns new_user.user_id
 
-            # Create the student using the new_user.user_id
+            # Create student linked to new_user
             new_student = Student(
                 student_id=new_user.user_id,
                 student_name=student_data.student_name,
                 email=student_data.email,
                 contact_no=student_data.contact_no,
                 index_no=student_data.index_no,
-                uni_id=uni_id,  # no longer from input
+                uni_id=uni_id,
                 batch_id=student_data.batch_id
             )
             session.add(new_student)
 
-        await session.refresh(new_student)
+            # ✅ Just commit once
+            await session.commit()
+
+            # Refresh student to return full data
+            await session.refresh(new_student)
+
+        except Exception as e:
+            await session.rollback()
+            raise HTTPException(status_code=500, detail=str(e))
 
         return StudentOut(
             student_id=new_student.student_id,
@@ -96,6 +107,8 @@ async def create_student(
             student_name=new_student.student_name,
             email=new_student.email
         )
+
+
 
 # Get all students
 @router.get("/", response_model=List[StudentOut])
