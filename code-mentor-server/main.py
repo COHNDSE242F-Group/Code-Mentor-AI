@@ -11,6 +11,7 @@ from sqlalchemy import text
 
 
 # Create FastAPI app
+
 app = FastAPI()
 
 app.add_middleware(

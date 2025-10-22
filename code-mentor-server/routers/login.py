@@ -2,6 +2,7 @@ from fastapi import APIRouter, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from pydantic import BaseModel
+from typing import Optional
 
 from database import async_session
 from models import User
@@ -22,6 +23,8 @@ class LoginRequest(BaseModel):
 class TokenResponse(BaseModel):
     access_token: str
     token_type: str = "bearer"
+    role: Optional[str] = None
+    redirect_url: Optional[str] = None
 
 
 # --------------------------
@@ -53,8 +56,23 @@ async def login_user(login_data: LoginRequest):
                 )
 
             # Create JWT token with user_id and role (default 'user')
+            role = getattr(user, "role", "user")
             access_token = create_access_token(
-                data={"user_id": user.user_id, "role": getattr(user, "role", "user")}
+                data={"user_id": user.user_id, "role": role}
             )
 
-            return {"access_token": access_token, "token_type": "bearer"}
+            # Decide redirect URL based on role (frontend will perform the navigation)
+            redirect_url = None
+            if role == "admin":
+                redirect_url = "http://localhost:3000/Dashboard"
+            elif role == "student":
+                redirect_url = "http://localhost:3000/StudentDashboard"
+            elif role == "instructor":
+                redirect_url = "http://localhost:3000/UniversityDashboard"
+
+            return {
+                "access_token": access_token,
+                "token_type": "bearer",
+                "role": role,
+                "redirect_url": redirect_url,
+            }
