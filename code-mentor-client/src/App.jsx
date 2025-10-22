@@ -6,6 +6,7 @@ import CodeEditorPage from "./pages/CodeEditorPage";
 
 // Layout
 import Layout from "./components/layout/Layout";
+import StudentLayout from "./components/layout/StudentLayout";
 
 // Assignment Pages
 import Home from "./pages/Home";
@@ -34,6 +35,8 @@ import ForgotPassword from "./pages/auth/ForgotPassword";
  //import ResetPassword from "./pages/auth/ResetPassword";
 //import VerifyEmail from "./pages/auth/VerifyEmail";
 import AccountDetails from "./pages/auth/AccountDetails";
+import Progress from "./pages/Progress";
+import StudentDashboard from "./pages/StudentDashboard";
 
 function App() {
   return (
@@ -56,6 +59,8 @@ function App() {
 
         {/* Code editor page */}
         <Route path="/code-editor" element={<CodeEditorPage />} />
+        <Route path="/progress" element={<StudentLayout><Progress /></StudentLayout>} />
+        <Route path="/student-dashboard" element={<StudentLayout><StudentDashboard /></StudentLayout>} />
        
 
         {/* Protected routes with layout */}
@@ -65,6 +70,8 @@ function App() {
         <Route path="/account" element={<Layout><AccountDetails /></Layout>} />
         <Route path="/assignments/create" element={<Layout><CreateAssignment /></Layout>} />
         <Route path="/assignments" element={<Layout><AssignmentList /></Layout>} />
+        <Route path="/assignments/:id" element={<Layout><AssignmentDetail /></Layout>} />
+        {/* <Route path="/dashboard" element={<Layout><Dashboard /></Layout>} />
          <Route path="/assignments/:id" element={<Layout><AssignmentDetail /></Layout>} />
           <Route path="/dashboard" element={<Layout><Dashboard /></Layout>} />
           <Route path="/reports" element={<Layout><Reports /></Layout>} />
