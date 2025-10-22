@@ -2,9 +2,10 @@ from fastapi import APIRouter, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from pydantic import BaseModel
+from typing import Optional
 
 from database import async_session
-from models import User, Admin  # make sure Admin model is imported
+from models import User
 from auth import verify_password, create_access_token
 
 router = APIRouter(
@@ -22,14 +23,18 @@ class LoginRequest(BaseModel):
 class TokenResponse(BaseModel):
     access_token: str
     token_type: str = "bearer"
+    role: Optional[str] = None
+    redirect_url: Optional[str] = None
 
 
 # --------------------------
-# Admin Login endpoint
+# Login endpoint
 # --------------------------
 @router.post("/", response_model=TokenResponse)
-async def login_admin(login_data: LoginRequest):
+async def login_user(login_data: LoginRequest):
+    # Always create a new session per request
     async with async_session() as session:
+        # Use transaction context to ensure connection stays alive
         async with session.begin():
             # Fetch user by username
             result = await session.execute(
@@ -50,21 +55,24 @@ async def login_admin(login_data: LoginRequest):
                     detail="Invalid username or password"
                 )
 
-            # Check if user exists in Admin table
-            admin_result = await session.execute(
-                select(Admin).where(Admin.user_id == user.user_id)
-            )
-            admin = admin_result.scalar_one_or_none()
-
-            if not admin:
-                raise HTTPException(
-                    status_code=status.HTTP_401_UNAUTHORIZED,
-                    detail="User is not an admin"
-                )
-
-            # Create JWT token with role "admin"
+            # Create JWT token with user_id and role (default 'user')
+            role = getattr(user, "role", "user")
             access_token = create_access_token(
-                data={"user_id": user.user_id, "role": "admin"}
+                data={"user_id": user.user_id, "role": role}
             )
 
-            return {"access_token": access_token, "token_type": "bearer"}
+            # Decide redirect URL based on role (frontend will perform the navigation)
+            redirect_url = None
+            if role == "admin":
+                redirect_url = "http://localhost:3000/Dashboard"
+            elif role == "student":
+                redirect_url = "http://localhost:3000/StudentDashboard"
+            elif role == "instructor":
+                redirect_url = "http://localhost:3000/UniversityDashboard"
+
+            return {
+                "access_token": access_token,
+                "token_type": "bearer",
+                "role": role,
+                "redirect_url": redirect_url,
+            }

@@ -9,6 +9,8 @@ import {
   EditIcon,
   TrashIcon,
   MoreHorizontalIcon,
+  EyeIcon,
+  EyeOffIcon,
 } from "lucide-react";
 
 // Define types for batches and students
@@ -23,12 +25,15 @@ interface Batch {
 }
 
 interface Student {
-  id: number;
+  student_id: number;
+  index_no?: string | null;
   name: string;
   email: string;
-  batch: string;
-  enrollmentDate: string;
-  status: "Active" | "Inactive";
+  contact_no?: string | null;
+  university_name?: string | null;
+  batch_name?: string | null;
+  username?: string | null;
+  password?: string | null;
 }
 
 const BatchManagement: React.FC = () => {
@@ -37,6 +42,11 @@ const BatchManagement: React.FC = () => {
   const [batches, setBatches] = useState<Batch[]>([]);
   const [students, setStudents] = useState<Student[]>([]);
   const [loading, setLoading] = useState(true);
+  const [visiblePasswords, setVisiblePasswords] = useState<Record<number, boolean>>({});
+
+  const togglePassword = (id: number) => {
+    setVisiblePasswords(prev => ({ ...prev, [id]: !prev[id] }));
+  };
 
   // Fetch data from backend
   useEffect(() => {
@@ -213,56 +223,62 @@ const BatchManagement: React.FC = () => {
           </div>
 
           <Card>
+            <div className="flex items-center justify-between mb-4">
+              <div>
+                <span className="text-sm text-gray-600">Passwords are masked by default. Click "Show" on a row to reveal.</span>
+              </div>
+            </div>
             <div className="overflow-x-auto">
               <table className="min-w-full">
                 <thead>
                   <tr className="bg-gray-50 border-b border-gray-200">
-                    <th className="py-3 px-4 text-left text-sm font-medium text-gray-500">
-                      NAME
-                    </th>
-                    <th className="py-3 px-4 text-left text-sm font-medium text-gray-500">
-                      EMAIL
-                    </th>
-                    <th className="py-3 px-4 text-left text-sm font-medium text-gray-500">
-                      BATCH
-                    </th>
-                    <th className="py-3 px-4 text-left text-sm font-medium text-gray-500">
-                      ENROLLED
-                    </th>
-                    <th className="py-3 px-4 text-left text-sm font-medium text-gray-500">
-                      STATUS
-                    </th>
-                    <th className="py-3 px-4 text-left text-sm font-medium text-gray-500">
-                      ACTIONS
-                    </th>
+                    <th className="py-3 px-4 text-left text-sm font-medium text-gray-500">ID</th>
+                    <th className="py-3 px-4 text-left text-sm font-medium text-gray-500">Index No</th>
+                    <th className="py-3 px-4 text-left text-sm font-medium text-gray-500">Name</th>
+                    <th className="py-3 px-4 text-left text-sm font-medium text-gray-500">Email</th>
+                    <th className="py-3 px-4 text-left text-sm font-medium text-gray-500">Contact</th>
+                    <th className="py-3 px-4 text-left text-sm font-medium text-gray-500">University</th>
+                    <th className="py-3 px-4 text-left text-sm font-medium text-gray-500">Batch</th>
+                    <th className="py-3 px-4 text-left text-sm font-medium text-gray-500">Username</th>
+                    <th className="py-3 px-4 text-left text-sm font-medium text-gray-500">Password</th>
+                    <th className="py-3 px-4 text-left text-sm font-medium text-gray-500">ACTIONS</th>
                   </tr>
                 </thead>
                 <tbody>
                   {students.map((student) => (
-                    <tr
-                      key={student.id}
-                      className="border-b border-gray-100 hover:bg-gray-50"
-                    >
+                    <tr key={student.student_id} className="border-b border-gray-100 hover:bg-gray-50">
+                      <td className="py-3 px-4 font-medium">{student.student_id}</td>
+                      <td className="py-3 px-4 text-sm">{student.index_no ?? '-'}</td>
                       <td className="py-3 px-4 font-medium">{student.name}</td>
                       <td className="py-3 px-4 text-sm">{student.email}</td>
-                      <td className="py-3 px-4 text-sm">{student.batch}</td>
-                      <td className="py-3 px-4 text-sm text-gray-500">
-                        {student.enrollmentDate}
-                      </td>
-                      <td className="py-3 px-4">
-                        <span
-                          className={`px-2 py-1 rounded-full text-xs ${
-                            student.status === "Active"
-                              ? "bg-green-100 text-green-800"
-                              : "bg-red-100 text-red-800"
-                          }`}
-                        >
-                          {student.status}
-                        </span>
+                      <td className="py-3 px-4 text-sm">{student.contact_no ?? '-'}</td>
+                      <td className="py-3 px-4 text-sm">{student.university_name ?? '-'}</td>
+                      <td className="py-3 px-4 text-sm">{student.batch_name ?? '-'}</td>
+                      <td className="py-3 px-4 text-sm">{student.username ?? '-'}</td>
+                      <td className="py-3 px-4 text-sm">
+                        {student.password ? (
+                          <div className="flex items-center space-x-2">
+                            <span className="font-mono">{visiblePasswords[student.student_id] ? student.password : '********'}</span>
+                            <button
+                              onClick={() => togglePassword(student.student_id)}
+                              className="text-blue-500 hover:text-blue-700 p-1 rounded"
+                              aria-label={visiblePasswords[student.student_id] ? 'Hide password' : 'Show password'}
+                              title={visiblePasswords[student.student_id] ? 'Hide password' : 'Show password'}
+                            >
+                              {visiblePasswords[student.student_id] ? (
+                                <EyeOffIcon size={16} />
+                              ) : (
+                                <EyeIcon size={16} />
+                              )}
+                            </button>
+                          </div>
+                        ) : (
+                          '-'
+                        )}
                       </td>
                       <td className="py-3 px-4">
                         <div className="flex space-x-2">
-                          <button className="text-blue-500 hover:text-blue-700">
+                          <button onClick={()=>navigate(`/students/${student.student_id}/edit`)} className="text-blue-500 hover:text-blue-700">
                             <EditIcon size={16} />
                           </button>
                           <button className="text-red-500 hover:text-red-700">
