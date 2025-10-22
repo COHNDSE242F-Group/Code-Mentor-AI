@@ -43,6 +43,8 @@ const BatchManagement: React.FC = () => {
   const [students, setStudents] = useState<Student[]>([]);
   const [loading, setLoading] = useState(true);
   const [visiblePasswords, setVisiblePasswords] = useState<Record<number, boolean>>({});
+  const [currentPage, setCurrentPage] = useState<number>(1);
+  const [pageSize] = useState<number>(10);
 
   const togglePassword = (id: number) => {
     setVisiblePasswords(prev => ({ ...prev, [id]: !prev[id] }));
@@ -245,7 +247,13 @@ const BatchManagement: React.FC = () => {
                   </tr>
                 </thead>
                 <tbody>
-                  {students.map((student) => (
+                  {(() => {
+                    const totalPages = Math.max(1, Math.ceil(students.length / pageSize));
+                    const page = Math.min(currentPage, totalPages);
+                    const startIndex = (page - 1) * pageSize;
+                    const endIndex = startIndex + pageSize;
+                    const paginatedStudents = students.slice(startIndex, endIndex);
+                    return paginatedStudents.map((student) => (
                     <tr key={student.student_id} className="border-b border-gray-100 hover:bg-gray-50">
                       <td className="py-3 px-4 font-medium">{student.student_id}</td>
                       <td className="py-3 px-4 text-sm">{student.index_no ?? '-'}</td>
@@ -281,29 +289,79 @@ const BatchManagement: React.FC = () => {
                           <button onClick={()=>navigate(`/students/${student.student_id}/edit`)} className="text-blue-500 hover:text-blue-700">
                             <EditIcon size={16} />
                           </button>
-                          <button className="text-red-500 hover:text-red-700">
+                          <button
+                            onClick={async () => {
+                              // Confirm and delete
+                              if (!window.confirm('Delete this student? This action cannot be undone.')) return;
+                              try {
+                                const res = await fetch(`http://localhost:8000/student/${student.student_id}`, { method: 'DELETE' });
+                                if (!res.ok) throw new Error('Delete failed');
+                                // remove from local state
+                                setStudents(prev => {
+                                  const next = prev.filter(s => s.student_id !== student.student_id);
+                                  // adjust page if needed
+                                  const newTotalPages = Math.max(1, Math.ceil(next.length / pageSize));
+                                  if (currentPage > newTotalPages) setCurrentPage(newTotalPages);
+                                  return next;
+                                });
+                                setVisiblePasswords(prev => {
+                                  const copy = { ...prev };
+                                  delete copy[student.student_id];
+                                  return copy;
+                                });
+                              } catch (err) {
+                                console.error('Failed to delete student', err);
+                                alert('Failed to delete student');
+                              }
+                            }}
+                            className="text-red-500 hover:text-red-700"
+                            aria-label={`Delete student ${student.name}`}
+                            title="Delete"
+                          >
                             <TrashIcon size={16} />
                           </button>
                         </div>
                       </td>
                     </tr>
-                  ))}
+                    ));
+                  })()}
                 </tbody>
               </table>
             </div>
 
             <div className="flex justify-between items-center mt-6">
               <div className="text-sm text-gray-500">
-                Showing {students.length} students
+                {students.length === 0 ? (
+                  'No students'
+                ) : (
+                  (() => {
+                    const totalPages = Math.max(1, Math.ceil(students.length / pageSize));
+                    const page = Math.min(currentPage, totalPages);
+                    const startIndex = (page - 1) * pageSize;
+                    const endIndex = Math.min(startIndex + pageSize, students.length);
+                    return `Showing ${startIndex + 1}-${endIndex} of ${students.length} students`;
+                  })()
+                )}
               </div>
               <div className="flex space-x-2">
-                <button className="px-3 py-1 border border-gray-300 rounded-md bg-white text-gray-700 disabled:opacity-50">
+                <button
+                  onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                  disabled={currentPage === 1}
+                  className={`px-3 py-1 border border-gray-300 rounded-md bg-white text-gray-700 disabled:opacity-50 ${currentPage === 1 ? 'cursor-not-allowed' : ''}`}
+                >
                   Previous
                 </button>
                 <button className="px-3 py-1 bg-[#0D47A1] text-white rounded-md hover:bg-blue-800">
-                  1
+                  {currentPage}
                 </button>
-                <button className="px-3 py-1 border border-gray-300 rounded-md bg-white text-gray-700">
+                <button
+                  onClick={() => setCurrentPage(p => {
+                    const totalPages = Math.max(1, Math.ceil(students.length / pageSize));
+                    return Math.min(totalPages, p + 1);
+                  })}
+                  disabled={currentPage >= Math.max(1, Math.ceil(students.length / pageSize))}
+                  className={`px-3 py-1 border border-gray-300 rounded-md bg-white text-gray-700 ${currentPage >= Math.max(1, Math.ceil(students.length / pageSize)) ? 'cursor-not-allowed disabled:opacity-50' : ''}`}
+                >
                   Next
                 </button>
               </div>
