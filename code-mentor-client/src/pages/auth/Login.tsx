@@ -36,43 +36,23 @@ const Login = () => {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ username: usernameOrEmail, password }),
       });
+  if (!response.ok) {
+        const data = await response.json(); // Fetch the error response
+        setErrors({
+          usernameOrEmail: data.detail === "Invalid username or password" ? "Invalid username or password" : errors.usernameOrEmail,
+          password: data.detail === "Invalid username or password" ? "Invalid username or password" : errors.password,
+        });
+        return; // Exit early if the response is not OK
+      }
 
       const data = await response.json();
+      localStorage.setItem("token", data.access_token); // save JWT token
 
-      if (!response.ok) {
-        // Server returned an error (e.g., invalid credentials)
-        setErrors({
-          ...errors,
-          usernameOrEmail:
-            data?.detail === "Invalid username or password"
-              ? "Invalid username or password"
-              : errors.usernameOrEmail,
-          password:
-            data?.detail === "Invalid username or password"
-              ? "Invalid username or password"
-              : errors.password,
-        });
-        return;
-      }
+      // Decode the JWT token to extract the role
+      const payload = JSON.parse(atob(data.access_token.split(".")[1]));
+      const role = payload.role;
 
-      // Success: save token and role if present
-      if (data.access_token) localStorage.setItem("token", data.access_token);
-      if (data.role) localStorage.setItem("role", data.role);
-
-      // Prefer server-provided redirect_url
-      if (data.redirect_url) {
-        try {
-          const url = new URL(data.redirect_url);
-          navigate(url.pathname.toLowerCase());
-          return;
-        } catch (_) {
-          navigate(String(data.redirect_url).toLowerCase());
-          return;
-        }
-      }
-
-      // Fallback: redirect based on role
-      const role = data.role;
+      // Redirect based on role
       if (role === "admin") {
         navigate("/admin-dashboard");
       } else if (role === "instructor") {
