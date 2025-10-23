@@ -1,32 +1,77 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, HTTPException, Depends
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.future import select
+from database import async_session
+from models.submission import Submission
 from pydantic import BaseModel
 from typing import List, Optional
+from sqlalchemy.orm import joinedload
+from datetime import datetime,date
 
-router = APIRouter()
 
-class Submission(BaseModel):
-    id: int
-    student: str
-    studentId: str
-    assignment: str
-    submittedAt: str
-    status: str
-    score: Optional[int]
-    batch: str
+router = APIRouter(
+    prefix="/submission",
+    tags=["submission"]
+)
 
-@router.get("/submissions", response_model=List[Submission])
+# --------------------------
+# Pydantic schemas
+# --------------------------
+class AssignmentOut(BaseModel):
+    assignment_id: int
+    assignment_name: str
+    due_date: date  # Use `date` to match the database field type
+    batch_id: int
+    instructor_id: int
+
+    class Config:
+        orm_mode = True
+
+class StudentOut(BaseModel):
+    student_id: int
+    student_name: str
+    email: str
+    contact_no: Optional[str]
+    batch_id: int
+
+    class Config:
+        orm_mode = True
+
+
+class SubmissionOut(BaseModel):
+    submission_id: int
+    assignment: AssignmentOut
+    student: StudentOut
+    report: Optional[dict]
+    submitted_at: Optional[datetime]  # Use datetime directly
+
+    class Config:
+        orm_mode = True
+
+# --------------------------
+# Endpoints
+# --------------------------
+
+
+@router.get("/", response_model=List[SubmissionOut])
 async def get_submissions():
-    # Replace with database logic in production
-    return [
-        {
-            "id": 1,
-            "student": "Alex Johnson",
-            "studentId": "ST-2023-001",
-            "assignment": "Python Data Structures",
-            "submittedAt": "Oct 13, 2023 - 8:45 PM",
-            "status": "Pending",
-            "score": None,
-            "batch": "Batch A"
-        },
-        # ...add other submissions here...
-    ]
+    async with async_session() as session:
+        result = await session.execute(
+            select(Submission)
+            .options(joinedload(Submission.assignment), joinedload(Submission.student))
+        )
+        submissions = result.scalars().all()
+        return submissions
+
+# Get a single submission by ID with related data
+@router.get("/{submission_id}", response_model=SubmissionOut)
+async def get_submission(submission_id: int):
+    async with async_session() as session:
+        result = await session.execute(select(Submission).where(Submission.submission_id == submission_id).options(
+            select(Submission.assignment),
+            select(Submission.student)
+        ))
+        submission = result.scalar_one_or_none()
+        if not submission:
+            raise HTTPException(status_code=404, detail="Submission not found")
+        return submission

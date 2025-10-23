@@ -1,5 +1,7 @@
 import React, { useEffect, useState } from "react";
 import Card from "../components/ui/Card";
+import { useNavigate } from "react-router-dom";
+
 import {
   PlusIcon,
   SearchIcon,
@@ -7,6 +9,8 @@ import {
   EditIcon,
   TrashIcon,
   MoreHorizontalIcon,
+  EyeIcon,
+  EyeOffIcon,
 } from "lucide-react";
 
 // Define types for batches and students
@@ -21,39 +25,69 @@ interface Batch {
 }
 
 interface Student {
-  id: number;
+  student_id: number;
+  index_no?: string | null;
   name: string;
   email: string;
-  batch: string;
-  enrollmentDate: string;
-  status: "Active" | "Inactive";
+  contact_no?: string | null;
+  university_name?: string | null;
+  batch_name?: string | null;
+  username?: string | null;
+  password?: string | null;
+}
+
+interface Instructor {
+  instructor_id: number;
+  index_no?: string | null;
+  name: string;
+  email: string;
+  contact_no?: string | null;
+  university_name?: string | null;
+  username?: string | null;
+  password?: string | null;
 }
 
 const BatchManagement: React.FC = () => {
-  const [activeTab, setActiveTab] = useState<"batches" | "students">("batches");
+   const navigate = useNavigate();
+  const [activeTab, setActiveTab] = useState<"batches" | "students" | "instructors">("batches");
   const [batches, setBatches] = useState<Batch[]>([]);
   const [students, setStudents] = useState<Student[]>([]);
+  const [instructors, setInstructors] = useState<Instructor[]>([]);
   const [loading, setLoading] = useState(true);
+  const [visiblePasswords, setVisiblePasswords] = useState<Record<number, boolean>>({});
+  const [currentPageStudents, setCurrentPageStudents] = useState<number>(1);
+  const [currentPageInstructors, setCurrentPageInstructors] = useState<number>(1);
+  const [pageSize] = useState<number>(10);
+  const [studentSearch, setStudentSearch] = useState<string>("");
+  const [instructorSearch, setInstructorSearch] = useState<string>("");
+  const [selectedUniversity, setSelectedUniversity] = useState<string | null>(null);
+
+  const togglePassword = (id: number) => {
+    setVisiblePasswords(prev => ({ ...prev, [id]: !prev[id] }));
+  };
 
   // Fetch data from backend
   useEffect(() => {
     const fetchData = async () => {
       try {
         // Replace with your FastAPI endpoints
-        const [batchesRes, studentsRes] = await Promise.all([
+        const [batchesRes, studentsRes, instructorsRes] = await Promise.all([
           fetch("http://localhost:8000/batches"),
           fetch("http://localhost:8000/students"),
+          fetch("http://localhost:8000/instructors"),
         ]);
 
-        if (!batchesRes.ok || !studentsRes.ok) {
+        if (!batchesRes.ok || !studentsRes.ok || !instructorsRes.ok) {
           throw new Error("Failed to fetch data");
         }
 
         const batchData: Batch[] = await batchesRes.json();
         const studentData: Student[] = await studentsRes.json();
+        const instructorData: Instructor[] = await instructorsRes.json();
 
         setBatches(batchData);
         setStudents(studentData);
+        setInstructors(instructorData);
       } catch (error) {
         console.error("Error fetching batches/students:", error);
       } finally {
@@ -97,6 +131,16 @@ const BatchManagement: React.FC = () => {
             onClick={() => setActiveTab("students")}
           >
             Students
+          </button>
+          <button
+            className={`py-3 px-6 font-medium ${
+              activeTab === "instructors"
+                ? "text-[#0D47A1] border-b-2 border-[#0D47A1]"
+                : "text-gray-500"
+            }`}
+            onClick={() => setActiveTab("instructors")}
+          >
+            Instructors
           </button>
         </div>
       </div>
@@ -175,14 +219,16 @@ const BatchManagement: React.FC = () => {
             ))}
           </div>
         </div>
-      ) : (
+      ) : activeTab === 'students' ? (
         // Students View
         <div>
           <div className="flex justify-between items-center mb-6">
             <div className="relative w-64">
               <input
                 type="text"
-                placeholder="Search students..."
+                placeholder="Search students by name or id..."
+                value={studentSearch}
+                onChange={(e) => { setStudentSearch(e.target.value); setCurrentPageStudents(1); }}
                 className="w-full pl-10 pr-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-[#0D47A1] focus:border-transparent"
               />
               <SearchIcon
@@ -191,95 +237,401 @@ const BatchManagement: React.FC = () => {
               />
             </div>
             <div className="flex space-x-4">
-              <select className="px-4 py-2 border border-gray-300 rounded-md bg-white text-gray-700">
-                <option>All Batches</option>
-                {batches.map((batch) => (
-                  <option key={batch.id}>{batch.name}</option>
+              <select
+                value={selectedUniversity ?? ''}
+                onChange={(e) => { setSelectedUniversity(e.target.value || null); setCurrentPageStudents(1); setCurrentPageInstructors(1); }}
+                className="px-4 py-2 border border-gray-300 rounded-md bg-white text-gray-700"
+              >
+                <option value="">All Universities</option>
+                {Array.from(new Set(students.map(s => s.university_name ?? '').concat(instructors.map(i => i.university_name ?? '')))).filter(Boolean).map((u) => (
+                  <option key={u as string} value={u as string}>{u as string}</option>
                 ))}
               </select>
-              <button className="inline-flex items-center px-4 py-2 bg-[#0D47A1] text-white rounded-md hover:bg-blue-800">
-                <PlusIcon size={16} className="mr-2" />
-                Add Student
-              </button>
+
+              
+<button
+  onClick={() => navigate("/addstudent")}
+  className="inline-flex items-center px-4 py-2 bg-[#0D47A1] text-white rounded-md hover:bg-blue-800"
+>
+  <PlusIcon size={16} className="mr-2" />
+  Add Student
+</button>
             </div>
           </div>
 
           <Card>
+            <div className="flex items-center justify-between mb-4">
+              <div>
+                <span className="text-sm text-gray-600">Passwords are masked by default. Click "Show" on a row to reveal.</span>
+              </div>
+            </div>
             <div className="overflow-x-auto">
               <table className="min-w-full">
                 <thead>
                   <tr className="bg-gray-50 border-b border-gray-200">
-                    <th className="py-3 px-4 text-left text-sm font-medium text-gray-500">
-                      NAME
-                    </th>
-                    <th className="py-3 px-4 text-left text-sm font-medium text-gray-500">
-                      EMAIL
-                    </th>
-                    <th className="py-3 px-4 text-left text-sm font-medium text-gray-500">
-                      BATCH
-                    </th>
-                    <th className="py-3 px-4 text-left text-sm font-medium text-gray-500">
-                      ENROLLED
-                    </th>
-                    <th className="py-3 px-4 text-left text-sm font-medium text-gray-500">
-                      STATUS
-                    </th>
-                    <th className="py-3 px-4 text-left text-sm font-medium text-gray-500">
-                      ACTIONS
-                    </th>
+                    <th className="py-3 px-4 text-left text-sm font-medium text-gray-500">ID</th>
+                    <th className="py-3 px-4 text-left text-sm font-medium text-gray-500">Index No</th>
+                    <th className="py-3 px-4 text-left text-sm font-medium text-gray-500">Name</th>
+                    <th className="py-3 px-4 text-left text-sm font-medium text-gray-500">Email</th>
+                    <th className="py-3 px-4 text-left text-sm font-medium text-gray-500">Contact</th>
+                    <th className="py-3 px-4 text-left text-sm font-medium text-gray-500">University</th>
+                    <th className="py-3 px-4 text-left text-sm font-medium text-gray-500">Batch</th>
+                    <th className="py-3 px-4 text-left text-sm font-medium text-gray-500">Username</th>
+                    <th className="py-3 px-4 text-left text-sm font-medium text-gray-500">Password</th>
+                    <th className="py-3 px-4 text-left text-sm font-medium text-gray-500">ACTIONS</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {students.map((student) => (
-                    <tr
-                      key={student.id}
-                      className="border-b border-gray-100 hover:bg-gray-50"
-                    >
+                  {(() => {
+                    const filteredStudents = students.filter(s => {
+                      const matchUniv = selectedUniversity ? s.university_name === selectedUniversity : true;
+                      const q = studentSearch.trim().toLowerCase();
+                      const matchSearch = !q || s.name.toLowerCase().includes(q) || String(s.student_id).includes(q);
+                      return matchUniv && matchSearch;
+                    });
+                    const totalPages = Math.max(1, Math.ceil(filteredStudents.length / pageSize));
+                    const page = Math.min(currentPageStudents, totalPages);
+                    const startIndex = (page - 1) * pageSize;
+                    const endIndex = startIndex + pageSize;
+                    const paginatedStudents = filteredStudents.slice(startIndex, endIndex);
+                    return paginatedStudents.map((student) => (
+                    <tr key={student.student_id} className="border-b border-gray-100 hover:bg-gray-50">
+                      <td className="py-3 px-4 font-medium">{student.student_id}</td>
+                      <td className="py-3 px-4 text-sm">{student.index_no ?? '-'}</td>
                       <td className="py-3 px-4 font-medium">{student.name}</td>
                       <td className="py-3 px-4 text-sm">{student.email}</td>
-                      <td className="py-3 px-4 text-sm">{student.batch}</td>
-                      <td className="py-3 px-4 text-sm text-gray-500">
-                        {student.enrollmentDate}
-                      </td>
-                      <td className="py-3 px-4">
-                        <span
-                          className={`px-2 py-1 rounded-full text-xs ${
-                            student.status === "Active"
-                              ? "bg-green-100 text-green-800"
-                              : "bg-red-100 text-red-800"
-                          }`}
-                        >
-                          {student.status}
-                        </span>
+                      <td className="py-3 px-4 text-sm">{student.contact_no ?? '-'}</td>
+                      <td className="py-3 px-4 text-sm">{student.university_name ?? '-'}</td>
+                      <td className="py-3 px-4 text-sm">{student.batch_name ?? '-'}</td>
+                      <td className="py-3 px-4 text-sm">{student.username ?? '-'}</td>
+                      <td className="py-3 px-4 text-sm">
+                        {student.password ? (
+                          <div className="flex items-center space-x-2">
+                            <span className="font-mono">{visiblePasswords[student.student_id] ? student.password : '********'}</span>
+                            <button
+                              onClick={() => togglePassword(student.student_id)}
+                              className="text-blue-500 hover:text-blue-700 p-1 rounded"
+                              aria-label={visiblePasswords[student.student_id] ? 'Hide password' : 'Show password'}
+                              title={visiblePasswords[student.student_id] ? 'Hide password' : 'Show password'}
+                            >
+                              {visiblePasswords[student.student_id] ? (
+                                <EyeOffIcon size={16} />
+                              ) : (
+                                <EyeIcon size={16} />
+                              )}
+                            </button>
+                          </div>
+                        ) : (
+                          '-'
+                        )}
                       </td>
                       <td className="py-3 px-4">
                         <div className="flex space-x-2">
-                          <button className="text-blue-500 hover:text-blue-700">
+                          <button onClick={()=>navigate(`/students/${student.student_id}/edit`)} className="text-blue-500 hover:text-blue-700">
                             <EditIcon size={16} />
                           </button>
-                          <button className="text-red-500 hover:text-red-700">
+                          <button
+                            onClick={async () => {
+                              // Confirm and delete
+                              if (!window.confirm('Delete this student? This action cannot be undone.')) return;
+                              try {
+                                const res = await fetch(`http://localhost:8000/student/${student.student_id}`, { method: 'DELETE' });
+                                if (!res.ok) throw new Error('Delete failed');
+                                // remove from local state
+                                setStudents(prev => {
+                                  const next = prev.filter(s => s.student_id !== student.student_id);
+                                  // adjust page if needed
+                                  const filteredNext = next.filter(s => {
+                                    const matchUniv = selectedUniversity ? s.university_name === selectedUniversity : true;
+                                    const q = studentSearch.trim().toLowerCase();
+                                    const matchSearch = !q || s.name.toLowerCase().includes(q) || String(s.student_id).includes(q);
+                                    return matchUniv && matchSearch;
+                                  });
+                                  const newTotalPages = Math.max(1, Math.ceil(filteredNext.length / pageSize));
+                                  if (currentPageStudents > newTotalPages) setCurrentPageStudents(newTotalPages);
+                                  return next;
+                                });
+                                setVisiblePasswords(prev => {
+                                  const copy = { ...prev };
+                                  delete copy[student.student_id];
+                                  return copy;
+                                });
+                              } catch (err) {
+                                console.error('Failed to delete student', err);
+                                alert('Failed to delete student');
+                              }
+                            }}
+                            className="text-red-500 hover:text-red-700"
+                            aria-label={`Delete student ${student.name}`}
+                            title="Delete"
+                          >
                             <TrashIcon size={16} />
                           </button>
                         </div>
                       </td>
                     </tr>
-                  ))}
+                    ));
+                  })()}
                 </tbody>
               </table>
             </div>
 
             <div className="flex justify-between items-center mt-6">
               <div className="text-sm text-gray-500">
-                Showing {students.length} students
+                {(() => {
+                  const filteredStudents = students.filter(s => {
+                    const matchUniv = selectedUniversity ? s.university_name === selectedUniversity : true;
+                    const q = studentSearch.trim().toLowerCase();
+                    const matchSearch = !q || s.name.toLowerCase().includes(q) || String(s.student_id).includes(q);
+                    return matchUniv && matchSearch;
+                  });
+                  if (filteredStudents.length === 0) return 'No students';
+                  const totalPages = Math.max(1, Math.ceil(filteredStudents.length / pageSize));
+                  const page = Math.min(currentPageStudents, totalPages);
+                  const startIndex = (page - 1) * pageSize;
+                  const endIndex = Math.min(startIndex + pageSize, filteredStudents.length);
+                  return `Showing ${startIndex + 1}-${endIndex} of ${filteredStudents.length} students`;
+                })()}
               </div>
               <div className="flex space-x-2">
-                <button className="px-3 py-1 border border-gray-300 rounded-md bg-white text-gray-700 disabled:opacity-50">
+                <button
+                  onClick={() => setCurrentPageStudents(p => Math.max(1, p - 1))}
+                  disabled={currentPageStudents === 1}
+                  className={`px-3 py-1 border border-gray-300 rounded-md bg-white text-gray-700 disabled:opacity-50 ${currentPageStudents === 1 ? 'cursor-not-allowed' : ''}`}
+                >
                   Previous
                 </button>
                 <button className="px-3 py-1 bg-[#0D47A1] text-white rounded-md hover:bg-blue-800">
-                  1
+                  {currentPageStudents}
                 </button>
-                <button className="px-3 py-1 border border-gray-300 rounded-md bg-white text-gray-700">
+                <button
+                  onClick={() => setCurrentPageStudents(p => {
+                    const filteredStudents = students.filter(s => {
+                      const matchUniv = selectedUniversity ? s.university_name === selectedUniversity : true;
+                      const q = studentSearch.trim().toLowerCase();
+                      const matchSearch = !q || s.name.toLowerCase().includes(q) || String(s.student_id).includes(q);
+                      return matchUniv && matchSearch;
+                    });
+                    const totalPages = Math.max(1, Math.ceil(filteredStudents.length / pageSize));
+                    return Math.min(totalPages, p + 1);
+                  })}
+                  disabled={(() => {
+                    const filteredStudents = students.filter(s => {
+                      const matchUniv = selectedUniversity ? s.university_name === selectedUniversity : true;
+                      const q = studentSearch.trim().toLowerCase();
+                      const matchSearch = !q || s.name.toLowerCase().includes(q) || String(s.student_id).includes(q);
+                      return matchUniv && matchSearch;
+                    });
+                    return currentPageStudents >= Math.max(1, Math.ceil(filteredStudents.length / pageSize));
+                  })()}
+                  className={`px-3 py-1 border border-gray-300 rounded-md bg-white text-gray-700 ${(() => {
+                    const filteredStudents = students.filter(s => {
+                      const matchUniv = selectedUniversity ? s.university_name === selectedUniversity : true;
+                      const q = studentSearch.trim().toLowerCase();
+                      const matchSearch = !q || s.name.toLowerCase().includes(q) || String(s.student_id).includes(q);
+                      return matchUniv && matchSearch;
+                    });
+                    return currentPageStudents >= Math.max(1, Math.ceil(filteredStudents.length / pageSize)) ? 'cursor-not-allowed disabled:opacity-50' : '';
+                  })()}`}
+                >
+                  Next
+                </button>
+              </div>
+            </div>
+          </Card>
+        </div>
+      ) : (
+        // Instructors View
+        <div>
+          <div className="flex justify-between items-center mb-6">
+            <div className="relative w-64">
+              <input
+                type="text"
+                placeholder="Search instructors by name or id..."
+                value={instructorSearch}
+                onChange={(e) => { setInstructorSearch(e.target.value); setCurrentPageInstructors(1); }}
+                className="w-full pl-10 pr-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-[#0D47A1] focus:border-transparent"
+              />
+              <SearchIcon
+                size={18}
+                className="absolute left-3 top-2.5 text-gray-400"
+              />
+            </div>
+            <div className="flex space-x-4">
+              <select
+                value={selectedUniversity ?? ''}
+                onChange={(e) => { setSelectedUniversity(e.target.value || null); setCurrentPageStudents(1); setCurrentPageInstructors(1); }}
+                className="px-4 py-2 border border-gray-300 rounded-md bg-white text-gray-700"
+              >
+                <option value="">All Universities</option>
+                {Array.from(new Set(students.map(s => s.university_name ?? '').concat(instructors.map(i => i.university_name ?? '')))).filter(Boolean).map((u) => (
+                  <option key={u as string} value={u as string}>{u as string}</option>
+                ))}
+              </select>
+
+              <button
+                onClick={() => navigate('/addinstructor')}
+                className="inline-flex items-center px-4 py-2 bg-[#0D47A1] text-white rounded-md hover:bg-blue-800"
+              >
+                <PlusIcon size={16} className="mr-2" />
+                Add Instructor
+              </button>
+            </div>
+          </div>
+
+          <Card>
+            <div className="flex items-center justify-between mb-4">
+              <div>
+                <span className="text-sm text-gray-600">Passwords are masked by default. Click the eye icon on a row to reveal.</span>
+              </div>
+            </div>
+            <div className="overflow-x-auto">
+              <table className="min-w-full">
+                <thead>
+                  <tr className="bg-gray-50 border-b border-gray-200">
+                    <th className="py-3 px-4 text-left text-sm font-medium text-gray-500">ID</th>
+                    <th className="py-3 px-4 text-left text-sm font-medium text-gray-500">Index No</th>
+                    <th className="py-3 px-4 text-left text-sm font-medium text-gray-500">Name</th>
+                    <th className="py-3 px-4 text-left text-sm font-medium text-gray-500">Email</th>
+                    <th className="py-3 px-4 text-left text-sm font-medium text-gray-500">Contact</th>
+                    <th className="py-3 px-4 text-left text-sm font-medium text-gray-500">University</th>
+                    <th className="py-3 px-4 text-left text-sm font-medium text-gray-500">Username</th>
+                    <th className="py-3 px-4 text-left text-sm font-medium text-gray-500">Password</th>
+                    <th className="py-3 px-4 text-left text-sm font-medium text-gray-500">ACTIONS</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {(() => {
+                    const filteredInstructors = instructors.filter(ins => {
+                      const matchUniv = selectedUniversity ? ins.university_name === selectedUniversity : true;
+                      const q = instructorSearch.trim().toLowerCase();
+                      const matchSearch = !q || ins.name.toLowerCase().includes(q) || String(ins.instructor_id).includes(q);
+                      return matchUniv && matchSearch;
+                    });
+                    const totalPages = Math.max(1, Math.ceil(filteredInstructors.length / pageSize));
+                    const page = Math.min(currentPageInstructors, totalPages);
+                    const startIndex = (page - 1) * pageSize;
+                    const endIndex = startIndex + pageSize;
+                    const paginated = filteredInstructors.slice(startIndex, endIndex);
+                    return paginated.map((ins) => (
+                      <tr key={ins.instructor_id} className="border-b border-gray-100 hover:bg-gray-50">
+                        <td className="py-3 px-4 font-medium">{ins.instructor_id}</td>
+                        <td className="py-3 px-4 text-sm">{ins.index_no ?? '-'}</td>
+                        <td className="py-3 px-4 font-medium">{ins.name}</td>
+                        <td className="py-3 px-4 text-sm">{ins.email}</td>
+                        <td className="py-3 px-4 text-sm">{ins.contact_no ?? '-'}</td>
+                        <td className="py-3 px-4 text-sm">{ins.university_name ?? '-'}</td>
+                        <td className="py-3 px-4 text-sm">{ins.username ?? '-'}</td>
+                        <td className="py-3 px-4 text-sm">
+                          {ins.password ? (
+                            <div className="flex items-center space-x-2">
+                              <span className="font-mono">{visiblePasswords[ins.instructor_id] ? ins.password : '********'}</span>
+                              <button
+                                onClick={() => togglePassword(ins.instructor_id)}
+                                className="text-blue-500 hover:text-blue-700 p-1 rounded"
+                                aria-label={visiblePasswords[ins.instructor_id] ? 'Hide password' : 'Show password'}
+                                title={visiblePasswords[ins.instructor_id] ? 'Hide password' : 'Show password'}
+                              >
+                                  {visiblePasswords[ins.instructor_id] ? (
+                                    <EyeOffIcon size={16} />
+                                  ) : (
+                                    <EyeIcon size={16} />
+                                  )}
+                              </button>
+                            </div>
+                          ) : (
+                            '-'
+                          )}
+                        </td>
+                        <td className="py-3 px-4">
+                          <div className="flex space-x-2">
+                            <button onClick={()=>navigate(`/instructors/${ins.instructor_id}/edit`)} className="text-blue-500 hover:text-blue-700">
+                              <EditIcon size={16} />
+                            </button>
+                            <button
+                              onClick={async () => {
+                                if (!window.confirm('Delete this instructor? This action cannot be undone.')) return;
+                                try {
+                                  const res = await fetch(`http://localhost:8000/instructor/${ins.instructor_id}`, { method: 'DELETE' });
+                                  if (!res.ok) throw new Error('Delete failed');
+                                  setInstructors(prev => prev.filter(i => i.instructor_id !== ins.instructor_id));
+                                  setVisiblePasswords(prev => { const copy = { ...prev }; delete copy[ins.instructor_id]; return copy; });
+                                } catch (err) {
+                                  console.error('Failed to delete instructor', err);
+                                  alert('Failed to delete instructor');
+                                }
+                              }}
+                              className="text-red-500 hover:text-red-700"
+                            >
+                              <TrashIcon size={16} />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ));
+                  })()}
+                </tbody>
+              </table>
+            </div>
+
+            <div className="flex justify-between items-center mt-6">
+              <div className="text-sm text-gray-500">
+                {(() => {
+                  const filteredInstructors = instructors.filter(ins => {
+                    const matchUniv = selectedUniversity ? ins.university_name === selectedUniversity : true;
+                    const q = instructorSearch.trim().toLowerCase();
+                    const matchSearch = !q || ins.name.toLowerCase().includes(q) || String(ins.instructor_id).includes(q);
+                    return matchUniv && matchSearch;
+                  });
+                  if (filteredInstructors.length === 0) return 'No instructors';
+                  const totalPages = Math.max(1, Math.ceil(filteredInstructors.length / pageSize));
+                  const page = Math.min(currentPageInstructors, totalPages);
+                  const startIndex = (page - 1) * pageSize;
+                  const endIndex = Math.min(startIndex + pageSize, filteredInstructors.length);
+                  return `Showing ${startIndex + 1}-${endIndex} of ${filteredInstructors.length} instructors`;
+                })()}
+              </div>
+              <div className="flex space-x-2">
+                <button
+                  onClick={() => setCurrentPageInstructors(p => Math.max(1, p - 1))}
+                  disabled={currentPageInstructors === 1}
+                  className={`px-3 py-1 border border-gray-300 rounded-md bg-white text-gray-700 disabled:opacity-50 ${currentPageInstructors === 1 ? 'cursor-not-allowed' : ''}`}
+                >
+                  Previous
+                </button>
+                <button className="px-3 py-1 bg-[#0D47A1] text-white rounded-md hover:bg-blue-800">
+                  {currentPageInstructors}
+                </button>
+                <button
+                  onClick={() => setCurrentPageInstructors(p => {
+                    const filteredInstructors = instructors.filter(ins => {
+                      const matchUniv = selectedUniversity ? ins.university_name === selectedUniversity : true;
+                      const q = instructorSearch.trim().toLowerCase();
+                      const matchSearch = !q || ins.name.toLowerCase().includes(q) || String(ins.instructor_id).includes(q);
+                      return matchUniv && matchSearch;
+                    });
+                    const totalPages = Math.max(1, Math.ceil(filteredInstructors.length / pageSize));
+                    return Math.min(totalPages, p + 1);
+                  })}
+                  disabled={(() => {
+                    const filteredInstructors = instructors.filter(ins => {
+                      const matchUniv = selectedUniversity ? ins.university_name === selectedUniversity : true;
+                      const q = instructorSearch.trim().toLowerCase();
+                      const matchSearch = !q || ins.name.toLowerCase().includes(q) || String(ins.instructor_id).includes(q);
+                      return matchUniv && matchSearch;
+                    });
+                    return currentPageInstructors >= Math.max(1, Math.ceil(filteredInstructors.length / pageSize));
+                  })()}
+                  className={`px-3 py-1 border border-gray-300 rounded-md bg-white text-gray-700 ${(() => {
+                    const filteredInstructors = instructors.filter(ins => {
+                      const matchUniv = selectedUniversity ? ins.university_name === selectedUniversity : true;
+                      const q = instructorSearch.trim().toLowerCase();
+                      const matchSearch = !q || ins.name.toLowerCase().includes(q) || String(ins.instructor_id).includes(q);
+                      return matchUniv && matchSearch;
+                    });
+                    return currentPageInstructors >= Math.max(1, Math.ceil(filteredInstructors.length / pageSize)) ? 'cursor-not-allowed disabled:opacity-50' : '';
+                  })()}`}
+                >
                   Next
                 </button>
               </div>

@@ -1,20 +1,47 @@
 // @ts-nocheck
 import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { LogInIcon, UserIcon, KeyIcon, GithubIcon } from 'lucide-react';
 const Login: React.FC = () => {
   const [isLogin, setIsLogin] = useState(true);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [name, setName] = useState('');
-  const handleSubmit = (e: React.FormEvent) => {
+  const navigate = useNavigate();
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Handle authentication logic here
-    console.log('Form submitted:', {
-      email,
-      password,
-      name
-    });
+    // Send login request to backend
+    try {
+      const res = await fetch('http://localhost:8000/login/', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username: email, password })
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        // show error
+        alert(data.detail || 'Login failed');
+        return;
+      }
+
+      // store token and role
+      if (data.access_token) {
+        localStorage.setItem('token', data.access_token);
+      }
+      if (data.role) {
+        localStorage.setItem('role', data.role);
+      }
+
+      // navigate to redirect_url if provided, else Dashboard
+      const target = data.redirect_url || '/Dashboard';
+      // If redirect_url is absolute and different origin, open in same window
+      navigate(target.replace('http://localhost:3000', ''));
+    } catch (err) {
+      console.error(err);
+      alert('Login request failed');
+    }
   };
   const toggleMode = () => {
     setIsLogin(!isLogin);

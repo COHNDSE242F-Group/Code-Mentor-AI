@@ -1,5 +1,5 @@
-import React, { useEffect, useState } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import React, { useEffect, useState, useRef, } from "react";
+import { useParams, useNavigate, useLocation } from "react-router-dom";
 import CodeEditor from "../components/CodeEditor";
 import LanguageSwitcher from "../components/LanguageSwitcher";
 import AiTutorChat from "../components/AiTutorChat";
@@ -13,11 +13,18 @@ import {
   FileTextIcon,
   ListIcon,
   Code2Icon,
+  TerminalIcon,
+  ClipboardListIcon,
+  BeakerIcon,
 } from "lucide-react";
 
 const CodeEditorPage: React.FC = () => {
-  const { problemId } = useParams();
   const navigate = useNavigate();
+
+  const reactLocation = useLocation();
+  const searchParams = new URLSearchParams(reactLocation.search);
+  const assignmentId = searchParams.get("assignmentId");
+  const problemId = searchParams.get("problemId");
 
   // ---------------------------
   // State variables
@@ -31,7 +38,16 @@ const CodeEditorPage: React.FC = () => {
   const [pasteDetected, setPasteDetected] = useState<boolean>(false);
   const [showHintButton, setShowHintButton] = useState<boolean>(true);
   const [loading, setLoading] = useState<boolean>(false);
-
+  const [showPasteModal, setShowPasteModal] = useState(false);
+  const editorRef = useRef<any>(null);
+  const [showSubmitModal, setShowSubmitModal] = useState(false);
+  const [keystrokeReport, setKeystrokeReport] = useState<{code: string; paste: boolean} | null>(null);
+  const defaultCodeMap: Record<string, string> = {
+    javascript: "// Write your solution here\nconsole.log('Hello, world!');",
+    python: "# Write your solution here\nprint('Hello, world!')",
+    c: "/* Write your solution here */\n#include <stdio.h>\nint main() {\n    printf(\"Hello, world!\\n\");\n    return 0;\n}",
+  };
+  const [problemData, setProblemData] = useState<any>(null);
   // ---------------------------
   // Auth & Page Setup
   // ---------------------------
@@ -44,6 +60,75 @@ const CodeEditorPage: React.FC = () => {
     document.title = `CodeMentorAI - ${problemId || "Code Editor"}`;
   }, [problemId]);
 
+  useEffect(() => {
+    const initializePage = async () => {
+      // Check for invalid cases: neither or both IDs provided
+      if ((!assignmentId && !problemId) || (assignmentId && problemId)) {
+        console.error("Invalid URL: must provide either assignmentId or problemId, not both.");
+        navigate("/");
+        return;
+      }
+
+      if (assignmentId) {
+        try {
+          const res = await fetchWithAuth(`http://localhost:8000/assignment/${assignmentId}`, {
+            method: "GET",
+          });
+
+          if (res.status === 401 || res.status === 403) {
+            navigate("/");
+            return;
+          }
+
+          if (!res.ok) {
+            navigate("/");
+            console.error("Failed to fetch assignment");
+            return;
+          }
+
+          const assignmentData = await res.json();
+          console.log("Assignment loaded:", assignmentData);
+          setProblemData(assignmentData);
+
+        } catch (err) {
+          console.error("Error fetching assignment:", err);
+          navigate("/");
+        }
+      } else if (problemId) {
+        // TODO: implement problem fetching logic later
+        console.log("Problem mode, ID:", problemId);
+      }
+    };
+
+    initializePage();
+  }, [assignmentId, problemId]);
+
+  useEffect(() => {
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      const token = localStorage.getItem("token");
+      const code = editorRef.current?.getValue() || "";
+      const language = selectedLanguage;
+
+      // Prepare payload with token
+      const payload = JSON.stringify({
+        action: "exit",
+        code,
+        language,
+        token,
+      });
+
+      const blob = new Blob([payload], { type: "application/json" });
+      navigator.sendBeacon("http://localhost:8000/keystroke/clear", blob);
+
+      // Optional: show browser confirmation dialog
+      e.preventDefault();
+      e.returnValue = ""; // required in Chrome
+    };
+
+    window.addEventListener("beforeunload", handleBeforeUnload);
+    return () => window.removeEventListener("beforeunload", handleBeforeUnload);
+  }, [selectedLanguage]);
+
   // ---------------------------
   // Helper: Auth headers
   // ---------------------------
@@ -54,6 +139,23 @@ const CodeEditorPage: React.FC = () => {
       ...(token ? { Authorization: `Bearer ${token}` } : {}),
     };
   };
+
+  const handleUndo = () => {
+    if (editorRef.current) {
+      editorRef.current.trigger('keyboard', 'undo', null);
+    }
+    setShowPasteModal(false);
+  };
+
+  const handleContinue = () => {
+    setShowPasteModal(false);
+
+    if (editorRef.current) {
+      // Trigger sending paste keystroke to backend
+      editorRef.current.sendPasteEvent();
+    }
+  };
+
 
   // ---------------------------
   // Ensure user is logged in
@@ -72,10 +174,7 @@ const CodeEditorPage: React.FC = () => {
   // ---------------------------
   const handleCodeChange = (newCode: string, isPaste?: boolean) => {
     setCode(newCode);
-    if (isPaste) {
-      setPasteDetected(true);
-      setTimeout(() => setPasteDetected(false), 3000);
-    }
+    if (isPaste) setShowPasteModal(true);
   };
 
   // ---------------------------
@@ -112,21 +211,90 @@ const CodeEditorPage: React.FC = () => {
   const handleSubmitCode = async () => {
     if (!ensureLoggedIn()) return;
 
-    setConsoleOutput(
-      (prev) =>
-        prev +
-        "\n> Submitting solution...\n> Validating...\n> All test cases passed!\n> Solution submitted successfully."
-    );
-
     try {
-      const res = await fetchWithAuth("http://localhost:8000/keystroke-report", {
+      const res = await fetchWithAuth("http://localhost:8000/keystroke/report", {
         method: "GET",
       });
+
+      if (!res.ok) throw new Error("Failed to fetch report");
+
       const report = await res.json();
-      console.log("Keystroke report sent for submission:", report);
+      setKeystrokeReport(report);
+      setShowSubmitModal(true); // Show modal
     } catch (err) {
       console.error("Failed to fetch keystroke report", err);
     }
+  };
+
+  const handleConfirmSubmit = async (assignmentId: number, keystrokeReport: any) => {
+    if (!ensureLoggedIn()) return;
+
+    try {
+      // Submit the code and keystroke report to backend
+      const submitRes = await fetchWithAuth("http://localhost:8000/submit", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          assignment_id: assignmentId,
+          report: keystrokeReport,
+        }),
+      });
+
+      if (!submitRes.ok) {
+        const errorData = await submitRes.json();
+        throw new Error(errorData.detail || "Submission failed");
+      }
+
+      const submitData = await submitRes.json();
+      console.log("Submission successful:", submitData);
+
+      // Clear the user's keystroke cache
+      const token = localStorage.getItem("token");
+      if (token) {
+        const clearRes = await fetch("http://localhost:8000/keystroke/clear", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ token }),
+        });
+
+        if (!clearRes.ok) {
+          const clearErr = await clearRes.json();
+          console.warn("Failed to clear keystrokes:", clearErr.detail);
+        } else {
+          console.log("Keystrokes cleared successfully");
+        }
+      }
+
+      alert("Code submitted successfully!");
+      setShowSubmitModal(false);
+      resetEditor();
+    } catch (err) {
+      console.error("Error submitting code:", err);
+      alert("Submission failed. Please try again.");
+    }
+  };
+
+  const resetEditor = () => {
+    const initialCode = defaultCodeMap[selectedLanguage];
+    
+    // Update the Monaco editor without triggering handleChange
+    editorRef.current?.setValue(initialCode);
+
+    // Update internal lastCode so paste detection stays correct
+    if (editorRef.current?.lastCode !== undefined) {
+      editorRef.current.lastCode = initialCode; // optional if you want to avoid paste detection
+    }
+
+    // Reset other states in parent if needed
+    setCode(initialCode);
+    setPasteDetected(false);
+    setConsoleOutput("");
+    setKeystrokeReport(null);
+    setShowSubmitModal(false);
   };
 
   // ---------------------------
@@ -144,9 +312,13 @@ const CodeEditorPage: React.FC = () => {
         <div className="flex h-full bg-[#1e1e2e] border-r border-[#313244] w-[320px] flex-shrink-0 min-h-0">
           {/* Sidebar Icons */}
           <div className="w-14 bg-[#181825] border-r border-[#313244] flex flex-col items-center py-3 space-y-4">
-            {[{ tab: "description", icon: FileTextIcon, title: "Description" },
+            {[
+              { tab: "description", icon: FileTextIcon, title: "Description" },
+              { tab: "io", icon: TerminalIcon, title: "Input / Output" },
+              { tab: "constraints", icon: ClipboardListIcon, title: "Constraints" },
               { tab: "examples", icon: ListIcon, title: "Examples" },
               { tab: "solution", icon: Code2Icon, title: "Solution" },
+              { tab: "testcases", icon: BeakerIcon, title: "Test Cases" },
             ].map(({ tab, icon: Icon, title }) => (
               <button
                 key={tab}
@@ -163,7 +335,7 @@ const CodeEditorPage: React.FC = () => {
             ))}
           </div>
 
-          {/* Problem Details */}
+          {/* Problem Details Section */}
           <div className="flex-1 flex flex-col min-h-0">
             <div className="flex items-center justify-between px-4 py-3 bg-[#181825] border-b border-[#313244]">
               <h2 className="font-semibold text-sm text-slate-200">
@@ -171,7 +343,11 @@ const CodeEditorPage: React.FC = () => {
               </h2>
             </div>
             <div className="flex-1 overflow-y-auto px-4 py-3 min-h-0">
-              <ProblemDetails activeTab={activeTab} setActiveTab={setActiveTab} />
+              <ProblemDetails
+                activeTab={activeTab}
+                setActiveTab={setActiveTab}
+                data={problemData}
+              />
             </div>
           </div>
         </div>
@@ -218,6 +394,7 @@ const CodeEditorPage: React.FC = () => {
             {/* Code editor */}
             <div className="flex-1 overflow-auto bg-gray-800 min-h-0">
               <CodeEditor
+                ref={editorRef}
                 language={selectedLanguage}
                 value={code}
                 onChange={handleCodeChange}
@@ -229,6 +406,39 @@ const CodeEditorPage: React.FC = () => {
                   }
                 }}
               />
+
+              {showPasteModal && (
+                <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-60 z-50">
+                  <div className="bg-white p-6 rounded-2xl shadow-lg max-w-md text-center space-y-4">
+                    <h2 className="text-lg font-semibold text-gray-800">
+                      Paste Detected
+                    </h2>
+                    <p className="text-gray-600">
+                      A paste action was detected. Do you want to undo the last action?
+                    </p>
+
+                    <label className="flex items-center gap-2 text-sm text-gray-600 justify-center">
+                      <input type="checkbox" required />
+                      I understand this will be recorded.
+                    </label>
+
+                    <div className="flex justify-center gap-4 pt-3">
+                      <button
+                        onClick={handleUndo}
+                        className="px-4 py-2 bg-red-500 text-white rounded-md hover:bg-red-600"
+                      >
+                        Undo
+                      </button>
+                      <button
+                        onClick={handleContinue}
+                        className="px-4 py-2 bg-green-500 text-white rounded-md hover:bg-green-600"
+                      >
+                        Continue
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* Hint button */}
@@ -255,6 +465,50 @@ const CodeEditorPage: React.FC = () => {
             <AiTutorChat />
           </div>
         </div>
+
+        {showSubmitModal && keystrokeReport && (
+          <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-80 z-50">
+            <div className="bg-white w-11/12 max-w-5xl h-4/5 p-8 rounded-3xl shadow-2xl flex flex-col space-y-6">
+              <h2 className="text-2xl font-bold text-gray-900 text-center">
+                Submit Code
+              </h2>
+
+              <div className="flex-1 overflow-auto bg-gray-100 p-4 rounded-lg border border-gray-300">
+                <pre className="whitespace-pre-wrap text-sm md:text-base text-gray-800 font-mono">
+                  {keystrokeReport.code}
+                </pre>
+              </div>
+
+              <p className="text-lg font-medium text-gray-800 text-center">
+                {keystrokeReport.paste ? "⚠️ Paste detected!" : "✅ No paste detected"}
+              </p>
+
+              <div className="flex justify-center gap-6">
+                <button
+                  onClick={() => {
+                    setShowSubmitModal(false);
+                    console.log("User canceled submission");
+                    // TODO: handle cancel logic
+                  }}
+                  className="px-6 py-3 bg-red-600 text-white font-semibold rounded-lg hover:bg-red-700 transition"
+                >
+                  Cancel
+                </button>
+
+                <button
+                  onClick={() => {
+                    if (problemData && problemData.assignment_id) {
+                      handleConfirmSubmit(problemData.assignment_id, keystrokeReport)
+                    }
+                  }}
+                  className="px-6 py-3 bg-green-600 text-white font-semibold rounded-lg hover:bg-green-700 transition"
+                >
+                  Submit
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

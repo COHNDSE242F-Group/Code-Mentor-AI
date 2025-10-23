@@ -3,12 +3,13 @@ import ssl
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
 from sqlalchemy.orm import sessionmaker, declarative_base
 from fastapi import Depends
+from typing import AsyncGenerator
 
 # ===========================
 # Neon Database Configuration
 # ===========================
 DB_USER = "neondb_owner"              # from Neon GUI
-DB_PASSWORD = "npg_k5qcgEu0LSBP"      # from Neon GUI
+DB_PASSWORD = "npg_k5qcgEu0LSBP"     # from Neon GUI
 DB_HOST = "ep-steep-glitter-a1pg3spu-pooler.ap-southeast-1.aws.neon.tech"
 DB_NAME = "code_mentor_db"
 
@@ -46,7 +47,7 @@ Base = declarative_base()
 # ===========================
 # FastAPI Dependency
 # ===========================
-async def get_db() -> AsyncSession:
+async def get_db() -> AsyncGenerator[AsyncSession, None]:
     """
     FastAPI dependency that yields a database session for each request
     and ensures it is closed after the request finishes.
