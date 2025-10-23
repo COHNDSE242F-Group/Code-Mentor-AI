@@ -1,8 +1,7 @@
-// @ts-nocheck
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { PlayIcon, MessageSquareIcon, BookOpenIcon, ClockIcon, CheckCircleIcon, AlertTriangleIcon } from 'lucide-react';
-const Dashboard: React.FC = () => {
+const StudentDashboard: React.FC = () => {
   return <div className="space-y-6">
       {/* Welcome section */}
       <div className="flex flex-col md:flex-row md:items-center md:justify-between">
@@ -239,4 +238,4 @@ const Dashboard: React.FC = () => {
       </div>
     </div>;
 };
-export default Dashboard;
+export default StudentDashboard;

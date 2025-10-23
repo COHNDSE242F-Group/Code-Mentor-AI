@@ -1,8 +1,11 @@
 import React from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation,useNavigate} from 'react-router-dom';
 import { LayoutDashboardIcon, FileTextIcon, SendIcon, UsersIcon, BarChartIcon, MessageSquareIcon, SettingsIcon, LogOutIcon } from 'lucide-react';
 const Sidebar = () => {
   const location = useLocation();
+
+  const navigate = useNavigate();
+
   const navItems = [{
     icon: <LayoutDashboardIcon size={20} />,
     label: 'Dashboard',
@@ -36,6 +39,11 @@ const Sidebar = () => {
     if (path === '/dashboard') return location.pathname === '/dashboard';
     return location.pathname.startsWith(path);
   };
+
+  const handleLogout = () => {
+    localStorage.removeItem('authToken'); // Clear auth token
+    navigate('/'); // Navigate to home
+  };
   return <div className="w-64 bg-[#0D47A1] text-white flex flex-col h-full">
       <div className="p-5">
         <h1 className="text-xl font-bold flex items-center">
@@ -54,7 +62,10 @@ const Sidebar = () => {
         </nav>
       </div>
       <div className="p-4 border-t border-blue-800">
-        <button className="flex items-center text-gray-300 hover:text-white w-full px-4 py-2">
+        <button
+          onClick={handleLogout}
+          className="flex items-center text-gray-300 hover:text-white w-full px-4 py-2"
+        >
           <LogOutIcon size={20} className="mr-3" />
           <span>Logout</span>
         </button>
