@@ -41,12 +41,9 @@ routers = [
     assignment_details_router,
     code_submit_router,
     assignment_router,
-    student_router
-    ,
-    instructor_router
-    ,
-    reset_password_router
-    report_router,
     student_router,
-    public_lists_router
+    instructor_router,
+    reset_password_router,
+    report_router,
+    public_lists_router,
 ]
