@@ -70,8 +70,8 @@ function App() {
        
 
         {/* Protected routes with layout */}
-        <Route path="/submissions" element={<Layout><SubmissionsList /></Layout>} />
-        <Route path="/submissions/:id" element={<Layout><SubmissionDetail /></Layout>} />
+        <Route path="/submissions" element={<SubmissionsList />} />
+        <Route path="/submissions/:submissionId" element={<SubmissionDetail />} /> {/* Correct route */}
         <Route path="/messaging" element={<Layout><Messaging /></Layout>} />
         <Route path="/account" element={<Layout><AccountDetails /></Layout>} />
         <Route path="/assignments/create" element={<Layout><CreateAssignment /></Layout>} />

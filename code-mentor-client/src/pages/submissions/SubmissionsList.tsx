@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import Card from '../../components/ui/Card';
@@ -225,10 +224,10 @@ const [loading, setLoading] = useState(true);
             <tbody>
               {sortedSubmissions.map(submission => <tr key={submission.id} className="border-b border-gray-100 hover:bg-gray-50">
                  <td className="py-3 px-4">
-              <Link to={`/submissions/${submission.id}`} className="font-medium text-[#0D47A1] hover:underline">
-             {submission.student.student_name} {/* Access student_name */}
-          </Link>
-             <div className="text-xs text-gray-500">
+             <Link to={`/submissions/${submission.id}`} className="font-medium text-[#0D47A1] hover:underline">
+  {submission.student.student_name} {/* Access student_name */}
+</Link>
+             <div className="text-xs text-gray-500">  
             {submission.student.student_id} {/* Access student_id */}
           </div>
             </td>

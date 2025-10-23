@@ -61,17 +61,47 @@ async def get_submissions():
             .options(joinedload(Submission.assignment), joinedload(Submission.student))
         )
         submissions = result.scalars().all()
-        return submissions
+
+        # Extract data from the report JSON column for each submission
+        return [
+            {
+                "submission_id": submission.submission_id,
+                "assignment": submission.assignment,
+                "student": submission.student,
+                "report": submission.report or {},  # Ensure report is a dictionary
+                "submitted_at": submission.submitted_at,
+            }
+            for submission in submissions
+        ]
 
 # Get a single submission by ID with related data
 @router.get("/{submission_id}", response_model=SubmissionOut)
-async def get_submission(submission_id: int):
-    async with async_session() as session:
-        result = await session.execute(select(Submission).where(Submission.submission_id == submission_id).options(
-            select(Submission.assignment),
-            select(Submission.student)
-        ))
-        submission = result.scalar_one_or_none()
-        if not submission:
-            raise HTTPException(status_code=404, detail="Submission not found")
-        return submission
+async def get_submission(submission_id: int, session: AsyncSession = Depends(async_session)):
+    result = await session.execute(
+        select(Submission)
+        .where(Submission.submission_id == submission_id)
+        .options(
+            joinedload(Submission.assignment),
+            joinedload(Submission.student)
+        )
+    )
+    submission = result.scalar_one_or_none()
+    if not submission:
+        raise HTTPException(status_code=404, detail="Submission not found")
+
+    # Extract code from the report JSON
+    report = submission.report or {}
+    return {
+        "id": submission.submission_id,
+        "assignment": submission.assignment.assignment_name,
+        "student": submission.student.student_name,
+        "studentId": submission.student.index_no,
+        "submittedAt": submission.submitted_at.strftime("%b %d, %Y - %I:%M %p"),
+        "code": report.get("code", ""),  # Extract code
+        "paste": report.get("paste", False),  # Extract paste flag
+        "status": report.get("status", "Pending"),
+        "score": report.get("score"),
+        "batch": submission.student.batch_id,
+        "plagiarism": report.get("plagiarism"),  # Dummy data
+        "ai_feedback": report.get("ai_feedback"),  # Dummy data
+    }
