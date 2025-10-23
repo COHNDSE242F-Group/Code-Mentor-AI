@@ -23,7 +23,8 @@ const CreateAssignment = () => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   useEffect(() => {
-    fetch('http://localhost:8000/assignment/options')
+    const token = localStorage.getItem('token');
+    fetch('http://localhost:8000/assignment/options', { headers: { Authorization: token ? `Bearer ${token}` : '' } })
       .then(res => res.json())
       .then(data => setBatches(data.batches || []));
     // Load draft if exists
@@ -53,10 +54,23 @@ const CreateAssignment = () => {
       setTimeout(() => setError(''), 2000);
       return;
     }
+    const token = localStorage.getItem('token');
+    const payload = {
+      title: form.title,
+      language: form.language,
+      difficulty: form.difficulty,
+      dueDate: form.dueDate,
+      dueTime: form.dueTime,
+      batch: form.batch,
+      instructions: form.instructions,
+      aiEvaluation: form.aiEvaluation,
+      plagiarism: form.plagiarism,
+    };
+
     const res = await fetch('http://localhost:8000/assignment/create', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(form)
+      headers: { 'Content-Type': 'application/json', Authorization: token ? `Bearer ${token}` : '' },
+      body: JSON.stringify(payload)
     });
     if (res.ok) {
       setSuccess('Assignment created successfully!');

@@ -1,18 +1,93 @@
-from fastapi import APIRouter
-from typing import Dict, Any
+from fastapi import APIRouter, Depends, HTTPException, status
+from pydantic import BaseModel
+from typing import Optional, Dict, Any
+from datetime import date
+from sqlalchemy.future import select
+
+from database import async_session
+from models.assignment import Assignment
+from models.batch import Batch
+from auth.dependencies import login_required
 
 router = APIRouter()
 
-# Mock batch/group options
-MOCK_BATCHES = ["All Students", "Batch A", "Batch B", "Batch C", "Custom Group"]
+
+class AssignmentCreateIn(BaseModel):
+    title: str
+    language: str
+    difficulty: str
+    dueDate: str  # ISO date string
+    dueTime: Optional[str] = None
+    batch: Optional[str] = None
+    instructions: str
+    aiEvaluation: Optional[bool] = False
+    plagiarism: Optional[bool] = False
+
 
 @router.get("/assignment/options")
-def get_assignment_options():
-    return {"batches": MOCK_BATCHES}
+async def get_assignment_options():
+    """Return available batches/groups for assignment targeting."""
+    async with async_session() as session:
+        result = await session.execute(select(Batch))
+        batches = [b.batch_name for b in result.scalars().all()]
+        # include an 'All Students' option for convenience
+        return {"batches": ["All Students"] + batches}
+
 
 @router.post("/assignment/create")
-def create_assignment(assignment: Dict[str, Any]):
-    # For now, just echo back the posted assignment
-    return assignment
+async def create_assignment(assignment: AssignmentCreateIn, token_data: dict = Depends(login_required)):
+    """Create an assignment in the database. Requires authentication (instructor).
+    The token's user_id is used as instructor_id.
+    """
+    user_id_raw = token_data.get("user_id")
+    try:
+        instructor_id = int(user_id_raw)
+    except Exception:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid user id in token")
+
+    # Parse due date
+    try:
+        due_date = date.fromisoformat(assignment.dueDate)
+    except Exception:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid dueDate format, expected YYYY-MM-DD")
+
+    async with async_session() as session:
+        # Resolve batch name to batch_id (if provided and not 'All Students')
+        batch_id = None
+        if assignment.batch and assignment.batch != "All Students":
+            result = await session.execute(select(Batch).where(Batch.batch_name == assignment.batch))
+            batch = result.scalar_one_or_none()
+            if not batch:
+                raise HTTPException(status_code=404, detail=f"Batch '{assignment.batch}' not found")
+            batch_id = batch.batch_id
+
+        # Store instructions and metadata in description (JSON column)
+        description: Dict[str, Any] = {
+            "instructions": assignment.instructions,
+            "language": assignment.language,
+            "difficulty": assignment.difficulty,
+            "aiEvaluation": assignment.aiEvaluation,
+            "plagiarism": assignment.plagiarism,
+        }
+
+        new_assignment = Assignment(
+            assignment_name=assignment.title,
+            description=description,
+            due_date=due_date,
+            instructor_id=instructor_id,
+            batch_id=batch_id,
+        )
+
+        session.add(new_assignment)
+        await session.commit()
+        await session.refresh(new_assignment)
+
+        return {
+            "assignment_id": new_assignment.assignment_id,
+            "assignment_name": new_assignment.assignment_name,
+            "due_date": str(new_assignment.due_date),
+            "instructor_id": new_assignment.instructor_id,
+            "batch_id": new_assignment.batch_id,
+        }
 
 
