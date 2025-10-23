@@ -20,6 +20,7 @@ from .assignment import router as assignment_router
 from .report import router as report_router
 from .student import router as student_router
 from .public_lists import router as public_lists_router
+from .student_messaging import router as student_messaging_router
 
 routers = [
     
@@ -41,5 +42,6 @@ routers = [
     assignment_router,
     report_router,
     student_router,
-    public_lists_router
+    public_lists_router,
+    student_messaging_router,
 ]

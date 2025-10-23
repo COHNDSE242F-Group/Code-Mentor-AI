@@ -20,12 +20,15 @@ import EditStudent from "./pages/EditStudent";
 // // Submissions
 import SubmissionsList from "./pages/submissions/SubmissionsList";
 import SubmissionDetail from "./pages/submissions/SubmissionDetail";
+import StudentMessaging from "./pages/StudentMessaging";
 
 // // Other Pages
 //import AIEvaluationBuilder from "./pages/AIEvaluationBuilder";
  import BatchManagement from "./pages/BatchManagement";
  import Reports from "./pages/Reports";
 import Messaging from "./pages/Messaging";
+
+
 // import Settings from "./pages/Settings";
 
 // Auth Pages
@@ -55,7 +58,9 @@ function App() {
         <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="/reset-password" element={<ResetPassword />} />
 
+
         
+
         {/*<Route path="/verify-email" element={<VerifyEmail />} /> */}
         
 
@@ -77,6 +82,7 @@ function App() {
         <Route path="/assignments/create" element={<Layout><CreateAssignment /></Layout>} />
         <Route path="/assignments" element={<Layout><AssignmentList /></Layout>} />
         <Route path="/assignments/:id" element={<Layout><AssignmentDetail /></Layout>} />
+        
         {/* <Route path="/dashboard" element={<Layout><Dashboard /></Layout>} />
          <Route path="/assignments/:id" element={<Layout><AssignmentDetail /></Layout>} />
           <Route path="/dashboard" element={<Layout><Dashboard /></Layout>} />
@@ -98,6 +104,7 @@ function App() {
         
         <Route path="/settings" element={<Layout><Settings /></Layout>} />
         */}
+        <Route path="/student-messaging" element={<StudentLayout><StudentMessaging /></StudentLayout>} />
       </Routes>
     </Router>
   );
