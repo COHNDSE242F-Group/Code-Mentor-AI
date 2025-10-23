@@ -36,11 +36,23 @@ interface Student {
   password?: string | null;
 }
 
+interface Instructor {
+  instructor_id: number;
+  index_no?: string | null;
+  name: string;
+  email: string;
+  contact_no?: string | null;
+  university_name?: string | null;
+  username?: string | null;
+  password?: string | null;
+}
+
 const BatchManagement: React.FC = () => {
    const navigate = useNavigate();
-  const [activeTab, setActiveTab] = useState<"batches" | "students">("batches");
+  const [activeTab, setActiveTab] = useState<"batches" | "students" | "instructors">("batches");
   const [batches, setBatches] = useState<Batch[]>([]);
   const [students, setStudents] = useState<Student[]>([]);
+  const [instructors, setInstructors] = useState<Instructor[]>([]);
   const [loading, setLoading] = useState(true);
   const [visiblePasswords, setVisiblePasswords] = useState<Record<number, boolean>>({});
   const [currentPage, setCurrentPage] = useState<number>(1);
@@ -55,20 +67,23 @@ const BatchManagement: React.FC = () => {
     const fetchData = async () => {
       try {
         // Replace with your FastAPI endpoints
-        const [batchesRes, studentsRes] = await Promise.all([
+        const [batchesRes, studentsRes, instructorsRes] = await Promise.all([
           fetch("http://localhost:8000/batches"),
           fetch("http://localhost:8000/students"),
+          fetch("http://localhost:8000/instructors"),
         ]);
 
-        if (!batchesRes.ok || !studentsRes.ok) {
+        if (!batchesRes.ok || !studentsRes.ok || !instructorsRes.ok) {
           throw new Error("Failed to fetch data");
         }
 
         const batchData: Batch[] = await batchesRes.json();
         const studentData: Student[] = await studentsRes.json();
+        const instructorData: Instructor[] = await instructorsRes.json();
 
         setBatches(batchData);
         setStudents(studentData);
+        setInstructors(instructorData);
       } catch (error) {
         console.error("Error fetching batches/students:", error);
       } finally {
@@ -112,6 +127,16 @@ const BatchManagement: React.FC = () => {
             onClick={() => setActiveTab("students")}
           >
             Students
+          </button>
+          <button
+            className={`py-3 px-6 font-medium ${
+              activeTab === "instructors"
+                ? "text-[#0D47A1] border-b-2 border-[#0D47A1]"
+                : "text-gray-500"
+            }`}
+            onClick={() => setActiveTab("instructors")}
+          >
+            Instructors
           </button>
         </div>
       </div>
@@ -190,7 +215,7 @@ const BatchManagement: React.FC = () => {
             ))}
           </div>
         </div>
-      ) : (
+      ) : activeTab === 'students' ? (
         // Students View
         <div>
           <div className="flex justify-between items-center mb-6">
@@ -361,6 +386,163 @@ const BatchManagement: React.FC = () => {
                   })}
                   disabled={currentPage >= Math.max(1, Math.ceil(students.length / pageSize))}
                   className={`px-3 py-1 border border-gray-300 rounded-md bg-white text-gray-700 ${currentPage >= Math.max(1, Math.ceil(students.length / pageSize)) ? 'cursor-not-allowed disabled:opacity-50' : ''}`}
+                >
+                  Next
+                </button>
+              </div>
+            </div>
+          </Card>
+        </div>
+      ) : (
+        // Instructors View
+        <div>
+          <div className="flex justify-between items-center mb-6">
+            <div className="relative w-64">
+              <input
+                type="text"
+                placeholder="Search instructors..."
+                className="w-full pl-10 pr-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-[#0D47A1] focus:border-transparent"
+              />
+            </div>
+            <div className="flex space-x-4">
+              <select className="px-4 py-2 border border-gray-300 rounded-md bg-white text-gray-700">
+                <option>All Universities</option>
+                {batches.map((batch) => (
+                  <option key={batch.id}>{batch.name}</option>
+                ))}
+              </select>
+
+              <button
+                onClick={() => navigate('/addinstructor')}
+                className="inline-flex items-center px-4 py-2 bg-[#0D47A1] text-white rounded-md hover:bg-blue-800"
+              >
+                <PlusIcon size={16} className="mr-2" />
+                Add Instructor
+              </button>
+            </div>
+          </div>
+
+          <Card>
+            <div className="flex items-center justify-between mb-4">
+              <div>
+                <span className="text-sm text-gray-600">Passwords are masked by default. Click the eye icon on a row to reveal.</span>
+              </div>
+            </div>
+            <div className="overflow-x-auto">
+              <table className="min-w-full">
+                <thead>
+                  <tr className="bg-gray-50 border-b border-gray-200">
+                    <th className="py-3 px-4 text-left text-sm font-medium text-gray-500">ID</th>
+                    <th className="py-3 px-4 text-left text-sm font-medium text-gray-500">Index No</th>
+                    <th className="py-3 px-4 text-left text-sm font-medium text-gray-500">Name</th>
+                    <th className="py-3 px-4 text-left text-sm font-medium text-gray-500">Email</th>
+                    <th className="py-3 px-4 text-left text-sm font-medium text-gray-500">Contact</th>
+                    <th className="py-3 px-4 text-left text-sm font-medium text-gray-500">University</th>
+                    <th className="py-3 px-4 text-left text-sm font-medium text-gray-500">Username</th>
+                    <th className="py-3 px-4 text-left text-sm font-medium text-gray-500">Password</th>
+                    <th className="py-3 px-4 text-left text-sm font-medium text-gray-500">ACTIONS</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {(() => {
+                    const totalPages = Math.max(1, Math.ceil(instructors.length / pageSize));
+                    const page = Math.min(currentPage, totalPages);
+                    const startIndex = (page - 1) * pageSize;
+                    const endIndex = startIndex + pageSize;
+                    const paginated = instructors.slice(startIndex, endIndex);
+                    return paginated.map((ins) => (
+                      <tr key={ins.instructor_id} className="border-b border-gray-100 hover:bg-gray-50">
+                        <td className="py-3 px-4 font-medium">{ins.instructor_id}</td>
+                        <td className="py-3 px-4 text-sm">{ins.index_no ?? '-'}</td>
+                        <td className="py-3 px-4 font-medium">{ins.name}</td>
+                        <td className="py-3 px-4 text-sm">{ins.email}</td>
+                        <td className="py-3 px-4 text-sm">{ins.contact_no ?? '-'}</td>
+                        <td className="py-3 px-4 text-sm">{ins.university_name ?? '-'}</td>
+                        <td className="py-3 px-4 text-sm">{ins.username ?? '-'}</td>
+                        <td className="py-3 px-4 text-sm">
+                          {ins.password ? (
+                            <div className="flex items-center space-x-2">
+                              <span className="font-mono">{visiblePasswords[ins.instructor_id] ? ins.password : '********'}</span>
+                              <button
+                                onClick={() => togglePassword(ins.instructor_id)}
+                                className="text-blue-500 hover:text-blue-700 p-1 rounded"
+                                aria-label={visiblePasswords[ins.instructor_id] ? 'Hide password' : 'Show password'}
+                                title={visiblePasswords[ins.instructor_id] ? 'Hide password' : 'Show password'}
+                              >
+                                  {visiblePasswords[ins.instructor_id] ? (
+                                    <EyeOffIcon size={16} />
+                                  ) : (
+                                    <EyeIcon size={16} />
+                                  )}
+                              </button>
+                            </div>
+                          ) : (
+                            '-'
+                          )}
+                        </td>
+                        <td className="py-3 px-4">
+                          <div className="flex space-x-2">
+                            <button onClick={()=>navigate(`/instructors/${ins.instructor_id}/edit`)} className="text-blue-500 hover:text-blue-700">
+                              <EditIcon size={16} />
+                            </button>
+                            <button
+                              onClick={async () => {
+                                if (!window.confirm('Delete this instructor? This action cannot be undone.')) return;
+                                try {
+                                  const res = await fetch(`http://localhost:8000/instructor/${ins.instructor_id}`, { method: 'DELETE' });
+                                  if (!res.ok) throw new Error('Delete failed');
+                                  setInstructors(prev => prev.filter(i => i.instructor_id !== ins.instructor_id));
+                                  setVisiblePasswords(prev => { const copy = { ...prev }; delete copy[ins.instructor_id]; return copy; });
+                                } catch (err) {
+                                  console.error('Failed to delete instructor', err);
+                                  alert('Failed to delete instructor');
+                                }
+                              }}
+                              className="text-red-500 hover:text-red-700"
+                            >
+                              <TrashIcon size={16} />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ));
+                  })()}
+                </tbody>
+              </table>
+            </div>
+
+            <div className="flex justify-between items-center mt-6">
+              <div className="text-sm text-gray-500">
+                {instructors.length === 0 ? (
+                  'No instructors'
+                ) : (
+                  (() => {
+                    const totalPages = Math.max(1, Math.ceil(instructors.length / pageSize));
+                    const page = Math.min(currentPage, totalPages);
+                    const startIndex = (page - 1) * pageSize;
+                    const endIndex = Math.min(startIndex + pageSize, instructors.length);
+                    return `Showing ${startIndex + 1}-${endIndex} of ${instructors.length} instructors`;
+                  })()
+                )}
+              </div>
+              <div className="flex space-x-2">
+                <button
+                  onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                  disabled={currentPage === 1}
+                  className={`px-3 py-1 border border-gray-300 rounded-md bg-white text-gray-700 disabled:opacity-50 ${currentPage === 1 ? 'cursor-not-allowed' : ''}`}
+                >
+                  Previous
+                </button>
+                <button className="px-3 py-1 bg-[#0D47A1] text-white rounded-md hover:bg-blue-800">
+                  {currentPage}
+                </button>
+                <button
+                  onClick={() => setCurrentPage(p => {
+                    const totalPages = Math.max(1, Math.ceil(instructors.length / pageSize));
+                    return Math.min(totalPages, p + 1);
+                  })}
+                  disabled={currentPage >= Math.max(1, Math.ceil(instructors.length / pageSize))}
+                  className={`px-3 py-1 border border-gray-300 rounded-md bg-white text-gray-700 ${currentPage >= Math.max(1, Math.ceil(instructors.length / pageSize)) ? 'cursor-not-allowed disabled:opacity-50' : ''}`}
                 >
                   Next
                 </button>

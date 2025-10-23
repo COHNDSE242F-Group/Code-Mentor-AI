@@ -15,6 +15,8 @@ import AssignmentList from "./pages/assignments/AssignmentList";
 import AssignmentDetail from "./pages/assignments/AssignmentDetail";
 import AddStudent from "./pages/AddStudent";
 import EditStudent from "./pages/EditStudent";
+import EditInstructor from "./pages/EditInstructor";
+import AddInstructor from "./pages/AddInstructor";
 
 // // Submissions
 import SubmissionsList from "./pages/submissions/SubmissionsList";
@@ -71,7 +73,9 @@ function App() {
            <Route path="/batches" element={<Layout><BatchManagement /></Layout>} />
 
            <Route path="/addstudent" element={<AddStudent />} />
+        <Route path="/addinstructor" element={<AddInstructor />} />
     <Route path="/students/:id/edit" element={<Layout><EditStudent /></Layout>} />
+        <Route path="/instructors/:id/edit" element={<Layout><EditInstructor /></Layout>} />
 
         {/*
         
