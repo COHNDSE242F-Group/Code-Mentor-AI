@@ -55,8 +55,12 @@ const BatchManagement: React.FC = () => {
   const [instructors, setInstructors] = useState<Instructor[]>([]);
   const [loading, setLoading] = useState(true);
   const [visiblePasswords, setVisiblePasswords] = useState<Record<number, boolean>>({});
-  const [currentPage, setCurrentPage] = useState<number>(1);
+  const [currentPageStudents, setCurrentPageStudents] = useState<number>(1);
+  const [currentPageInstructors, setCurrentPageInstructors] = useState<number>(1);
   const [pageSize] = useState<number>(10);
+  const [studentSearch, setStudentSearch] = useState<string>("");
+  const [instructorSearch, setInstructorSearch] = useState<string>("");
+  const [selectedUniversity, setSelectedUniversity] = useState<string | null>(null);
 
   const togglePassword = (id: number) => {
     setVisiblePasswords(prev => ({ ...prev, [id]: !prev[id] }));
@@ -222,7 +226,9 @@ const BatchManagement: React.FC = () => {
             <div className="relative w-64">
               <input
                 type="text"
-                placeholder="Search students..."
+                placeholder="Search students by name or id..."
+                value={studentSearch}
+                onChange={(e) => { setStudentSearch(e.target.value); setCurrentPageStudents(1); }}
                 className="w-full pl-10 pr-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-[#0D47A1] focus:border-transparent"
               />
               <SearchIcon
@@ -231,10 +237,14 @@ const BatchManagement: React.FC = () => {
               />
             </div>
             <div className="flex space-x-4">
-              <select className="px-4 py-2 border border-gray-300 rounded-md bg-white text-gray-700">
-                <option>All Batches</option>
-                {batches.map((batch) => (
-                  <option key={batch.id}>{batch.name}</option>
+              <select
+                value={selectedUniversity ?? ''}
+                onChange={(e) => { setSelectedUniversity(e.target.value || null); setCurrentPageStudents(1); setCurrentPageInstructors(1); }}
+                className="px-4 py-2 border border-gray-300 rounded-md bg-white text-gray-700"
+              >
+                <option value="">All Universities</option>
+                {Array.from(new Set(students.map(s => s.university_name ?? '').concat(instructors.map(i => i.university_name ?? '')))).filter(Boolean).map((u) => (
+                  <option key={u as string} value={u as string}>{u as string}</option>
                 ))}
               </select>
 
@@ -273,11 +283,17 @@ const BatchManagement: React.FC = () => {
                 </thead>
                 <tbody>
                   {(() => {
-                    const totalPages = Math.max(1, Math.ceil(students.length / pageSize));
-                    const page = Math.min(currentPage, totalPages);
+                    const filteredStudents = students.filter(s => {
+                      const matchUniv = selectedUniversity ? s.university_name === selectedUniversity : true;
+                      const q = studentSearch.trim().toLowerCase();
+                      const matchSearch = !q || s.name.toLowerCase().includes(q) || String(s.student_id).includes(q);
+                      return matchUniv && matchSearch;
+                    });
+                    const totalPages = Math.max(1, Math.ceil(filteredStudents.length / pageSize));
+                    const page = Math.min(currentPageStudents, totalPages);
                     const startIndex = (page - 1) * pageSize;
                     const endIndex = startIndex + pageSize;
-                    const paginatedStudents = students.slice(startIndex, endIndex);
+                    const paginatedStudents = filteredStudents.slice(startIndex, endIndex);
                     return paginatedStudents.map((student) => (
                     <tr key={student.student_id} className="border-b border-gray-100 hover:bg-gray-50">
                       <td className="py-3 px-4 font-medium">{student.student_id}</td>
@@ -325,8 +341,14 @@ const BatchManagement: React.FC = () => {
                                 setStudents(prev => {
                                   const next = prev.filter(s => s.student_id !== student.student_id);
                                   // adjust page if needed
-                                  const newTotalPages = Math.max(1, Math.ceil(next.length / pageSize));
-                                  if (currentPage > newTotalPages) setCurrentPage(newTotalPages);
+                                  const filteredNext = next.filter(s => {
+                                    const matchUniv = selectedUniversity ? s.university_name === selectedUniversity : true;
+                                    const q = studentSearch.trim().toLowerCase();
+                                    const matchSearch = !q || s.name.toLowerCase().includes(q) || String(s.student_id).includes(q);
+                                    return matchUniv && matchSearch;
+                                  });
+                                  const newTotalPages = Math.max(1, Math.ceil(filteredNext.length / pageSize));
+                                  if (currentPageStudents > newTotalPages) setCurrentPageStudents(newTotalPages);
                                   return next;
                                 });
                                 setVisiblePasswords(prev => {
@@ -356,36 +378,61 @@ const BatchManagement: React.FC = () => {
 
             <div className="flex justify-between items-center mt-6">
               <div className="text-sm text-gray-500">
-                {students.length === 0 ? (
-                  'No students'
-                ) : (
-                  (() => {
-                    const totalPages = Math.max(1, Math.ceil(students.length / pageSize));
-                    const page = Math.min(currentPage, totalPages);
-                    const startIndex = (page - 1) * pageSize;
-                    const endIndex = Math.min(startIndex + pageSize, students.length);
-                    return `Showing ${startIndex + 1}-${endIndex} of ${students.length} students`;
-                  })()
-                )}
+                {(() => {
+                  const filteredStudents = students.filter(s => {
+                    const matchUniv = selectedUniversity ? s.university_name === selectedUniversity : true;
+                    const q = studentSearch.trim().toLowerCase();
+                    const matchSearch = !q || s.name.toLowerCase().includes(q) || String(s.student_id).includes(q);
+                    return matchUniv && matchSearch;
+                  });
+                  if (filteredStudents.length === 0) return 'No students';
+                  const totalPages = Math.max(1, Math.ceil(filteredStudents.length / pageSize));
+                  const page = Math.min(currentPageStudents, totalPages);
+                  const startIndex = (page - 1) * pageSize;
+                  const endIndex = Math.min(startIndex + pageSize, filteredStudents.length);
+                  return `Showing ${startIndex + 1}-${endIndex} of ${filteredStudents.length} students`;
+                })()}
               </div>
               <div className="flex space-x-2">
                 <button
-                  onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
-                  disabled={currentPage === 1}
-                  className={`px-3 py-1 border border-gray-300 rounded-md bg-white text-gray-700 disabled:opacity-50 ${currentPage === 1 ? 'cursor-not-allowed' : ''}`}
+                  onClick={() => setCurrentPageStudents(p => Math.max(1, p - 1))}
+                  disabled={currentPageStudents === 1}
+                  className={`px-3 py-1 border border-gray-300 rounded-md bg-white text-gray-700 disabled:opacity-50 ${currentPageStudents === 1 ? 'cursor-not-allowed' : ''}`}
                 >
                   Previous
                 </button>
                 <button className="px-3 py-1 bg-[#0D47A1] text-white rounded-md hover:bg-blue-800">
-                  {currentPage}
+                  {currentPageStudents}
                 </button>
                 <button
-                  onClick={() => setCurrentPage(p => {
-                    const totalPages = Math.max(1, Math.ceil(students.length / pageSize));
+                  onClick={() => setCurrentPageStudents(p => {
+                    const filteredStudents = students.filter(s => {
+                      const matchUniv = selectedUniversity ? s.university_name === selectedUniversity : true;
+                      const q = studentSearch.trim().toLowerCase();
+                      const matchSearch = !q || s.name.toLowerCase().includes(q) || String(s.student_id).includes(q);
+                      return matchUniv && matchSearch;
+                    });
+                    const totalPages = Math.max(1, Math.ceil(filteredStudents.length / pageSize));
                     return Math.min(totalPages, p + 1);
                   })}
-                  disabled={currentPage >= Math.max(1, Math.ceil(students.length / pageSize))}
-                  className={`px-3 py-1 border border-gray-300 rounded-md bg-white text-gray-700 ${currentPage >= Math.max(1, Math.ceil(students.length / pageSize)) ? 'cursor-not-allowed disabled:opacity-50' : ''}`}
+                  disabled={(() => {
+                    const filteredStudents = students.filter(s => {
+                      const matchUniv = selectedUniversity ? s.university_name === selectedUniversity : true;
+                      const q = studentSearch.trim().toLowerCase();
+                      const matchSearch = !q || s.name.toLowerCase().includes(q) || String(s.student_id).includes(q);
+                      return matchUniv && matchSearch;
+                    });
+                    return currentPageStudents >= Math.max(1, Math.ceil(filteredStudents.length / pageSize));
+                  })()}
+                  className={`px-3 py-1 border border-gray-300 rounded-md bg-white text-gray-700 ${(() => {
+                    const filteredStudents = students.filter(s => {
+                      const matchUniv = selectedUniversity ? s.university_name === selectedUniversity : true;
+                      const q = studentSearch.trim().toLowerCase();
+                      const matchSearch = !q || s.name.toLowerCase().includes(q) || String(s.student_id).includes(q);
+                      return matchUniv && matchSearch;
+                    });
+                    return currentPageStudents >= Math.max(1, Math.ceil(filteredStudents.length / pageSize)) ? 'cursor-not-allowed disabled:opacity-50' : '';
+                  })()}`}
                 >
                   Next
                 </button>
@@ -400,15 +447,25 @@ const BatchManagement: React.FC = () => {
             <div className="relative w-64">
               <input
                 type="text"
-                placeholder="Search instructors..."
+                placeholder="Search instructors by name or id..."
+                value={instructorSearch}
+                onChange={(e) => { setInstructorSearch(e.target.value); setCurrentPageInstructors(1); }}
                 className="w-full pl-10 pr-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-[#0D47A1] focus:border-transparent"
+              />
+              <SearchIcon
+                size={18}
+                className="absolute left-3 top-2.5 text-gray-400"
               />
             </div>
             <div className="flex space-x-4">
-              <select className="px-4 py-2 border border-gray-300 rounded-md bg-white text-gray-700">
-                <option>All Universities</option>
-                {batches.map((batch) => (
-                  <option key={batch.id}>{batch.name}</option>
+              <select
+                value={selectedUniversity ?? ''}
+                onChange={(e) => { setSelectedUniversity(e.target.value || null); setCurrentPageStudents(1); setCurrentPageInstructors(1); }}
+                className="px-4 py-2 border border-gray-300 rounded-md bg-white text-gray-700"
+              >
+                <option value="">All Universities</option>
+                {Array.from(new Set(students.map(s => s.university_name ?? '').concat(instructors.map(i => i.university_name ?? '')))).filter(Boolean).map((u) => (
+                  <option key={u as string} value={u as string}>{u as string}</option>
                 ))}
               </select>
 
@@ -445,11 +502,17 @@ const BatchManagement: React.FC = () => {
                 </thead>
                 <tbody>
                   {(() => {
-                    const totalPages = Math.max(1, Math.ceil(instructors.length / pageSize));
-                    const page = Math.min(currentPage, totalPages);
+                    const filteredInstructors = instructors.filter(ins => {
+                      const matchUniv = selectedUniversity ? ins.university_name === selectedUniversity : true;
+                      const q = instructorSearch.trim().toLowerCase();
+                      const matchSearch = !q || ins.name.toLowerCase().includes(q) || String(ins.instructor_id).includes(q);
+                      return matchUniv && matchSearch;
+                    });
+                    const totalPages = Math.max(1, Math.ceil(filteredInstructors.length / pageSize));
+                    const page = Math.min(currentPageInstructors, totalPages);
                     const startIndex = (page - 1) * pageSize;
                     const endIndex = startIndex + pageSize;
-                    const paginated = instructors.slice(startIndex, endIndex);
+                    const paginated = filteredInstructors.slice(startIndex, endIndex);
                     return paginated.map((ins) => (
                       <tr key={ins.instructor_id} className="border-b border-gray-100 hover:bg-gray-50">
                         <td className="py-3 px-4 font-medium">{ins.instructor_id}</td>
@@ -513,36 +576,61 @@ const BatchManagement: React.FC = () => {
 
             <div className="flex justify-between items-center mt-6">
               <div className="text-sm text-gray-500">
-                {instructors.length === 0 ? (
-                  'No instructors'
-                ) : (
-                  (() => {
-                    const totalPages = Math.max(1, Math.ceil(instructors.length / pageSize));
-                    const page = Math.min(currentPage, totalPages);
-                    const startIndex = (page - 1) * pageSize;
-                    const endIndex = Math.min(startIndex + pageSize, instructors.length);
-                    return `Showing ${startIndex + 1}-${endIndex} of ${instructors.length} instructors`;
-                  })()
-                )}
+                {(() => {
+                  const filteredInstructors = instructors.filter(ins => {
+                    const matchUniv = selectedUniversity ? ins.university_name === selectedUniversity : true;
+                    const q = instructorSearch.trim().toLowerCase();
+                    const matchSearch = !q || ins.name.toLowerCase().includes(q) || String(ins.instructor_id).includes(q);
+                    return matchUniv && matchSearch;
+                  });
+                  if (filteredInstructors.length === 0) return 'No instructors';
+                  const totalPages = Math.max(1, Math.ceil(filteredInstructors.length / pageSize));
+                  const page = Math.min(currentPageInstructors, totalPages);
+                  const startIndex = (page - 1) * pageSize;
+                  const endIndex = Math.min(startIndex + pageSize, filteredInstructors.length);
+                  return `Showing ${startIndex + 1}-${endIndex} of ${filteredInstructors.length} instructors`;
+                })()}
               </div>
               <div className="flex space-x-2">
                 <button
-                  onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
-                  disabled={currentPage === 1}
-                  className={`px-3 py-1 border border-gray-300 rounded-md bg-white text-gray-700 disabled:opacity-50 ${currentPage === 1 ? 'cursor-not-allowed' : ''}`}
+                  onClick={() => setCurrentPageInstructors(p => Math.max(1, p - 1))}
+                  disabled={currentPageInstructors === 1}
+                  className={`px-3 py-1 border border-gray-300 rounded-md bg-white text-gray-700 disabled:opacity-50 ${currentPageInstructors === 1 ? 'cursor-not-allowed' : ''}`}
                 >
                   Previous
                 </button>
                 <button className="px-3 py-1 bg-[#0D47A1] text-white rounded-md hover:bg-blue-800">
-                  {currentPage}
+                  {currentPageInstructors}
                 </button>
                 <button
-                  onClick={() => setCurrentPage(p => {
-                    const totalPages = Math.max(1, Math.ceil(instructors.length / pageSize));
+                  onClick={() => setCurrentPageInstructors(p => {
+                    const filteredInstructors = instructors.filter(ins => {
+                      const matchUniv = selectedUniversity ? ins.university_name === selectedUniversity : true;
+                      const q = instructorSearch.trim().toLowerCase();
+                      const matchSearch = !q || ins.name.toLowerCase().includes(q) || String(ins.instructor_id).includes(q);
+                      return matchUniv && matchSearch;
+                    });
+                    const totalPages = Math.max(1, Math.ceil(filteredInstructors.length / pageSize));
                     return Math.min(totalPages, p + 1);
                   })}
-                  disabled={currentPage >= Math.max(1, Math.ceil(instructors.length / pageSize))}
-                  className={`px-3 py-1 border border-gray-300 rounded-md bg-white text-gray-700 ${currentPage >= Math.max(1, Math.ceil(instructors.length / pageSize)) ? 'cursor-not-allowed disabled:opacity-50' : ''}`}
+                  disabled={(() => {
+                    const filteredInstructors = instructors.filter(ins => {
+                      const matchUniv = selectedUniversity ? ins.university_name === selectedUniversity : true;
+                      const q = instructorSearch.trim().toLowerCase();
+                      const matchSearch = !q || ins.name.toLowerCase().includes(q) || String(ins.instructor_id).includes(q);
+                      return matchUniv && matchSearch;
+                    });
+                    return currentPageInstructors >= Math.max(1, Math.ceil(filteredInstructors.length / pageSize));
+                  })()}
+                  className={`px-3 py-1 border border-gray-300 rounded-md bg-white text-gray-700 ${(() => {
+                    const filteredInstructors = instructors.filter(ins => {
+                      const matchUniv = selectedUniversity ? ins.university_name === selectedUniversity : true;
+                      const q = instructorSearch.trim().toLowerCase();
+                      const matchSearch = !q || ins.name.toLowerCase().includes(q) || String(ins.instructor_id).includes(q);
+                      return matchUniv && matchSearch;
+                    });
+                    return currentPageInstructors >= Math.max(1, Math.ceil(filteredInstructors.length / pageSize)) ? 'cursor-not-allowed disabled:opacity-50' : '';
+                  })()}`}
                 >
                   Next
                 </button>
