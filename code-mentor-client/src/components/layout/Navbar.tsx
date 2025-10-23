@@ -7,7 +7,7 @@ const Navbar: React.FC = () => {
   const location = useLocation();
   const navItems = [{
     label: 'Home',
-    path: '/',
+    path: '/student-dashboard',
     icon: <HomeIcon size={18} />
   }, {
     label: 'Assignments',

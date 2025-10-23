@@ -43,6 +43,26 @@ const Login = () => {
 
       if (!response.ok) {
         const data = await response.json();
+        localStorage.setItem("token", data.access_token); // save JWT token
+        if (data.role) {
+          localStorage.setItem("role", data.role);
+        }
+
+        // Prefer server-provided redirect_url, fallback to /dashboard
+        let target = "/dashboard";
+        if (data.redirect_url) {
+          try {
+            const url = new URL(data.redirect_url);
+            target = url.pathname.toLowerCase();
+          } catch (err) {
+            // If it's not a full URL, use it directly
+            target = data.redirect_url.toLowerCase();
+          }
+        }
+
+        navigate(target);
+      } catch (err) {
+        console.error(err);
         setErrors({
           ...errors,
           usernameOrEmail: data.detail === "Invalid username or password" ? "Invalid username or password" : errors.usernameOrEmail,
