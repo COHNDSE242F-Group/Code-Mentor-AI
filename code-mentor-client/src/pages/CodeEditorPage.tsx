@@ -497,7 +497,9 @@ const CodeEditorPage: React.FC = () => {
 
                 <button
                   onClick={() => {
-                    handleConfirmSubmit(1, keystrokeReport)
+                    if (problemData && problemData.assignment_id) {
+                      handleConfirmSubmit(problemData.assignment_id, keystrokeReport)
+                    }
                   }}
                   className="px-6 py-3 bg-green-600 text-white font-semibold rounded-lg hover:bg-green-700 transition"
                 >

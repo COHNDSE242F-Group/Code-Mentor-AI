@@ -26,31 +26,22 @@ const Login = () => {
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  e.preventDefault();
 
-    if (validateForm()) {
-      try {
-        const response = await fetch("http://localhost:8000/login/", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            username: usernameOrEmail, // sending username or email
-            password,
-          }),
-        });
+  if (validateForm()) {
+    try {
+      const response = await fetch("http://localhost:8000/login/", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          username: usernameOrEmail, // sending username or email
+          password,
+        }),
+      });
 
-        if (!response.ok) {
-          const data = await response.json();
-          setErrors({
-            ...errors,
-            usernameOrEmail: data.detail === "Invalid username or password" ? "Invalid username or password" : errors.usernameOrEmail,
-            password: data.detail === "Invalid username or password" ? "Invalid username or password" : errors.password,
-          });
-          return;
-        }
-
+      if (!response.ok) {
         const data = await response.json();
         localStorage.setItem("token", data.access_token); // save JWT token
         if (data.role) {
@@ -74,11 +65,40 @@ const Login = () => {
         console.error(err);
         setErrors({
           ...errors,
-          usernameOrEmail: "Server error. Please try again.",
+          usernameOrEmail: data.detail === "Invalid username or password" ? "Invalid username or password" : errors.usernameOrEmail,
+          password: data.detail === "Invalid username or password" ? "Invalid username or password" : errors.password,
         });
+        return;
       }
+
+      const data = await response.json();
+      localStorage.setItem("token", data.access_token); // save JWT token
+
+      // Decode the JWT token to extract the role
+      const payload = JSON.parse(atob(data.access_token.split(".")[1]));
+      const role = payload.role;
+
+      // Redirect based on role
+      if (role === "admin") {
+        navigate("/admin-dashboard");
+      } else if (role === "instructor") {
+        navigate("/messaging");
+      } else if (role === "student") {
+        navigate("/code-editor"); // Ensure this is the correct route for the code editor
+      } else {
+        navigate("/"); // Default redirect
+      }
+      console.log("Role:", role);
+      console.log("Navigating to:", role === "student" ? "/code-editor" : "/");
+    } catch (err) {
+      console.error(err);
+      setErrors({
+        ...errors,
+        usernameOrEmail: "Server error. Please try again.",
+      });
     }
-  };
+  }
+};
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8">

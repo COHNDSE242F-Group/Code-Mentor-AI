@@ -1,12 +1,19 @@
-import React from 'react';
-import { Outlet } from 'react-router-dom';
-import Navbar from './Navbar';
-const Layout: React.FC = () => {
-  return <div className="flex flex-col min-h-screen bg-slate-900">
+import React from "react";
+import Navbar from "./Navbar";
+
+interface StudentLayoutProps {
+  children?: React.ReactNode;
+}
+
+const StudentLayout: React.FC<StudentLayoutProps> = ({ children }) => {
+  return (
+    <div className="flex flex-col min-h-screen bg-slate-900">
       <Navbar />
       <main className="flex-1 p-4 md:p-6 max-w-7xl mx-auto w-full">
-        <Outlet />
+        {children}
       </main>
-    </div>;
+    </div>
+  );
 };
-export default Layout;
+
+export default StudentLayout;
