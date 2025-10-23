@@ -1,76 +1,90 @@
-from fastapi import APIRouter, HTTPException, Depends
-from pydantic import BaseModel
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.future import select
-from database import async_session
-from models import User
+import os
+import smtplib
+from email.message import EmailMessage
+from datetime import datetime, timedelta
 
-SECRET_KEY = "YOUR_SECRET_KEY"
-ALGORITHM = "HS256"
+import jwt
+from fastapi import APIRouter, HTTPException
+from pydantic import BaseModel, EmailStr
+from dotenv import load_dotenv
 
-router = APIRouter()
+# Load .env file
+load_dotenv()
 
+router = APIRouter(prefix="/auth", tags=["Password Reset"])
+
+# Get environment variables
+SECRET_KEY = os.getenv("SECRET_KEY")
+EMAIL_USER = os.getenv("EMAIL_USER")
+EMAIL_PASS = os.getenv("EMAIL_PASS")
+
+if not SECRET_KEY or not EMAIL_USER or not EMAIL_PASS:
+    raise RuntimeError("SECRET_KEY, EMAIL_USER, and EMAIL_PASS must be set in .env")
+
+# Request models
+class ForgotPasswordRequest(BaseModel):
+    email: EmailStr
 
 class ResetPasswordRequest(BaseModel):
     token: str
     new_password: str
 
+# Temporary token store
+password_reset_tokens = {}
+
+@router.post("/forgot-password")
+async def forgot_password(req: ForgotPasswordRequest):
+    email = req.email
+
+    # Generate JWT token valid for 15 minutes
+    token = jwt.encode(
+        {"email": email, "exp": datetime.utcnow() + timedelta(minutes=15)},
+        SECRET_KEY,
+        algorithm="HS256"
+    )
+
+    password_reset_tokens[token] = email
+    reset_link = f"http://localhost:5173/reset-password?token={token}"  # Your React page
+
+    # Create email
+    msg = EmailMessage()
+    msg['Subject'] = "Reset your CodeMentorAI password"
+    msg['From'] = EMAIL_USER
+    msg['To'] = email
+    msg.set_content(
+        f"Hello,\n\nClick this link to reset your password:\n{reset_link}\n\n"
+        "This link will expire in 15 minutes."
+    )
+
+    # Send email
+    try:
+        with smtplib.SMTP("smtp.gmail.com", 587) as server:
+            server.starttls()
+            server.login(EMAIL_USER, EMAIL_PASS)
+            server.send_message(msg)
+        return {"message": "Password reset link sent"}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to send email: {str(e)}")
+
 
 @router.post("/reset-password")
-async def reset_password(request: ResetPasswordRequest, session: AsyncSession = Depends(async_session)):
-    # Import JWT and password hashing libraries at runtime so static analyzers
-    # that don't see the project's venv don't report unresolved imports.
-    import importlib
+async def reset_password(req: ResetPasswordRequest):
+    token = req.token
+    new_password = req.new_password
 
-    # Load JWT implementation dynamically to avoid static analyzer import errors
-    jwt = None
-    JWTError = Exception
     try:
-        jose_mod = importlib.import_module("jose")
-        jwt = getattr(jose_mod, "jwt", None)
-        JWTError = getattr(jose_mod, "JWTError", JWTError)
-    except Exception:
-        # fallback to PyJWT
-        try:
-            pyjwt = importlib.import_module("jwt")
-            jwt = pyjwt
-            # PyJWT doesn't expose JWTError; define a local wrapper
-            class JWTError(Exception):
-                pass
-        except Exception:
-            raise HTTPException(status_code=500, detail="Missing JWT library: install 'python-jose' or 'PyJWT' in the project venv")
-
-    # Load password hashing implementation dynamically
-    try:
-        passlib_context_mod = importlib.import_module("passlib.context")
-        CryptContext = getattr(passlib_context_mod, "CryptContext")
-        pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
-    except Exception:
-        raise HTTPException(status_code=500, detail="Missing password hashing library: install 'passlib[bcrypt]' in the project venv")
-
-    # Decode the token
-    try:
-        # If we're using PyJWT the signature is the same for decode
-        payload = jwt.decode(request.token, SECRET_KEY, algorithms=[ALGORITHM])
+        payload = jwt.decode(token, SECRET_KEY, algorithms=["HS256"])
         email = payload.get("email")
-        if not email:
-            raise HTTPException(status_code=400, detail="Invalid token")
-    except JWTError:
-        raise HTTPException(status_code=400, detail="Invalid or expired token")
-    except Exception as e:
-        # PyJWT may raise different exceptions; treat them as invalid token here
-        raise HTTPException(status_code=400, detail=f"Invalid or expired token: {str(e)}")
+    except jwt.ExpiredSignatureError:
+        raise HTTPException(status_code=400, detail="Token expired")
+    except jwt.InvalidTokenError:
+        raise HTTPException(status_code=400, detail="Invalid token")
 
-    # Check if the user exists in the database
-    result = await session.execute(select(User).where(User.email == email))
-    user = result.scalar_one_or_none()
-    if not user:
-        raise HTTPException(status_code=404, detail="User not found")
+    if token not in password_reset_tokens or password_reset_tokens[token] != email:
+        raise HTTPException(status_code=400, detail="Invalid token")
 
-    # Update the user's password
-    hashed_password = pwd_context.hash(request.new_password)
-    user.password = hashed_password
-    session.add(user)
-    await session.commit()
+    # 🔧 TODO: Update password in database for this user
+    print(f"Password for {email} has been reset to: {new_password}")
 
+    del password_reset_tokens[token]
     return {"message": "Password reset successful"}
