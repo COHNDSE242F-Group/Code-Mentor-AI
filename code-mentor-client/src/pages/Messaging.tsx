@@ -43,6 +43,8 @@ const Messaging: React.FC = () => {
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const [showNewMessageModal, setShowNewMessageModal] = useState(false);
 const [users, setUsers] = useState<{ id: number; name: string; role: string }[]>([]);
+  const [searchQuery, setSearchQuery] = useState(''); // State for search input
+
 
 useEffect(() => {
   const token = localStorage.getItem("token");
@@ -60,80 +62,124 @@ useEffect(() => {
         return res.json();
       })
       .then(data => {
-        const formattedData = data.map((conversation: any) => ({
-          id: conversation.conversation_id,
-          name: conversation.name || "Unnamed Conversation",
-          messages: conversation.messages || [],
-          participants: conversation.participants || [],
-          time: conversation.created_at,
-          unread: 0,
-          online: false,
-        }));
-        setConversations(formattedData);
-      })
-      .catch(err => console.error(err));
-  }
+          const formattedData = data.map((conversation: any) => ({
+            id: conversation.conversation_id,
+            name: conversation.name || "Unnamed Conversation",
+            lastMessage: conversation.messages.length > 0 
+              ? conversation.messages[conversation.messages.length - 1].text 
+              : "",
+            time: conversation.messages.length > 0 
+              ? conversation.messages[conversation.messages.length - 1].sent_at 
+              : conversation.created_at,
+            unread: 0,
+            online: false,
+          }));
+          // Sort conversations by last message time
+          formattedData.sort((a: Conversation, b: Conversation) => new Date(b.time).getTime() - new Date(a.time).getTime());
+          setConversations(formattedData);
+        })
+        .catch(err => console.error(err));
+    }
 }, []);
+
+  const handleSearchChange = (e: ChangeEvent<HTMLInputElement>) => {
+    setSearchQuery(e.target.value);
+  };
+    const filteredConversations = conversations.filter(conversation =>
+    conversation.name.toLowerCase().includes(searchQuery.toLowerCase())
+  );
 
 useEffect(() => {
   if (!activeConversation) return;
 
-  fetch(`http://localhost:8000/conversations/${activeConversation.id}/messages`)
-    .then(res => res.json())
+  const token = localStorage.getItem("token");
+  if (!token) {
+    console.error("Token is missing. User might not be logged in.");
+    return;
+  }
+
+  fetch(`http://localhost:8000/conversations/${activeConversation.id}/messages`, {
+    method: "GET",
+    headers: {
+      Authorization: `Bearer ${token}`, // Include the token in the Authorization header
+    },
+  })
+    .then(res => {
+      if (!res.ok) {
+        throw new Error("Failed to fetch messages");
+      }
+      return res.json();
+    })
     .then(data => {
       if (Array.isArray(data)) {
-        setMessages(data);
+        const payload = JSON.parse(atob(token.split(".")[1])); // Decode the token payload
+        setMessages(data.map((message: any) => ({
+          id: message.message_id,
+          sender: message.sender_id,
+          text: message.text,
+          time: message.sent_at,
+          isMe: message.sender_id === payload.user_id, // Check if the sender is the logged-in user
+        })));
       } else {
         setMessages([]); // Fallback to an empty array if the response is invalid
       }
     })
-    .catch(err => {
-      console.error(err);
-      setMessages([]); // Fallback to an empty array in case of an error
-    });
+    .catch(err => console.error(err));
 }, [activeConversation]);
 
-const handleSendMessage = async (e: FormEvent) => {
-  e.preventDefault();
-  if (!activeConversation || !newMessage.trim()) return;
+ const handleSendMessage = async (e: FormEvent) => {
+    e.preventDefault();
+    if (!activeConversation || !newMessage.trim()) return;
 
-  const token = localStorage.getItem("token");
-
-  const payloadData = {
-    text: newMessage, // Ensure the payload matches the backend's expectations
-  };
-
-  try {
-    const res = await fetch(`http://localhost:8000/conversations/${activeConversation.id}/messages`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`, // Include the token in the Authorization header
-      },
-      body: JSON.stringify(payloadData), // Send the correct payload
-    });
-
-    if (!res.ok) {
-      throw new Error("Failed to send message");
+    const token = localStorage.getItem("token");
+    if (!token) {
+      console.error("Token is missing. Cannot send message.");
+      return;
     }
 
-    const savedMessage = await res.json();
+    const payloadData = {
+      text: newMessage, // Ensure the payload matches the backend's expectations
+    };
 
-    // Update the messages state with the new message
-    setMessages(prev => [...prev, {
-      id: savedMessage.message_id,
-      sender: token ? JSON.parse(atob(token.split(".")[1])).user_id : null, // Sender ID from token
-      text: savedMessage.text,
-      time: savedMessage.sent_at,
-      isMe: true, // Mark as sent by the current user
-    }]);
+    try {
+      const res = await fetch(`http://localhost:8000/conversations/${activeConversation.id}/messages`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`, // Include the token in the Authorization header
+        },
+        body: JSON.stringify(payloadData), // Send the correct payload
+      });
 
-    // Clear the input field
-    setNewMessage("");
-  } catch (err) {
-    console.error("Failed to send message:", err);
-  }
-};
+      if (!res.ok) {
+        throw new Error("Failed to send message");
+      }
+
+      const savedMessage = await res.json();
+      const payload = JSON.parse(atob(token.split(".")[1])); // Decode the token payload
+
+      // Update the messages state with the new message
+      setMessages(prev => [...prev, {
+        id: savedMessage.message_id,
+        sender: payload.user_id, // Sender ID from token
+        text: savedMessage.text,
+        time: savedMessage.sent_at,
+        isMe: true, // Mark as sent by the current user
+      }]);
+
+      // Update the conversation list with the latest message
+      setConversations(prev => prev.map(conversation =>
+        conversation.id === activeConversation.id
+          ? { ...conversation, lastMessage: savedMessage.text, time: savedMessage.sent_at }
+          : conversation
+      ));
+
+      // Clear the input field
+      setNewMessage("");
+    } catch (err) {
+      console.error("Failed to send message:", err);
+    }
+  };
   const handleEmojiClick = (emojiData: any) => {
     setNewMessage((prev) => prev + emojiData.emoji); // Add the selected emoji to the message
   };
@@ -182,7 +228,7 @@ const handleUserSelect = async (user: { id: number; name: string; role: string }
       id: newConversation.conversation_id,
       name: newConversation.name,
       lastMessage: "",
-      time: newConversation.created_at,
+      time: new Date().toISOString(), // Use current time for new conversations
       unread: 0,
       online: false,
       avatar: null,
@@ -194,7 +240,7 @@ const handleUserSelect = async (user: { id: number; name: string; role: string }
       id: newConversation.conversation_id,
       name: newConversation.name,
       lastMessage: "",
-      time: newConversation.created_at,
+      time: new Date().toISOString(), // Use current time for new conversations
       unread: 0,
       online: false,
       avatar: null,
@@ -247,17 +293,19 @@ return (
                 type="text"
                 placeholder="Search conversations..."
                 className="w-full pl-10 pr-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-[#0D47A1] focus:border-transparent"
+                value={searchQuery} // Bind the search input to the state
+                onChange={handleSearchChange} // Handle search input changes
               />
               <SearchIcon size={18} className="absolute left-3 top-2.5 text-gray-400" />
             </div>
           </div>
           <div className="flex-1 overflow-y-auto">
-            {conversations.map(conversation => (
-              <div
-                key={conversation.id}
-                className={`flex items-center p-4 border-b border-gray-100 cursor-pointer ${
-                  activeConversation?.id === conversation.id ? 'bg-blue-50' : 'hover:bg-gray-50'
-                }`}
+            {filteredConversations.map(conversation => (
+  <div
+    key={conversation.id}
+    className={`flex items-center p-4 border-b border-gray-100 cursor-pointer ${
+      activeConversation?.id === conversation.id ? 'bg-blue-50' : 'hover:bg-gray-50'
+    }`}
                 onClick={() => handleConversationClick(conversation)}
               >
                 <div className="relative mr-3">
@@ -279,7 +327,7 @@ return (
                 <div className="flex-1 min-w-0">
                   <div className="flex justify-between items-center">
                     <h3 className="font-medium text-gray-900 truncate">{conversation.name}</h3>
-                    <span className="text-xs text-gray-500">{conversation.time}</span>
+                    <span className="text-xs text-gray-500">{new Date(conversation.time).toLocaleString()}</span>
                   </div>
                   <p className="text-sm text-gray-500 truncate">{conversation.lastMessage}</p>
                 </div>

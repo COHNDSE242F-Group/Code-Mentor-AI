@@ -64,10 +64,12 @@ const Login = () => {
       } else if (role === "instructor") {
         navigate("/messaging");
       } else if (role === "student") {
-        navigate("/student-dashboard");
+        navigate("/code-editor"); // Ensure this is the correct route for the code editor
       } else {
         navigate("/"); // Default redirect
       }
+      console.log("Role:", role);
+      console.log("Navigating to:", role === "student" ? "/code-editor" : "/");
     } catch (err) {
       console.error(err);
       setErrors({

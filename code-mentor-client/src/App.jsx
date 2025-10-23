@@ -29,7 +29,7 @@ import Messaging from "./pages/Messaging";
 import Login from "./pages/auth/Login";
 import Signup from "./pages/auth/Signup";
 import ForgotPassword from "./pages/auth/ForgotPassword";
-// import ResetPassword from "./pages/auth/ResetPassword";
+import ResetPassword from "./pages/auth/ResetPassword";
 // import VerifyEmail from "./pages/auth/VerifyEmail";
 import AccountDetails from "./pages/auth/AccountDetails";
 
@@ -44,9 +44,10 @@ function App() {
         <Route path="/login" element={<Login />} />
         <Route path="/signup" element={<Signup />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />
+        <Route path="/reset-password" element={<ResetPassword />} />
 
-        {/*<Route path="/reset-password" element={<ResetPassword />} />
-        <Route path="/verify-email" element={<VerifyEmail />} /> */}
+        
+        {/*<Route path="/verify-email" element={<VerifyEmail />} /> */}
 
         {/* Code editor page */}
         <Route path="/code-editor" element={<CodeEditorPage />} />
