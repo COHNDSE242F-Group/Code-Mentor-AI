@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { EyeIcon, EyeOffIcon, LockIcon } from 'lucide-react';
@@ -30,19 +31,29 @@ const ResetPassword = () => {
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (validateForm()) {
-      // In a real app, we would call an API to reset the password using the token
-      console.log('Password reset with token:', token, 'New password:', password);
-      // Show success message
-      setIsSubmitted(true);
-      // Redirect to login after 3 seconds
-      setTimeout(() => {
-        navigate('/login');
-      }, 3000);
+ const handleSubmit = async (e: React.FormEvent) => {
+  e.preventDefault();
+  if (validateForm()) {
+    try {
+      const response = await fetch("http://localhost:8000/reset-password", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ token, new_password: password }),
+      });
+      if (response.ok) {
+        setIsSubmitted(true);
+        setTimeout(() => {
+          navigate("/login");
+        }, 3000);
+      } else {
+        const data = await response.json();
+        setErrors({ password: data.message || "Failed to reset password" });
+      }
+    } catch (error) {
+      setErrors({ password: "Server error. Please try again later." });
     }
-  };
+  }
+};
   return <div className="min-h-screen bg-gray-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
       <div className="sm:mx-auto sm:w-full sm:max-w-md">
         <div className="flex justify-center">

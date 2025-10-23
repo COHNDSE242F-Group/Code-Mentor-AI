@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { MailIcon, ArrowLeftIcon } from 'lucide-react';
@@ -21,26 +20,27 @@ const ForgotPassword = () => {
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
-  const handleSubmit = async(e: React.FormEvent) => {
-    e.preventDefault();
-    if (validateForm()) {
-      try {
-        const response = await fetch("http://localhost:8000/forgot-password", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ email }),
-        });
-        if (response.ok) {
-          setIsSubmitted(true);
-        } else {
-          const data = await response.json();
-          setErrors({ email: data.message || "Failed to send reset email" });
-        }
-      } catch (error) {
-        setErrors({ email: "Server error. Please try again later." });
+ const handleSubmit = async (e: React.FormEvent) => {
+  e.preventDefault();
+  if (validateForm()) {
+    try {
+      const response = await fetch("http://localhost:8000/forgot-password", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email }), // Ensure the email field is sent correctly
+      });
+      if (response.ok) {
+        const data = await response.json();
+        window.location.href = data.reset_link; // Redirect to reset password page
+      } else {
+        const data = await response.json();
+        setErrors({ email: data.message || "Failed to generate reset link" });
       }
+    } catch (error) {
+      setErrors({ email: "Server error. Please try again later." });
     }
-  };
+  }
+};
   return <div className="min-h-screen bg-gray-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
       <div className="sm:mx-auto sm:w-full sm:max-w-md">
         <div className="flex justify-center">

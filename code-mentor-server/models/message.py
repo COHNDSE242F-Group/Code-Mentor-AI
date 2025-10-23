@@ -5,6 +5,9 @@ from database import Base
 from sqlalchemy import Column, Integer, String, Boolean, TIMESTAMP, JSON
 from database import Base
 
+from sqlalchemy.ext.mutable import MutableList
+from sqlalchemy import JSON
+
 class Conversation(Base):
     __tablename__ = "conversation"
 
@@ -12,5 +15,5 @@ class Conversation(Base):
     name = Column(String(255), nullable=False)
     is_group = Column(Boolean, default=False)
     created_at = Column(TIMESTAMP, default="now()")
-    participants = Column(JSON, nullable=False)  # JSON column for participants
-    messages = Column(JSON, nullable=False)      # JSON column for messages
+    participants = Column(JSON, nullable=False)  # List of participants
+    messages = Column(MutableList.as_mutable(JSON), default=[])  # Track changes to the messages list
