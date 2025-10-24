@@ -53,7 +53,7 @@ class ConceptCreate(BaseModel):
     description: str
 
 groq_client = Groq(api_key=os.getenv("GROQ_API_KEY"))
-gemini_client = genai.Client()
+gemini_client = genai.Client(api_key="AIzaSyAuryUoesohR0or9ZzKVxjNQ04w7unWTR4")
 
 async def update_all_student_reports(batch_id: int, concept: dict):
     async with async_session() as session:
@@ -77,9 +77,62 @@ async def update_all_student_reports(batch_id: int, concept: dict):
 
         await session.commit()
 
-def background_update(batch_id: int, concept: dict):
-    import asyncio
-    asyncio.create_task(update_all_student_reports(batch_id, concept))
+async def update_student_report_with_submission(submission_id: int):
+    async with async_session() as session:
+        # Get the submission by ID
+        result = await session.execute(
+            select(Submission).where(Submission.submission_id == submission_id)
+        )
+        submission = result.scalar_one_or_none()
+
+        if not submission:
+            raise HTTPException(status_code=404, detail="Submission not found")
+        
+        # Get the progress report by student ID
+        progress_result = await session.execute(
+            select(ProgressReport).where(ProgressReport.student_id == submission.student_id)
+        )
+        progress_report = progress_result.scalar_one_or_none()
+
+        if not progress_report:
+            raise HTTPException(status_code=404, detail="Progress report not found")
+        
+        # Get the topic map by assignment ID
+        topic_result = await session.execute(
+            select(TopicMap).where(TopicMap.assignment_id == submission.assignment_id)
+        )
+        topic_map = topic_result.scalar_one_or_none()
+
+        if not topic_map:
+            raise HTTPException(status_code=404, detail="Topic map not found")
+        
+        report_data = progress_report.content or {}
+        concepts = report_data.get("concepts", [])
+        topic_data = topic_map.content or {}
+
+        topic_data = {int(k): [int(v) for v in vals] for k, vals in topic_data.items()}
+
+        for concept in concepts:
+            new_topics = 0
+            if concept["id"] in topic_data:
+                for topic in concept.get("topics"):
+                    if topic["id"] in topic_data[concept["id"]]:
+                        if topic["completed"] == False:
+                            topic["completed"] = True
+                            new_topics += 1
+            
+            if "topic_count" not in concept:
+                concept["topic_count"] = len(concept.get("topics", []))
+            
+            if "completed_count" not in concept:
+                concept["completed_count"] = 0
+            
+            concept["completed_count"] += new_topics
+        
+        report_data["concepts"] = concepts
+        progress_report.content = report_data
+
+        await session.commit()
 
 # ==============================
 # Endpoints for managing Conceptual Map
@@ -266,23 +319,13 @@ async def create_or_update_conceptual_map(
             logger.error(f"Error creating/updating conceptual map: {str(e)}")
             raise HTTPException(status_code=500, detail="Internal Server Error")
 
-# Create progress report
-@router.post("/progress_report", summary="Create or update progress report")
-async def create_or_update_progress_report(
-    student_id: int = Query(..., description="ID of the student"),
+# Update progress report
+@router.post("/progress_report", summary="Update progress report")
+async def update_progress_report(
+    submission_id: int = Query(..., description="ID of the submission"),
     token_data: dict = Depends(role_required(["student"]))
 ):
-    async with async_session() as session:
-        # Get the student by ID
-        result = await session.execute(
-            select(Student).where(Student.student_id == student_id)
-        )
-        student = result.scalar_one_or_none()
-
-        if not student:
-            raise HTTPException(status_code=404, detail="Student not found")
-        
-        # Get the progress report with the student_id
+    asyncio.create_task(update_student_report_with_submission(submission_id))
 
 # Creating new concept
 @router.post("/concept", summary="Create new concept")
