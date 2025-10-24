@@ -1,4 +1,4 @@
-// @ts-nocheck
+
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
@@ -8,10 +8,9 @@ import { BuildingIcon, MailIcon, MapPinIcon, UserIcon } from 'lucide-react';
 import { useTheme } from '../context/ThemeContext';
 const registrationSchema = z.object({
   universityName: z.string().min(2, 'University name is required'),
-  domain: z.string().min(3, 'Domain is required'),
   address: z.string().min(5, 'Address is required'),
-  adminName: z.string().min(2, 'Admin name is required'),
-  adminEmail: z.string().email('Invalid email address')
+  contactEmail: z.string().email('Invalid email address').optional(),
+  contactNo: z.string().min(7, 'Contact number is required').optional()
 });
 type RegistrationFormData = z.infer<typeof registrationSchema>;
 export const Welcome: React.FC = () => {
@@ -20,6 +19,8 @@ export const Welcome: React.FC = () => {
   } = useTheme();
   const navigate = useNavigate();
   const [isVerified, setIsVerified] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [serverError, setServerError] = useState<string | undefined>(undefined);
   const {
     register,
     handleSubmit,
@@ -30,11 +31,32 @@ export const Welcome: React.FC = () => {
     resolver: zodResolver(registrationSchema)
   });
   const onSubmit = (data: RegistrationFormData) => {
-    console.log(data);
-    // Simulate email verification
-    setTimeout(() => {
-      setIsVerified(true);
-    }, 1500);
+    // Send registration to backend
+    const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:8000';
+    setIsSubmitting(true);
+    setServerError(undefined);
+    fetch(`${apiUrl}/welcome/register`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        universityName: data.universityName,
+        address: data.address,
+        contactEmail: data.contactEmail || undefined,
+        contactNo: data.contactNo || undefined
+      })
+    }).then(async res => {
+      if (res.ok) {
+        // proceed to verification success state
+        setIsVerified(true);
+      } else {
+        const err = await res.json().catch(() => ({}));
+        setServerError(err.detail || err.message || 'Registration failed');
+      }
+    }).catch(err => {
+      setServerError(err.message || 'Network error');
+    }).finally(() => setIsSubmitting(false));
   };
   const goToPackageSelection = () => {
     navigate('/select-package');
@@ -47,9 +69,9 @@ export const Welcome: React.FC = () => {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
             </svg>
           </div>
-          <h2 className="text-2xl font-bold mb-4">Email Verified!</h2>
+          <h2 className="text-2xl font-bold mb-4">Successfully Registered!</h2>
           <p className={`mb-6 ${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'}`}>
-            Your university email has been successfully verified. You're now
+            Your university has been successfully registered. You're now
             ready to choose a subscription plan.
           </p>
           <button onClick={goToPackageSelection} className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 px-4 rounded-md transition duration-300">
@@ -87,18 +109,16 @@ export const Welcome: React.FC = () => {
                 </p>}
             </div>
             <div>
-              <label htmlFor="domain" className={`block text-sm font-medium mb-1 ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>
-                University Domain/Email
+              <label htmlFor="contactEmail" className={`block text-sm font-medium mb-1 ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>
+                University Email
               </label>
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                   <MailIcon size={18} className={theme === 'dark' ? 'text-gray-500' : 'text-gray-400'} />
                 </div>
-                <input id="domain" type="text" {...register('domain')} className={`pl-10 block w-full rounded-md py-2 px-3 ${theme === 'dark' ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' : 'border-gray-300 placeholder-gray-400'} focus:ring-blue-500 focus:border-blue-500`} placeholder="e.g. stanford.edu" />
+                <input id="contactEmail" type="email" {...register('contactEmail')} className={`pl-10 block w-full rounded-md py-2 px-3 ${theme === 'dark' ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' : 'border-gray-300 placeholder-gray-400'} focus:ring-blue-500 focus:border-blue-500`} placeholder="e.g. contact@university.edu" />
               </div>
-              {errors.domain && <p className="mt-1 text-sm text-red-600">
-                  {errors.domain.message}
-                </p>}
+              {errors.contactEmail && <p className="mt-1 text-sm text-red-600">{errors.contactEmail.message}</p>}
             </div>
             <div>
               <label htmlFor="address" className={`block text-sm font-medium mb-1 ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>
@@ -116,37 +136,22 @@ export const Welcome: React.FC = () => {
             </div>
             <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
               <div>
-                <label htmlFor="adminName" className={`block text-sm font-medium mb-1 ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>
-                  Primary Admin Name
+                <label htmlFor="contactNo" className={`block text-sm font-medium mb-1 ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>
+                  Contact Number (optional)
                 </label>
                 <div className="relative">
                   <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                     <UserIcon size={18} className={theme === 'dark' ? 'text-gray-500' : 'text-gray-400'} />
                   </div>
-                  <input id="adminName" type="text" {...register('adminName')} className={`pl-10 block w-full rounded-md py-2 px-3 ${theme === 'dark' ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' : 'border-gray-300 placeholder-gray-400'} focus:ring-blue-500 focus:border-blue-500`} placeholder="e.g. John Doe" />
+                  <input id="contactNo" type="text" {...register('contactNo')} className={`pl-10 block w-full rounded-md py-2 px-3 ${theme === 'dark' ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' : 'border-gray-300 placeholder-gray-400'} focus:ring-blue-500 focus:border-blue-500`} placeholder="e.g. +1 650-xxx-xxxx" />
                 </div>
-                {errors.adminName && <p className="mt-1 text-sm text-red-600">
-                    {errors.adminName.message}
-                  </p>}
-              </div>
-              <div>
-                <label htmlFor="adminEmail" className={`block text-sm font-medium mb-1 ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>
-                  Admin Email
-                </label>
-                <div className="relative">
-                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <MailIcon size={18} className={theme === 'dark' ? 'text-gray-500' : 'text-gray-400'} />
-                  </div>
-                  <input id="adminEmail" type="email" {...register('adminEmail')} className={`pl-10 block w-full rounded-md py-2 px-3 ${theme === 'dark' ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' : 'border-gray-300 placeholder-gray-400'} focus:ring-blue-500 focus:border-blue-500`} placeholder="e.g. admin@stanford.edu" />
-                </div>
-                {errors.adminEmail && <p className="mt-1 text-sm text-red-600">
-                    {errors.adminEmail.message}
-                  </p>}
+                {errors.contactNo && <p className="mt-1 text-sm text-red-600">{errors.contactNo.message}</p>}
               </div>
             </div>
+            {serverError && <div className="pt-2 text-sm text-red-600">{serverError}</div>}
             <div className="pt-4">
-              <button type="submit" className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 px-4 rounded-md transition duration-300">
-                Register & Verify Email
+              <button type="submit" disabled={isSubmitting} className={`w-full ${isSubmitting ? 'bg-blue-400' : 'bg-blue-600 hover:bg-blue-700'} text-white font-medium py-3 px-4 rounded-md transition duration-300`}>
+                {isSubmitting ? 'Registering…' : 'Register'}
               </button>
             </div>
           </div>

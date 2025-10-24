@@ -21,6 +21,7 @@ from .reset_password import router as reset_password_router
 from .report import router as report_router
 from .student import router as student_router
 from .instructor import router as instructor_router
+from .welcome import router as welcome_router
 from .public_lists import router as public_lists_router
 
 routers = [
@@ -43,6 +44,7 @@ routers = [
     assignment_router,
     student_router,
     instructor_router,
+    welcome_router,
     reset_password_router,
     report_router,
     public_lists_router,
