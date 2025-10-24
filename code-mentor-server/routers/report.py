@@ -1,9 +1,10 @@
-from fastapi import APIRouter, HTTPException, Depends, Request, Query
+from fastapi import APIRouter, HTTPException, Depends, Request, Query, BackgroundTasks
 from pydantic import BaseModel
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from database import async_session
 import traceback
+import asyncio
 
 from typing import Any, Dict, List
 import json
@@ -16,6 +17,12 @@ from models.assignment import Assignment
 from models.conceptual_map import ConceptualMap
 from models.topic_map import TopicMap
 from models.student import Student
+from models.progress_report import ProgressReport
+from models.submission import Submission
+from sqlalchemy.orm.attributes import flag_modified
+
+# Import Gemini client
+from google import genai
 
 router = APIRouter(
     prefix="/report",
@@ -40,7 +47,39 @@ class ConceptualMapOut(BaseModel):
     class Config:
         orm_mode = True
 
-client = Groq(api_key=os.getenv("GROQ_API_KEY"))
+class ConceptCreate(BaseModel):
+    batch_id: int
+    concept: str
+    description: str
+
+groq_client = Groq(api_key=os.getenv("GROQ_API_KEY"))
+gemini_client = genai.Client()
+
+async def update_all_student_reports(batch_id: int, concept: dict):
+    async with async_session() as session:
+        # Get all progress reports of students in this batch
+        subq = select(Student.student_id).where(Student.batch_id == batch_id).subquery()
+        progress_result = await session.execute(
+            select(ProgressReport).where(ProgressReport.student_id.in_(subq))
+        )
+        progress_reports = progress_result.scalars().all()
+
+        if "topics" in concept and isinstance(concept["topics"], list):
+            for topic in concept["topics"]:
+                topic["completed"] = False
+
+        for progress_report in progress_reports:
+            report = progress_report.content or {}  # Get existing JSON
+            concepts = report.get("concepts", [])
+            concepts.append(concept)  # Add new concept
+            report["concepts"] = concepts  # Save updated list
+            progress_report.content = report  # Assign back to ORM object
+
+        await session.commit()
+
+def background_update(batch_id: int, concept: dict):
+    import asyncio
+    asyncio.create_task(update_all_student_reports(batch_id, concept))
 
 # ==============================
 # Endpoints for managing Conceptual Map
@@ -109,7 +148,7 @@ async def create_or_update_conceptual_map(
 
         try:
             # --- 2. Call Groq API directly inside the router ---
-            completion = client.chat.completions.create(
+            completion = groq_client.chat.completions.create(
                 model="openai/gpt-oss-20b",
                 messages=[
                     {"role": "system", "content": "You are a helpful AI tutor who extracts relevant concepts IDs from assignments."},
@@ -121,6 +160,14 @@ async def create_or_update_conceptual_map(
             )
 
             response_text = completion.choices[0].message.content
+
+            # --- Call Gemini ---
+            # response = gemini_client.models.generate_content(
+            #     model="gemini-2.5-flash",
+            #     contents=prompt
+            # )
+
+            # response_text = response.text.strip()
 
             # --- 3. Parse JSON safely ---
             try:
@@ -168,7 +215,7 @@ async def create_or_update_conceptual_map(
 
         try:
             # --- 2. Call Groq API directly inside the router ---
-            completion = client.chat.completions.create(
+            completion = groq_client.chat.completions.create(
                 model="openai/gpt-oss-20b",
                 messages=[
                     {"role": "system", "content": "You are a helpful AI tutor who extracts relevant topic IDs from assignments."},
@@ -180,6 +227,14 @@ async def create_or_update_conceptual_map(
             )
 
             response_text = completion.choices[0].message.content
+
+            # --- Call Gemini ---
+            # response = gemini_client.models.generate_content(
+            #     model="gemini-2.5-flash",
+            #     contents=prompt
+            # )
+
+            # response_text = response.text.strip()
 
             # --- 3. Parse JSON safely ---
             try:
@@ -211,15 +266,228 @@ async def create_or_update_conceptual_map(
             logger.error(f"Error creating/updating conceptual map: {str(e)}")
             raise HTTPException(status_code=500, detail="Internal Server Error")
 
-# Create or update progress report
-@router.post("/progress_report", summary="Create or update conceptual map")
+# Create progress report
+@router.post("/progress_report", summary="Create or update progress report")
 async def create_or_update_progress_report(
-    student_id: int = Query(..., description="ID of the assignment"),
+    student_id: int = Query(..., description="ID of the student"),
     token_data: dict = Depends(role_required(["student"]))
 ):
     async with async_session() as session:
         # Get the student by ID
         result = await session.execute(
-            select(Student).where(Assignment.assignment_id == assignment_id)
+            select(Student).where(Student.student_id == student_id)
         )
-        assignment = result.scalar_one_or_none()
+        student = result.scalar_one_or_none()
+
+        if not student:
+            raise HTTPException(status_code=404, detail="Student not found")
+        
+        # Get the progress report with the student_id
+
+# Creating new concept
+@router.post("/concept", summary="Create new concept")
+async def create_or_update_progress_report(
+    data: ConceptCreate,
+    background_tasks: BackgroundTasks,
+    token_data: dict = Depends(role_required(["student"]))
+):
+    async with async_session() as session:
+        # Get the student by ID
+        result = await session.execute(
+            select(ConceptualMap).where(ConceptualMap.batch_id == data.batch_id)
+        )
+        concept_map = result.scalar_one_or_none()
+
+        if not concept_map:
+            raise HTTPException(status_code=404, detail="Concept map not found")
+        
+        # Get the progress report with the student_id
+
+        # --- 1. Create prompt ---
+        prompt = f"""
+        You are an AI tutor who generates all possible subtopics for a concept.
+        The user will provide a concept name and a short description.
+
+        Concept: {data.concept}
+        Description: {data.description}
+
+        Return ONLY a valid JSON in this exact format (no explanations, no text outside JSON):
+        - The JSON must include all possible subtopics, do not skip any.
+        - Assign each topic a unique id starting from 1.
+
+        {{
+            "topics": [
+                {{ "id": 1, "name": "First topic name" }},
+                {{ "id": 2, "name": "Second topic name" }}
+            ]
+        }}
+        """
+
+        try:
+            # --- 2. Call Gemini API ---
+            response = gemini_client.models.generate_content(
+                model="gemini-2.5-flash",
+                contents=prompt
+            )
+
+            response_text = response.text.strip()
+            print("Gemini Response befor cleaning: ", response_text)
+            response_text = re.sub(r"^```json|```$", "", response_text, flags=re.MULTILINE).strip()
+            print("Gemini Response:", response_text)
+
+            concept_json = {}
+
+            # --- 3. Parse JSON ---
+            try:
+                topics_json = json.loads(response_text)
+                topics = topics_json.get("topics", [])
+                concept_json["id"] = max((concept["id"] for concept in concept_map.content.get("concepts", [])), default=0) + 1
+                concept_json["name"] = data.concept
+                concept_json["description"] = data.description
+                concept_json["topics"] = topics
+            except json.JSONDecodeError:
+                raise HTTPException(status_code=500, detail=f"Invalid JSON from Gemini: {response_text}")
+            
+            concepts = concept_map.content.get("concepts", [])
+            concepts.append(concept_json)
+            concept_map.content["concepts"] = concepts
+            await session.commit()
+
+            asyncio.create_task(update_all_student_reports(data.batch_id, concept_json))
+        except Exception as e:
+            print("❌ Error generating topics:", e)
+            traceback.print_exc()
+            raise HTTPException(status_code=500, detail=str(e))
+
+# AI evaluation
+@router.post("/ai-evaluation", summary="Evaluate submissions")
+async def create_or_update_progress_report(
+    submission_id: int = Query(..., description="ID of the submission"),
+    token_data: dict = Depends(role_required(["student"]))
+):
+    async with async_session() as session:
+        # Get the submission by ID
+        result = await session.execute(
+            select(Submission).where(Submission.submission_id == submission_id)
+        )
+        submission = result.scalar_one_or_none()
+
+        if not submission:
+            raise HTTPException(status_code=404, detail="Submission not found")
+        
+        report = submission.report or {} 
+        if "ai-evaluation" in report:
+            raise HTTPException(status_code=400, detail="AI evaluation allready exist for this submission.")
+
+        # Get the assignment by ID
+        assignment_result = await session.execute(
+            select(Assignment).where(Assignment.assignment_id == submission.assignment_id)
+        )
+        assignment = assignment_result.scalar_one_or_none()
+
+        if not assignment:
+            raise HTTPException(status_code=404, detail="Assignment not found")
+        
+                # --- 1. Create prompt ---
+        prompt = f"""
+        You are an expert AI programming evaluator and teacher. 
+        Your task is to evaluate a student's code submission based on the provided assignment details.
+
+        ---
+
+        ### Assignment Information
+        The assignment is given as a JSON object with name and description:
+        {{
+            "name": "{assignment.assignment_name}",
+            "description": {json.dumps(assignment.description, ensure_ascii=False)}
+        }}
+
+        ---
+
+        ### Student Code Submission
+        Here is the student's submitted code (written by the student, not the AI):
+
+        {report["code"]}
+
+        ---
+
+        ### Evaluation Criteria
+
+        You must carefully analyze the student's code **only** based on the following aspects:
+
+        1. **Correctness** — Does the code correctly solve the problem described in the assignment?
+        2. **Code Quality** — Is the logic efficient, modular, and cleanly implemented?
+        3. **Readability & Structure** — Are variable names clear, comments useful, and code easy to follow?
+        4. **Error Handling** — Does the code handle edge cases, exceptions, and invalid inputs properly?
+        5. **Adherence to Requirements** — Does the code meet all assignment goals and constraints?
+
+        ---
+
+        ### Expected Output Format
+
+        You must return **ONLY** a valid JSON object in this exact structure.  
+        There should be **no text before or after** the JSON.  
+        Do **not** include explanations, markdown, or code blocks.
+
+        The JSON should look like this:
+
+        {{
+        "evaluation": {{
+            "good_practices": [
+            "Use bullet points to highlight specific strengths. For example: 'Used descriptive variable names' or 'Implemented efficient sorting algorithm'."
+            ],
+            "errors": [
+            "List specific mistakes such as syntax errors, incorrect logic, or missing features."
+            ],
+            "improvements": [
+            "Provide clear and actionable suggestions for improvement, such as 'Refactor into smaller functions' or 'Add input validation'."
+            ],
+            "overall_score": integer_between_0_and_100
+        }}
+        }}
+
+        ---
+
+        ### ⚖️ Scoring Guidelines
+        - 90–100 → Excellent code (minor or no issues)
+        - 75–89 → Good code (mostly correct, few improvements needed)
+        - 50–74 → Fair (some mistakes but understandable)
+        - 30–49 → Poor (many logical or structural issues)
+        - 0–29  → Very poor or incorrect implementation
+
+        ---
+
+        ### Important Rules
+        - Do NOT include explanations or reasoning outside the JSON.
+        - Do NOT include markdown (no ```json, no ```).
+        - Ensure the JSON is syntactically correct.
+        - Be objective and consistent in scoring.
+
+        Now, evaluate the submission accordingly and return **only the JSON output**.
+        """
+
+        try:
+            # --- 2. Call Gemini API ---
+            response = gemini_client.models.generate_content(
+                model="gemini-2.5-flash",
+                contents=prompt
+            )
+
+            response_text = response.text.strip()
+            response_text = re.sub(r"^```(?:json)?|```$", "", response_text, flags=re.MULTILINE).strip()
+            print("Gemini Response:", response_text)
+
+            # --- 3. Parse JSON ---
+            try:
+                evaluation_json = json.loads(response_text)
+            except json.JSONDecodeError:
+                raise HTTPException(status_code=500, detail=f"Invalid JSON from Gemini: {response_text}")
+            
+            report["ai-evaluation"] = evaluation_json.get("evaluation")
+            flag_modified(submission, "report")
+            submission.report = report
+            await session.commit()
+        except Exception as e:
+            print("❌ Error evaluating submission:", e)
+            traceback.print_exc()
+            raise HTTPException(status_code=500, detail=str(e))
