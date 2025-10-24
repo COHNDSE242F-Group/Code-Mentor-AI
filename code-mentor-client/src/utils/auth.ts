@@ -33,7 +33,7 @@ export async function fetchWithAuth(input: RequestInfo, init?: RequestInit, retr
   return res;
 }
 
-// small JWT helpers for client-side UI decisions
+// JWT helpers for client-side UI decisions
 export function parseJwt(token: string | null) {
   if (!token) return null;
   try {
