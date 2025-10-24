@@ -43,8 +43,9 @@ async def get_assignments():
                     "id": a.assignment_id,
                     "title": a.assignment_name,
                     "language": description.get('language'),
-                    "difficulty": description.get('difficulty'),
-                    "dueDate": str(a.due_date) if getattr(a, 'due_date', None) else None,
+                    "difficulty": (a.difficulty if getattr(a, 'difficulty', None) else description.get('difficulty')),
+                        "dueDate": str(a.due_date) if getattr(a, 'due_date', None) else None,
+                        "dueTime": (a.due_time.isoformat() if getattr(a, 'due_time', None) else description.get('dueTime')),
                     "batch": batch_name,
                     "status": status
                 })

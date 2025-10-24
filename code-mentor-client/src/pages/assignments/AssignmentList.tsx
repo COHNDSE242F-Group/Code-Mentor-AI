@@ -141,7 +141,7 @@ const AssignmentList = () => {
                       </Link>
                     </td>
                     <td className="py-3 px-4 text-sm">{assignment.batch}</td>
-                    <td className="py-3 px-4 text-sm">{assignment.dueDate}</td>
+                    <td className="py-3 px-4 text-sm">{assignment.dueDate ? `${assignment.dueDate}${assignment.dueTime ? ' ' + assignment.dueTime : ''}` : '-'}</td>
                     <td className="py-3 px-4 text-sm">{assignment.language || '-'}</td>
                     <td className="py-3 px-4 text-sm">{assignment.difficulty || '-'}</td>
                     <td className="py-3 px-4">

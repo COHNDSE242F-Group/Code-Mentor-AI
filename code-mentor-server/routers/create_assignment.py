@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel
 from typing import Optional, Dict, Any
-from datetime import date
+from datetime import date, time as _time
 from sqlalchemy.future import select
 
 from database import async_session
@@ -72,14 +72,26 @@ async def create_assignment(assignment: AssignmentCreateIn, token_data: dict = D
             "instructions": assignment.instructions,
             "language": assignment.language,
             "difficulty": assignment.difficulty,
+            "dueTime": assignment.dueTime,
             "aiEvaluation": assignment.aiEvaluation,
             "plagiarism": assignment.plagiarism,
         }
+
+        # parse optional dueTime into a time object for the new column
+        due_time_obj = None
+        if assignment.dueTime:
+            try:
+                due_time_obj = _time.fromisoformat(assignment.dueTime)
+            except Exception:
+                # if parsing fails, keep None and still store original in description
+                due_time_obj = None
 
         new_assignment = Assignment(
             assignment_name=assignment.title,
             description=description,
             due_date=due_date,
+            due_time=due_time_obj,
+            difficulty=assignment.difficulty,
             instructor_id=instructor_id,
             batch_id=batch_id,
         )
@@ -92,6 +104,7 @@ async def create_assignment(assignment: AssignmentCreateIn, token_data: dict = D
             "assignment_id": new_assignment.assignment_id,
             "assignment_name": new_assignment.assignment_name,
             "due_date": str(new_assignment.due_date),
+            "due_time": (new_assignment.due_time.isoformat() if getattr(new_assignment, 'due_time', None) else (new_assignment.description or {}).get("dueTime")),
             "instructor_id": new_assignment.instructor_id,
             "batch_id": new_assignment.batch_id,
         }

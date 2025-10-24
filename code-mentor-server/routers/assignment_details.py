@@ -61,10 +61,11 @@ async def get_assignment_details(assignment_id: int):
                 "title": assignment.assignment_name,
                 "instructions": description.get("instructions"),
                 "language": description.get("language"),
-                "difficulty": description.get("difficulty"),
+                "difficulty": (assignment.difficulty if getattr(assignment, 'difficulty', None) else description.get("difficulty")),
                 "aiEvaluation": description.get("aiEvaluation"),
                 "plagiarism": description.get("plagiarism"),
                 "dueDate": str(assignment.due_date) if getattr(assignment, "due_date", None) else None,
+                "dueTime": (assignment.due_time.isoformat() if getattr(assignment, 'due_time', None) else description.get("dueTime")),
                 "batch": getattr(assignment.batch, "batch_name", None) if getattr(assignment, "batch", None) else None,
                 "instructor": getattr(assignment.instructor, "instructor_name", None) if getattr(assignment, "instructor", None) else None,
                 "status": status,
@@ -75,73 +76,4 @@ async def get_assignment_details(assignment_id: int):
     except Exception as e:
         # help debugging by raising a 500 with message
         raise HTTPException(status_code=500, detail=str(e))
-from fastapi import APIRouter, HTTPException
 
-router = APIRouter(prefix="/assignment")
-
-# Mock assignments data (like database)
-MOCK_ASSIGNMENTS = {
-    1: {
-        "id": 1,
-        "title": "Python Basics",
-        "language": "Python",
-        "difficulty": "Easy",
-        "dueDate": "2025-10-20",
-        "dueTime": "14:00",
-        "batch": "Batch A",
-        "status": "Active",
-        "instructions": "Write a Python program to demonstrate loops and conditional statements.\nSubmit your code as a .py file.",
-        "aiEvaluation": True,
-        "plagiarism": False,
-        "attachments": ["python_basics_instructions.pdf", "example_code.zip"]
-    },
-    2: {
-        "id": 2,
-        "title": "JavaScript Loops",
-        "language": "JavaScript",
-        "difficulty": "Medium",
-        "dueDate": "2025-10-22",
-        "dueTime": "10:00",
-        "batch": "Batch B",
-        "status": "Draft",
-        "instructions": "Create a JS program to practice loops and array manipulation.",
-        "aiEvaluation": False,
-        "plagiarism": True,
-        "attachments": ["loops_guide.pdf"]
-    },
-    3: {
-        "id": 3,
-        "title": "SQL Advanced Joins",
-        "language": "SQL",
-        "difficulty": "Hard",
-        "dueDate": "2025-10-25",
-        "dueTime": "17:00",
-        "batch": "Batch C",
-        "status": "Scheduled",
-        "instructions": "Write SQL queries that demonstrate INNER, LEFT, and RIGHT JOIN operations.",
-        "aiEvaluation": True,
-        "plagiarism": True,
-        "attachments": []
-    },
-    4: {
-        "id": 4,
-        "title": "Java Inheritance",
-        "language": "Java",
-        "difficulty": "Advanced",
-        "dueDate": "2025-10-28",
-        "dueTime": "11:30",
-        "batch": "Batch A",
-        "status": "Closed",
-        "instructions": "Implement a class hierarchy demonstrating inheritance and polymorphism.",
-        "aiEvaluation": False,
-        "plagiarism": False,
-        "attachments": ["inheritance_doc.pdf"]
-    }
-}
-
-@router.get("/details/{assignment_id}")
-def get_assignment_details(assignment_id: int):
-    assignment = MOCK_ASSIGNMENTS.get(assignment_id)
-    if not assignment:
-        raise HTTPException(status_code=404, detail="Assignment not found")
-    return assignment
