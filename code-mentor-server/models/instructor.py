@@ -12,6 +12,7 @@ class Instructor(Base):
     email = Column(String(255), nullable=False, unique=True)
     contact_no = Column(String(20), nullable=True)
     qualifications = Column(JSON, nullable=True)
+    address = Column(String(255), nullable=True)
 
     university = relationship("University", back_populates="instructors")
     assignments = relationship("Assignment", back_populates="instructor")

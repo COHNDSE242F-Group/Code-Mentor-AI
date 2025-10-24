@@ -68,6 +68,7 @@ async def get_assignment_details(assignment_id: int):
                 "dueTime": (assignment.due_time.isoformat() if getattr(assignment, 'due_time', None) else description.get("dueTime")),
                 "batch": getattr(assignment.batch, "batch_name", None) if getattr(assignment, "batch", None) else None,
                 "instructor": getattr(assignment.instructor, "instructor_name", None) if getattr(assignment, "instructor", None) else None,
+                "instructor_id": getattr(assignment, 'instructor_id', None),
                 "status": status,
                 "submissions": submissions,
             }
