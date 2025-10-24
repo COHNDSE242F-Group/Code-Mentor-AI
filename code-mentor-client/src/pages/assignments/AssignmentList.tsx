@@ -15,27 +15,28 @@ const AssignmentList = () => {
   const pageSize = 5;
 
   React.useEffect(() => {
-    setLoading(true);
     const token = localStorage.getItem('token');
-    fetch('http://localhost:8000/assignment/list', { headers: { Authorization: token ? `Bearer ${token}` : '' } })
-      .then(res => {
-        if (res.status === 401) {
-          setError('Not authenticated. Please log in.');
+    const fetchAssignments = () => {
+      setLoading(true);
+      fetch('http://localhost:8000/assignment/list', { headers: { Authorization: token ? `Bearer ${token}` : '' } })
+        .then(res => {
+          if (res.status === 401) {
+            setError('Not authenticated. Please log in.');
+            setLoading(false);
+            return Promise.reject(new Error('Not authenticated'));
+          }
+          if (!res.ok) throw new Error('Failed to fetch assignments');
+          return res.json();
+        })
+        .then(data => {
+          setAssignments(data.assignments || []);
           setLoading(false);
-          return Promise.reject(new Error('Not authenticated'));
-        }
-        if (!res.ok) throw new Error('Failed to fetch assignments');
-        return res.json();
-      })
-      .then(data => {
-        setAssignments(data.assignments || []);
-        setLoading(false);
-      })
-      .catch(err => {
-        setError('Error loading assignments');
-        setLoading(false);
-      });
-    
+        })
+        .catch(err => {
+          setError('Error loading assignments');
+          setLoading(false);
+        });
+
       // fetch available batch options from backend
       fetch('http://localhost:8000/assignment/options', { headers: { Authorization: token ? `Bearer ${token}` : '' } })
         .then(res => res.ok ? res.json() : Promise.reject(new Error('Failed to fetch batches')))
@@ -48,6 +49,19 @@ const AssignmentList = () => {
         .catch(() => {
           // keep default options on failure
         });
+
+      return fetchAssignments;
+    };
+
+    // initial fetch
+    const fetcher = fetchAssignments();
+
+    // listen for external updates
+    const onUpdate = (e: any) => {
+      fetchAssignments();
+    };
+    window.addEventListener('assignment:updated', onUpdate as EventListener);
+    return () => window.removeEventListener('assignment:updated', onUpdate as EventListener);
   }, []);
 
   // Filter assignments
