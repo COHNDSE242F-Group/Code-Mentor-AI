@@ -35,7 +35,16 @@ const AccountDetails = () => {
   useEffect(() => {
     async function fetchProfile() {
       try {
-        const res = await fetch('http://localhost:8000/account/profile');
+        const token = localStorage.getItem('token');
+        const res = await fetch('http://localhost:8000/account/profile', {
+          headers: {
+            Authorization: token ? `Bearer ${token}` : ''
+          }
+        });
+        if (res.status === 401) {
+          setErrorMessage('Not authenticated. Please log in.');
+          return;
+        }
         if (!res.ok) throw new Error('Failed to fetch profile');
         const data = await res.json();
         setProfile(data);
@@ -70,11 +79,17 @@ const AccountDetails = () => {
     setIsSaving(true);
     setErrorMessage('');
     try {
+      const token = localStorage.getItem('token');
       const res = await fetch('http://localhost:8000/account/profile', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', Authorization: token ? `Bearer ${token}` : '' },
         body: JSON.stringify(formData)
       });
+      if (res.status === 401) {
+        setErrorMessage('Not authenticated. Please log in.');
+        setIsSaving(false);
+        return;
+      }
       if (!res.ok) throw new Error('Failed to update profile');
       const updated = await res.json();
       setProfile(updated);
