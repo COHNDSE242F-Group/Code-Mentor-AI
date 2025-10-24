@@ -245,7 +245,7 @@ const AccountDetails = () => {
                   Last updated 3 months ago
                 </p>
               </div>
-              <Link to="/change-password" className="mt-2 md:mt-0 text-[#0D47A1] hover:text-blue-800 font-medium">
+              <Link to="/reset-password" className="mt-2 md:mt-0 text-[#0D47A1] hover:text-blue-800 font-medium">
                 Change password
               </Link>
             </div>

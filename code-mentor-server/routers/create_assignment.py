@@ -168,15 +168,7 @@ async def update_assignment(assignment_id: int, assignment: AssignmentCreateIn, 
         # update description JSON fields
         # make a new dict copy so SQLAlchemy detects the change (avoid in-place mutation of the same object)
         desc = dict(a.description or {})
-        # Debug prints: show incoming payload and current description
-        try:
-            logger.debug("[update_assignment] incoming payload: %s", assignment.dict())
-        except Exception:
-            logger.exception("Failed to log incoming payload")
-        try:
-            logger.debug("[update_assignment] before desc for assignment %s: %s", a.assignment_id, a.description)
-        except Exception:
-            logger.exception("Failed to log before description")
+        # update description fields from incoming payload
         desc.update({
             "instructions": assignment.instructions,
             "language": assignment.language,
@@ -191,19 +183,13 @@ async def update_assignment(assignment_id: int, assignment: AssignmentCreateIn, 
             flag_modified(a, 'description')
         except Exception:
             pass
-        try:
-            logger.debug("[update_assignment] after desc assigned (pre-commit) for assignment %s: %s", a.assignment_id, a.description)
-        except Exception:
-            logger.exception("Failed to log after description (pre-commit)")
+        # description prepared and will be persisted below
 
         session.add(a)
         await session.commit()
         await session.refresh(a)
 
-        try:
-            logger.info("[update_assignment] stored description after commit for assignment %s: %s", a.assignment_id, a.description)
-        except Exception:
-            logger.exception("Failed to log stored description after commit")
+        logger.info("[update_assignment] assignment %s updated", a.assignment_id)
 
         return {
             "assignment_id": a.assignment_id,

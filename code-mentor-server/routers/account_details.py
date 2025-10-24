@@ -43,10 +43,7 @@ async def get_profile(token_data: dict = Depends(login_required)):
     """Return profile information for the logged-in user.
     This returns a flat profile object matching the frontend expectations.
     """
-    try:
-        logger.debug("[get_profile] token payload: %s", token_data)
-    except Exception:
-        logger.exception("Failed to log token payload in get_profile")
+    # token_data is validated by the dependency; no debug logging required here
 
     user_id_raw = token_data.get("user_id")
     role = token_data.get("role", "user")
@@ -132,11 +129,7 @@ async def get_profile(token_data: dict = Depends(login_required)):
 @router.post("/account/profile", response_model=ProfileOut)
 async def update_profile(update: ProfileUpdate, token_data: dict = Depends(login_required)):
     """Update basic profile fields for the logged-in user. Only a small set of fields are allowed and persisted."""
-    # Log token payload for debugging
-    try:
-        logger.debug("[update_profile] token payload: %s", token_data)
-    except Exception:
-        logger.exception("Failed to log token payload")
+    # token_data is validated by the dependency; avoid noisy debug logs in production
 
     user_id_raw = token_data.get("user_id")
     role = token_data.get("role", "user")
@@ -148,7 +141,7 @@ async def update_profile(update: ProfileUpdate, token_data: dict = Depends(login
 
     try:
         async with async_session() as session:
-            logger.debug("[update_profile] incoming update: %s", update.dict())
+            # incoming update will be processed below; avoid verbose debug logging
             if role == "student":
                 result = await session.execute(
                     select(Student).options(selectinload(Student.university)).where(Student.student_id == user_id)

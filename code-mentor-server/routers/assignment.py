@@ -72,7 +72,7 @@ async def get_assignment(
 ):
     user_id = token_data["user_id"]
     
-    print(f"Fetching assignment {assignment_id} for user {user_id}")
+    # fetch assignment for user (log omitted for cleanliness)
 
     async with async_session() as session:
         # Fetch the student
