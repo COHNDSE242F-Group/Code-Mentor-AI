@@ -41,23 +41,17 @@ const StudentMessaging: React.FC = () => {
 
   useEffect(() => {
     fetchWithAuth("http://localhost:8000/student/conversations")
-      .then(res => res.json())
-      .then(data => {
-        const formattedData = data.map((conversation: any) => ({
-          id: conversation.conversation_id,
-          name: conversation.name || "Unnamed Conversation",
-          lastMessage: conversation.messages.length > 0 
-            ? conversation.messages[conversation.messages.length - 1].text 
-            : "",
-          time: conversation.messages.length > 0 
-            ? conversation.messages[conversation.messages.length - 1].sent_at 
-            : conversation.created_at,
-          unread: 0,
-          online: false,
-        }));
-        setConversations(formattedData);
+      .then(res => {
+        if (!res.ok) {
+          throw new Error("Failed to fetch conversations");
+        }
+        return res.json();
       })
-      .catch(err => console.error(err));
+      .then(data => setConversations(data))
+      .catch(err => {
+        console.error(err);
+        alert("An error occurred while fetching conversations. Please try again.");
+      });
   }, []);
 
   useEffect(() => {
@@ -81,19 +75,27 @@ const StudentMessaging: React.FC = () => {
 
   useEffect(() => {
     if (showNewMessageModal) {
-      fetchWithAuth("http://localhost:8000/student/users")
-        .then(res => res.json())
+      fetchWithAuth("http://localhost:8000/student/users", {
+        method: "GET",
+      })
+        .then(res => {
+          if (!res.ok) {
+            throw new Error(`Failed to fetch users: ${res.status} ${res.statusText}`);
+          }
+          return res.json();
+        })
         .then(data => {
           if (Array.isArray(data)) {
-            setUsers(data);
+            setUsers(data); // Set users only if the response is an array
           } else {
             console.error("Invalid response format:", data);
-            setUsers([]);
+            setUsers([]); // Fallback to an empty array
           }
         })
         .catch(err => {
-          console.error(err);
-          setUsers([]);
+          console.error("Error fetching users:", err);
+          alert("An error occurred while fetching users. Please try again.");
+          setUsers([]); // Fallback to an empty array
         });
     }
   }, [showNewMessageModal]);
