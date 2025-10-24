@@ -7,6 +7,7 @@ from sqlalchemy.future import select
 from database import async_session
 from models.assignment import Assignment
 from models.batch import Batch
+from models.instructor import Instructor
 from auth.dependencies import login_required
 
 router = APIRouter()
@@ -52,6 +53,11 @@ async def create_assignment(assignment: AssignmentCreateIn, token_data: dict = D
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid dueDate format, expected YYYY-MM-DD")
 
     async with async_session() as session:
+        # ensure instructor exists (token user_id should map to an Instructor)
+        instr = await session.execute(select(Instructor).where(Instructor.instructor_id == instructor_id))
+        instr_obj = instr.scalar_one_or_none()
+        if not instr_obj:
+            raise HTTPException(status_code=404, detail="Instructor not found for current user")
         # Resolve batch name to batch_id (if provided and not 'All Students')
         batch_id = None
         if assignment.batch and assignment.batch != "All Students":
