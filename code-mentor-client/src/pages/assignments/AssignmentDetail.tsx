@@ -12,9 +12,20 @@ const AssignmentDetail = () => {
 
   React.useEffect(() => {
     setLoading(true);
-    fetch(`http://localhost:8000/assignment/details/${id}`)
-      .then(res => {
-        if (!res.ok) throw new Error('Failed to fetch assignment details');
+    const token = localStorage.getItem('token');
+    fetch(`http://localhost:8000/assignment/details/${id}`, { headers: { Authorization: token ? `Bearer ${token}` : '' } })
+      .then(async res => {
+        if (res.status === 401) {
+          setError('Not authenticated. Please log in.');
+          setLoading(false);
+          return Promise.reject(new Error('Not authenticated'));
+        }
+        if (!res.ok) {
+          // try to get json error detail
+          const body = await res.json().catch(() => null);
+          const msg = body && body.detail ? body.detail : 'Failed to fetch assignment details';
+          throw new Error(msg);
+        }
         return res.json();
       })
       .then(data => {
@@ -22,7 +33,7 @@ const AssignmentDetail = () => {
         setLoading(false);
       })
       .catch(err => {
-        setError('Error loading assignment details');
+        setError(err.message || 'Error loading assignment details');
         setLoading(false);
       });
   }, [id]);
@@ -52,23 +63,23 @@ const AssignmentDetail = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
                 <p className="text-sm text-gray-500">Programming Language</p>
-                <p className="text-lg font-medium text-gray-800">{assignment.language}</p>
+                <p className="text-lg font-medium text-gray-800">{assignment.language || '-'}</p>
               </div>
               <div>
                 <p className="text-sm text-gray-500">Difficulty</p>
-                <p className="text-lg font-medium text-gray-800">{assignment.difficulty}</p>
+                <p className="text-lg font-medium text-gray-800">{assignment.difficulty || '-'}</p>
               </div>
               <div>
                 <p className="text-sm text-gray-500">Batch</p>
-                <p className="text-lg font-medium text-gray-800">{assignment.batch}</p>
+                <p className="text-lg font-medium text-gray-800">{assignment.batch || 'All Students'}</p>
               </div>
               <div>
                 <p className="text-sm text-gray-500">Status</p>
-                <p className="text-lg font-medium text-gray-800">{assignment.status}</p>
+                <p className="text-lg font-medium text-gray-800">{assignment.status || '-'}</p>
               </div>
               <div>
                 <p className="text-sm text-gray-500">Due Date</p>
-                <p className="text-lg font-medium text-gray-800">{assignment.dueDate}</p>
+                <p className="text-lg font-medium text-gray-800">{assignment.dueDate || '-'}</p>
               </div>
               <div>
                 <p className="text-sm text-gray-500">Due Time</p>
@@ -79,7 +90,7 @@ const AssignmentDetail = () => {
             <div>
               <p className="text-sm text-gray-500 mb-1">Instructions</p>
               <p className="text-gray-700 whitespace-pre-line">
-                {assignment.instructions}
+                {assignment.instructions || (assignment.description && assignment.description.instructions) || '-'}
               </p>
             </div>
 
@@ -88,10 +99,10 @@ const AssignmentDetail = () => {
                 <p className="text-sm text-gray-500 mb-1">Attachments</p>
                 <ul className="list-disc ml-6">
                 {assignment.attachments.map((file: string, index: number) => (
-  <li key={index} className="text-blue-600 hover:underline cursor-pointer">
-    {file}
-  </li>
-))}
+                  <li key={index} className="text-blue-600 hover:underline cursor-pointer">
+                    {file}
+                  </li>
+                ))}
                 </ul>
               </div>
             )}

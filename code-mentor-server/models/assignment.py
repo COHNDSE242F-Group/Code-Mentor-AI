@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, ForeignKey, JSON, Date
+from sqlalchemy import Column, Integer, String, ForeignKey, JSON, Date, Time
 from sqlalchemy.orm import relationship
 from database import Base
 
@@ -9,6 +9,8 @@ class Assignment(Base):
     assignment_name = Column(String(255), nullable=False)
     description = Column(JSON, nullable=True)
     due_date = Column(Date, nullable=False)
+    due_time = Column(Time, nullable=True)
+    difficulty = Column(String(20), nullable=True)
     instructor_id = Column(Integer, ForeignKey("instructor.instructor_id"), nullable=True)
     batch_id = Column(Integer, ForeignKey("batch.batch_id"), nullable=True)
 

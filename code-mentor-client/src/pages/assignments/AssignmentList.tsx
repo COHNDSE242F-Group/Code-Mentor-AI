@@ -8,15 +8,22 @@ const AssignmentList = () => {
   const [loading, setLoading] = React.useState(true);
   const [error, setError] = React.useState('');
   const [search, setSearch] = React.useState('');
-  const [batchFilter, setBatchFilter] = React.useState('All Batches');
+    const [batchFilter, setBatchFilter] = React.useState('All Students');
+    const [batchOptions, setBatchOptions] = React.useState<string[]>(['All Students']);
   const [statusFilter, setStatusFilter] = React.useState('All Statuses');
   const [page, setPage] = React.useState(1);
   const pageSize = 5;
 
   React.useEffect(() => {
     setLoading(true);
-    fetch('http://localhost:8000/assignment/list')
+    const token = localStorage.getItem('token');
+    fetch('http://localhost:8000/assignment/list', { headers: { Authorization: token ? `Bearer ${token}` : '' } })
       .then(res => {
+        if (res.status === 401) {
+          setError('Not authenticated. Please log in.');
+          setLoading(false);
+          return Promise.reject(new Error('Not authenticated'));
+        }
         if (!res.ok) throw new Error('Failed to fetch assignments');
         return res.json();
       })
@@ -28,12 +35,25 @@ const AssignmentList = () => {
         setError('Error loading assignments');
         setLoading(false);
       });
+    
+      // fetch available batch options from backend
+      fetch('http://localhost:8000/assignment/options', { headers: { Authorization: token ? `Bearer ${token}` : '' } })
+        .then(res => res.ok ? res.json() : Promise.reject(new Error('Failed to fetch batches')))
+        .then(d => {
+          const batches: string[] = d.batches || ['All Students'];
+          setBatchOptions(batches);
+          // ensure current filter is a valid option
+          if (!batches.includes(batchFilter)) setBatchFilter(batches[0] || 'All Students');
+        })
+        .catch(() => {
+          // keep default options on failure
+        });
   }, []);
 
   // Filter assignments
   const filtered = assignments.filter(a => {
     const matchesSearch = a.title.toLowerCase().includes(search.toLowerCase());
-    const matchesBatch = batchFilter === 'All Batches' || a.batch === batchFilter;
+      const matchesBatch = batchFilter === 'All Students' || batchFilter === 'All Batches' || a.batch === batchFilter;
     const matchesStatus = statusFilter === 'All Statuses' || (a.status ? a.status === statusFilter : true);
     return matchesSearch && matchesBatch && matchesStatus;
   });
@@ -79,12 +99,11 @@ const AssignmentList = () => {
               <FilterIcon size={16} className="mr-2" />
               Filters
             </button>
-            <select className="px-4 py-2 border border-gray-300 rounded-md bg-white text-gray-700" value={batchFilter} onChange={handleBatch}>
-              <option>All Batches</option>
-              <option>Batch A</option>
-              <option>Batch B</option>
-              <option>Batch C</option>
-            </select>
+              <select className="px-4 py-2 border border-gray-300 rounded-md bg-white text-gray-700" value={batchFilter} onChange={handleBatch}>
+                {batchOptions.map(b => (
+                  <option key={b}>{b}</option>
+                ))}
+              </select>
             <select className="px-4 py-2 border border-gray-300 rounded-md bg-white text-gray-700" value={statusFilter} onChange={handleStatus}>
               <option>All Statuses</option>
               <option>Active</option>
@@ -122,7 +141,7 @@ const AssignmentList = () => {
                       </Link>
                     </td>
                     <td className="py-3 px-4 text-sm">{assignment.batch}</td>
-                    <td className="py-3 px-4 text-sm">{assignment.dueDate}</td>
+                    <td className="py-3 px-4 text-sm">{assignment.dueDate ? `${assignment.dueDate}${assignment.dueTime ? ' ' + assignment.dueTime : ''}` : '-'}</td>
                     <td className="py-3 px-4 text-sm">{assignment.language || '-'}</td>
                     <td className="py-3 px-4 text-sm">{assignment.difficulty || '-'}</td>
                     <td className="py-3 px-4">
