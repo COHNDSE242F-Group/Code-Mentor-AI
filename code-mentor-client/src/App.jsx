@@ -29,7 +29,7 @@ import StudentMessaging from "./pages/StudentMessaging";
 import Messaging from "./pages/Messaging";
 
 
-// import Settings from "./pages/Settings";
+import Settings from "./pages/Settings";
 
 // Auth Pages
 import Login from "./pages/auth/Login"; 
@@ -42,6 +42,7 @@ import ResetPassword from "./pages/auth/ResetPassword";
 import AccountDetails from "./pages/auth/AccountDetails";
 import Progress from "./pages/Progress";
 import StudentDashboard from "./pages/StudentDashboard";
+
 
 function App() {
   return (
@@ -82,6 +83,7 @@ function App() {
         <Route path="/assignments/create" element={<Layout><CreateAssignment /></Layout>} />
         <Route path="/assignments" element={<Layout><AssignmentList /></Layout>} />
         <Route path="/assignments/:id" element={<Layout><AssignmentDetail /></Layout>} />
+        <Route path="/settings" element={<Layout><Settings /></Layout>} />
         
         {/* <Route path="/dashboard" element={<Layout><Dashboard /></Layout>} />
          <Route path="/assignments/:id" element={<Layout><AssignmentDetail /></Layout>} />
