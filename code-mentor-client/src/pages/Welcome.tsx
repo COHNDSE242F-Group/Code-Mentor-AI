@@ -48,7 +48,17 @@ export const Welcome: React.FC = () => {
       })
     }).then(async res => {
       if (res.ok) {
-        // proceed to verification success state
+        // store created university id so next pages can use it
+        const payload = await res.json().catch(() => ({}));
+        if (payload.university_id) {
+          try {
+            localStorage.setItem('university_id', String(payload.university_id));
+            localStorage.setItem('university_name', String(payload.university_name || ''));
+          } catch (e) {
+            // ignore storage errors
+          }
+        }
+        // proceed to success state
         setIsVerified(true);
       } else {
         const err = await res.json().catch(() => ({}));
