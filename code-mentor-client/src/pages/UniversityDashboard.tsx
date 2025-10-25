@@ -1,43 +1,57 @@
-
-import React from 'react';
+import React ,{useState,useEffect} from 'react';
 import { useNavigate } from 'react-router-dom';
 import { UserIcon, UsersIcon, BookOpenIcon, ServerIcon, CreditCardIcon, SettingsIcon, BellIcon, LogOutIcon, ChevronDownIcon, SearchIcon, BarChartIcon, PlusIcon, CalendarIcon } from 'lucide-react';
 import { useTheme } from '../context/ThemeContext';
-export const Dashboard: React.FC = () => {
-  const {
-    theme,
-    toggleTheme
-  } = useTheme();
+import axios from 'axios';
+
+const UniversityDashboard: React.FC = () => {
+  const [theme, setTheme] = useState<'light' | 'dark'>('light'); // Local theme state
+  const [stats, setStats] = useState({
+    activeInstructors: 0,
+    activeStudents: 0,
+    coursesCreated: 0,
+    storageUsed: '0 GB',
+    storageLimit: '100 GB',
+  });
   const navigate = useNavigate();
-  // Mock data - in a real app, this would come from an API
-  const stats = {
-    activeInstructors: 12,
-    activeStudents: 247,
-    coursesCreated: 18,
-    storageUsed: '87 GB',
-    storageLimit: '200 GB'
+  const recentActivity = [
+    { id: 1, type: 'instructor_joined', name: 'Dr. Alice Smith', date: '2024-10-01' },
+    { id: 2, type: 'course_created', name: 'Introduction to AI', date: '2024-09-28' },
+    { id: 3, type: 'student_joined', name: 'John Doe and 24 others', date: '2024-09-25' },
+    { id: 4, type: 'assignment_created', name: 'Project 1: Chatbot Development', date: '2024-09-20' },
+  ];
+  
+  useEffect(() => {
+    const fetchStats = async () => {
+      try {
+        const token = localStorage.getItem("token");
+        if (!token) {
+          console.error("Token is missing. User might not be logged in.");
+          return;
+        }
+
+        const response = await axios.get("http://localhost:8000/university-stats", {
+          headers: {
+            Authorization: `Bearer ${token}`, // Include the token in the Authorization header
+          },
+        });
+
+        setStats(response.data);
+      } catch (error) {
+        console.error("Error fetching stats:", error);
+      }
+    };
+
+    fetchStats();
+  }, []);
+   const handleLogout = () => {
+    localStorage.removeItem('authToken'); // Clear auth token
+    navigate('/'); // Navigate to home
   };
-  const recentActivity = [{
-    id: 1,
-    type: 'instructor_joined',
-    name: 'Dr. Sarah Johnson',
-    date: '2 hours ago'
-  }, {
-    id: 2,
-    type: 'course_created',
-    name: 'Introduction to Python',
-    date: '1 day ago'
-  }, {
-    id: 3,
-    type: 'student_joined',
-    name: '15 new students',
-    date: '2 days ago'
-  }, {
-    id: 4,
-    type: 'assignment_created',
-    name: 'Data Structures Assignment',
-    date: '3 days ago'
-  }];
+
+  const toggleTheme = () => {
+    setTheme((prevTheme) => (prevTheme === 'light' ? 'dark' : 'light'));
+  };
   return <div className={`min-h-screen ${theme === 'dark' ? 'bg-gray-900 text-white' : 'bg-gray-50 text-gray-900'}`}>
       <div className="flex">
         {/* Sidebar */}
@@ -77,6 +91,15 @@ export const Dashboard: React.FC = () => {
               Settings
             </a>
           </nav>
+           <div className="p-4 border-t border-blue-800">
+                  <button
+                    onClick={handleLogout}
+                    className="flex items-center text-gray-300 hover:text-white w-full px-4 py-2"
+                  >
+                    <LogOutIcon size={20} className="mr-3" />
+                    <span>Logout</span>
+                  </button>
+                </div>
           <div className="absolute bottom-0 w-full p-4">
             <button onClick={toggleTheme} className={`w-full flex items-center justify-center py-2 px-4 rounded-md ${theme === 'dark' ? 'bg-gray-700 hover:bg-gray-600 text-gray-300' : 'bg-gray-200 hover:bg-gray-300 text-gray-700'}`}>
               {theme === 'dark' ? 'Light Mode' : 'Dark Mode'}
@@ -117,80 +140,69 @@ export const Dashboard: React.FC = () => {
           </header>
           <main className="p-6">
             <div className="mb-8">
-              <h1 className="text-2xl font-bold mb-2">University Dashboard</h1>
-              <p className={theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}>
-                Welcome back to your CodeMentorAI University Portal
+        <h1 className="text-2xl font-bold mb-2">University Dashboard</h1>
+        <p className={theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}>
+          Welcome back to your CodeMentorAI University Portal
+        </p>
+      </div>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        <div className={`rounded-lg p-6 ${theme === 'dark' ? 'bg-gray-800' : 'bg-white shadow-md'}`}>
+          <div className="flex justify-between items-start">
+            <div>
+              <p className={`text-sm ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>
+                Active Instructors
               </p>
+              <h3 className="text-2xl font-bold mt-1">{stats.activeInstructors}</h3>
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-              <div className={`rounded-lg p-6 ${theme === 'dark' ? 'bg-gray-800' : 'bg-white shadow-md'}`}>
-                <div className="flex justify-between items-start">
-                  <div>
+            <div className={`p-3 rounded-full ${theme === 'dark' ? 'bg-blue-900 text-blue-400' : 'bg-blue-100 text-blue-600'}`}>
+              <UserIcon size={20} />
+            </div>
+          </div>
+        </div>
+        <div className={`rounded-lg p-6 ${theme === 'dark' ? 'bg-gray-800' : 'bg-white shadow-md'}`}>
+          <div className="flex justify-between items-start">
+            <div>
+              <p className={`text-sm ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>
+                Active Students
+              </p>
+              <h3 className="text-2xl font-bold mt-1">{stats.activeStudents}</h3>
+            </div>
+            <div className={`p-3 rounded-full ${theme === 'dark' ? 'bg-green-900 text-green-400' : 'bg-green-100 text-green-600'}`}>
+              <UsersIcon size={20} />
+            </div>
+          </div>
+        </div>
+        <div className={`rounded-lg p-6 ${theme === 'dark' ? 'bg-gray-800' : 'bg-white shadow-md'}`}>
+          <div className="flex justify-between items-start">
+            <div>
                     <p className={`text-sm ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>
-                      Active Instructors
-                    </p>
-                    <h3 className="text-2xl font-bold mt-1">
-                      {stats.activeInstructors}
-                    </h3>
-                  </div>
-                  <div className={`p-3 rounded-full ${theme === 'dark' ? 'bg-blue-900 text-blue-400' : 'bg-blue-100 text-blue-600'}`}>
-                    <UserIcon size={20} />
-                  </div>
-                </div>
-                <div className="mt-4 flex items-center text-sm">
-                  <span className="text-green-500 mr-1">+2</span>
-                  <span className={theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}>
-                    since last month
-                  </span>
-                </div>
-              </div>
-              <div className={`rounded-lg p-6 ${theme === 'dark' ? 'bg-gray-800' : 'bg-white shadow-md'}`}>
-                <div className="flex justify-between items-start">
-                  <div>
-                    <p className={`text-sm ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>
-                      Active Students
-                    </p>
-                    <h3 className="text-2xl font-bold mt-1">
-                      {stats.activeStudents}
-                    </h3>
-                  </div>
-                  <div className={`p-3 rounded-full ${theme === 'dark' ? 'bg-green-900 text-green-400' : 'bg-green-100 text-green-600'}`}>
-                    <UsersIcon size={20} />
-                  </div>
-                </div>
-                <div className="mt-4 flex items-center text-sm">
-                  <span className="text-green-500 mr-1">+15</span>
-                  <span className={theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}>
-                    since last month
-                  </span>
-                </div>
-              </div>
-              <div className={`rounded-lg p-6 ${theme === 'dark' ? 'bg-gray-800' : 'bg-white shadow-md'}`}>
-                <div className="flex justify-between items-start">
-                  <div>
-                    <p className={`text-sm ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>
-                      Courses Created
-                    </p>
-                    <h3 className="text-2xl font-bold mt-1">
-                      {stats.coursesCreated}
-                    </h3>
-                  </div>
-                  <div className={`p-3 rounded-full ${theme === 'dark' ? 'bg-purple-900 text-purple-400' : 'bg-purple-100 text-purple-600'}`}>
-                    <BookOpenIcon size={20} />
-                  </div>
-                </div>
-                <div className="mt-4 flex items-center text-sm">
-                  <span className="text-green-500 mr-1">+3</span>
-                  <span className={theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}>
-                    since last month
-                  </span>
-                </div>
-              </div>
-              <div className={`rounded-lg p-6 ${theme === 'dark' ? 'bg-gray-800' : 'bg-white shadow-md'}`}>
-                <div className="flex justify-between items-start">
-                  <div>
-                    <p className={`text-sm ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>
-                      Storage Used
+                Courses Created
+              </p>
+              <h3 className="text-2xl font-bold mt-1">{stats.coursesCreated}</h3>
+            </div>
+            <div className={`p-3 rounded-full ${theme === 'dark' ? 'bg-purple-900 text-purple-400' : 'bg-purple-100 text-purple-600'}`}>
+              <BookOpenIcon size={20} />
+            </div>
+          </div>
+        </div>
+        <div className={`rounded-lg p-6 ${theme === 'dark' ? 'bg-gray-800' : 'bg-white shadow-md'}`}>
+          <div className="flex justify-between items-start">
+            <div>
+              <p className={`text-sm ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>
+                Courses Created
+              </p>
+              <h3 className="text-2xl font-bold mt-1">{stats.coursesCreated}</h3>
+            </div>
+            <div className={`p-3 rounded-full ${theme === 'dark' ? 'bg-purple-900 text-purple-400' : 'bg-purple-100 text-purple-600'}`}>
+              <BookOpenIcon size={20} />
+            </div>
+          </div>
+        </div>
+        <div className={`rounded-lg p-6 ${theme === 'dark' ? 'bg-gray-800' : 'bg-white shadow-md'}`}>
+          <div className="flex justify-between items-start">
+            <div>
+              <p className={`text-sm ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>
+                Storage Used
                     </p>
                     <h3 className="text-2xl font-bold mt-1">
                       {stats.storageUsed}
@@ -336,3 +348,4 @@ export const Dashboard: React.FC = () => {
       </div>
     </div>;
 };
+export default UniversityDashboard;

@@ -17,5 +17,6 @@ from .conceptual_map import ConceptualMap
 from .topic_map import TopicMap
 from .submission import Submission
 from .admin import Admin
+
 from .plan import Plan
 from .subscription import Subscription
