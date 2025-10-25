@@ -38,6 +38,11 @@ import Login from "./pages/auth/Login";
 import Signup from "./pages/auth/Signup";
 import ForgotPassword from "./pages/auth/ForgotPassword";
 import ResetPassword from "./pages/auth/ResetPassword";
+import { Welcome } from "./pages/Welcome";
+import { PackageSelection } from "./pages/PackageSelection";
+import { Checkout } from "./pages/Checkout";
+import { Confirmation } from "./pages/Confirmation";
+import { BillingManagement } from "./pages/BillingManagement";
 // import VerifyEmail from "./pages/auth/VerifyEmail";
  //import ResetPassword from "./pages/auth/ResetPassword";
 //import VerifyEmail from "./pages/auth/VerifyEmail";
@@ -73,6 +78,11 @@ function App() {
 
         {/* Code editor page */}
         <Route path="/code-editor" element={<CodeEditorPage />} />
+  <Route path="/welcome" element={<Welcome />} />
+  <Route path="/select-package" element={<PackageSelection />} />
+  <Route path="/checkout" element={<Checkout />} />
+  <Route path="/confirmation" element={<Confirmation />} />
+  <Route path="/billing" element={<BillingManagement />} />
         <Route path="/progress" element={<StudentLayout><Progress /></StudentLayout>} />
         <Route path="/student-dashboard" element={<StudentLayout><StudentDashboard /></StudentLayout>} />
        

@@ -1,5 +1,5 @@
-// @ts-nocheck
-import React, { useState } from 'react';
+
+import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { CheckIcon, XIcon } from 'lucide-react';
 import { useTheme } from '../context/ThemeContext';
@@ -13,125 +13,77 @@ interface Plan {
   description: string;
   monthlyPrice: number;
   yearlyPrice: number;
-  instructors: number;
-  students: number;
+  instructors: number | string;
+  students: number | string;
   storage: string;
   features: PlanFeature[];
 }
-const plans: Plan[] = [{
-  id: 'starter',
-  name: 'Starter',
-  description: 'Perfect for small departments and pilot programs',
-  monthlyPrice: 499,
-  yearlyPrice: 5388,
-  instructors: 5,
-  students: 100,
-  storage: '50 GB',
-  features: [{
-    name: 'Basic AI code assistance',
-    included: true
-  }, {
-    name: 'Assignment grading',
-    included: true
-  }, {
-    name: 'Student progress tracking',
-    included: true
-  }, {
-    name: 'Email support',
-    included: true
-  }, {
-    name: 'Custom branding',
-    included: false
-  }, {
-    name: 'Advanced analytics',
-    included: false
-  }, {
-    name: 'LMS integration',
-    included: false
-  }, {
-    name: 'Dedicated account manager',
-    included: false
-  }]
-}, {
-  id: 'standard',
-  name: 'Standard',
-  description: 'Ideal for mid-sized departments and schools',
-  monthlyPrice: 999,
-  yearlyPrice: 10789,
-  instructors: 15,
-  students: 500,
-  storage: '200 GB',
-  features: [{
-    name: 'Basic AI code assistance',
-    included: true
-  }, {
-    name: 'Assignment grading',
-    included: true
-  }, {
-    name: 'Student progress tracking',
-    included: true
-  }, {
-    name: 'Email support',
-    included: true
-  }, {
-    name: 'Custom branding',
-    included: true
-  }, {
-    name: 'Advanced analytics',
-    included: true
-  }, {
-    name: 'LMS integration',
-    included: false
-  }, {
-    name: 'Dedicated account manager',
-    included: false
-  }]
-}, {
-  id: 'enterprise',
-  name: 'Enterprise',
-  description: 'For large universities with advanced needs',
-  monthlyPrice: 2499,
-  yearlyPrice: 26989,
-  instructors: 'Unlimited',
-  students: 'Unlimited',
-  storage: '1 TB',
-  features: [{
-    name: 'Basic AI code assistance',
-    included: true
-  }, {
-    name: 'Assignment grading',
-    included: true
-  }, {
-    name: 'Student progress tracking',
-    included: true
-  }, {
-    name: 'Email support',
-    included: true
-  }, {
-    name: 'Custom branding',
-    included: true
-  }, {
-    name: 'Advanced analytics',
-    included: true
-  }, {
-    name: 'LMS integration',
-    included: true
-  }, {
-    name: 'Dedicated account manager',
-    included: true
-  }]
-}];
+// We'll fetch plans from the backend; start with empty array
+const initialPlans: Plan[] = [];
 export const PackageSelection: React.FC = () => {
-  const {
-    theme
-  } = useTheme();
+  const { theme } = useTheme();
   const navigate = useNavigate();
   const [billingCycle, setBillingCycle] = useState<'monthly' | 'yearly'>('monthly');
-  const handleSelectPlan = (planId: string) => {
-    // In a real app, you'd save the selected plan to state/context
-    console.log(`Selected plan: ${planId}, billing: ${billingCycle}`);
-    navigate('/checkout');
+  const [plans, setPlans] = useState<Plan[]>(initialPlans);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:8000';
+    setLoading(true);
+    setError(null);
+    fetch(`${apiUrl}/packages/`).then(async res => {
+      if (!res.ok) throw new Error(`Failed to fetch plans: ${res.status}`);
+      const data = await res.json();
+      // backend PlanOut fields map to frontend Plan shape
+      const mapped: Plan[] = data.map((p: any) => ({
+        id: p.plan_key,
+        name: p.name,
+        description: p.description || '',
+        monthlyPrice: p.monthly_price,
+        yearlyPrice: p.yearly_price,
+        instructors: p.instructors,
+        students: p.students,
+        storage: p.storage || '',
+        features: (p.features || '').split(',').map((f: string) => ({ name: f.trim(), included: true }))
+      }));
+      setPlans(mapped);
+    }).catch(err => {
+      console.error(err);
+      setError(String(err.message || err));
+    }).finally(() => setLoading(false));
+  }, []);
+
+  const handleSelectPlan = async (planId: string) => {
+    // read selected university id from storage
+    const uniIdStr = localStorage.getItem('university_id');
+    const uniId = uniIdStr ? Number(uniIdStr) : null;
+    if (!uniId) {
+      setError('No university selected. Please register your university first.');
+      return;
+    }
+
+    const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:8000';
+    try {
+      const res = await fetch(`${apiUrl}/packages/subscribe`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ uni_id: uniId, plan_key: planId, billing_cycle: billingCycle })
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.detail || err.message || `Subscribe failed: ${res.status}`);
+      }
+      const payload = await res.json();
+      const subscriptionId = payload.subscription_id;
+      // navigate to checkout with subscription id
+      navigate('/checkout', { state: { subscriptionId } });
+    } catch (err: any) {
+      console.error(err);
+      setError(err.message || String(err));
+    }
   };
+
   return <div className="max-w-6xl mx-auto">
       <div className="text-center mb-10">
         <h1 className="text-3xl font-bold mb-4">
@@ -141,6 +93,8 @@ export const PackageSelection: React.FC = () => {
           Select the plan that best fits your university's needs. All plans
           include our core AI-powered coding education platform.
         </p>
+        {loading && <div className="mt-4">Loading plans…</div>}
+        {error && <div className="mt-4 text-sm text-red-600">{error}</div>}
         <div className="flex items-center justify-center mt-8">
           <div className={`p-1 rounded-full ${theme === 'dark' ? 'bg-gray-800' : 'bg-gray-100'} inline-flex`}>
             <button onClick={() => setBillingCycle('monthly')} className={`py-2 px-4 rounded-full text-sm font-medium ${billingCycle === 'monthly' ? 'bg-blue-600 text-white' : theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>
