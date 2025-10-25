@@ -19,7 +19,7 @@ const Navbar: React.FC = () => {
     icon: <TrendingUpIcon size={18} />
   }, {
     label: 'Chat Tutor',
-    path: '/editor/chat',
+    path: '/student-messaging',
     icon: <MessageCircleIcon size={18} />
   }];
   const toggleMenu = () => {
