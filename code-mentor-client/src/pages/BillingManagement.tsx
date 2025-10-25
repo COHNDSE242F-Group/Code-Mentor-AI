@@ -1,5 +1,5 @@
 // @ts-nocheck
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { CalendarIcon, DownloadIcon, AlertTriangleIcon, CheckIcon, XIcon } from 'lucide-react';
 import { useTheme } from '../context/ThemeContext';
@@ -23,11 +23,13 @@ interface Plan {
   }[];
 }
 export const BillingManagement: React.FC = () => {
-  const {
-    theme
-  } = useTheme();
+  const { theme } = useTheme();
   const navigate = useNavigate();
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [subscriptions, setSubscriptions] = useState<any[]>([]);
+  const [paymentMethods, setPaymentMethods] = useState<any[]>([]);
   // In a real app, these would come from your state management
   const currentPlan: Plan = {
     id: 'standard',
@@ -186,6 +188,27 @@ export const BillingManagement: React.FC = () => {
       included: true
     }]
   }];
+
+  useEffect(() => {
+    const uniIdStr = localStorage.getItem('university_id');
+    if (!uniIdStr) {
+      setError('No university selected. Please register first.');
+      return;
+    }
+    const uniId = Number(uniIdStr);
+    const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:8000';
+    setLoading(true);
+    Promise.all([
+      fetch(`${apiUrl}/packages/uni/${uniId}/subscriptions`).then(r => r.ok ? r.json() : Promise.reject(r)),
+      fetch(`${apiUrl}/packages/uni/${uniId}/payment-methods`).then(r => r.ok ? r.json() : Promise.reject(r))
+    ]).then(([subs, pms]) => {
+      setSubscriptions(subs || []);
+      setPaymentMethods(pms || []);
+    }).catch(err => {
+      console.error(err);
+      setError((err && err.message) || 'Failed to load billing data');
+    }).finally(() => setLoading(false));
+  }, []);
   return <div className="max-w-6xl mx-auto">
       <div className="flex justify-between items-center mb-8">
         <h1 className="text-3xl font-bold">Billing & Subscription</h1>
@@ -196,7 +219,7 @@ export const BillingManagement: React.FC = () => {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         <div className="lg:col-span-2 space-y-8">
           <div className={`rounded-lg overflow-hidden ${theme === 'dark' ? 'bg-gray-800' : 'bg-white shadow-md'}`}>
-            <div className="p-6">
+              <div className="p-6">
               <h2 className="text-xl font-semibold mb-4">
                 Subscription Summary
               </h2>
@@ -251,56 +274,24 @@ export const BillingManagement: React.FC = () => {
           </div>
           <div className={`rounded-lg overflow-hidden ${theme === 'dark' ? 'bg-gray-800' : 'bg-white shadow-md'}`}>
             <div className="p-6">
-              <h2 className="text-xl font-semibold mb-4">Payment History</h2>
-              <div className="overflow-x-auto">
-                <table className="min-w-full">
-                  <thead className={theme === 'dark' ? 'border-b border-gray-700' : 'border-b border-gray-200'}>
-                    <tr>
-                      <th className="py-3 text-left text-xs font-medium uppercase tracking-wider">
-                        Invoice
-                      </th>
-                      <th className="py-3 text-left text-xs font-medium uppercase tracking-wider">
-                        Date
-                      </th>
-                      <th className="py-3 text-left text-xs font-medium uppercase tracking-wider">
-                        Amount
-                      </th>
-                      <th className="py-3 text-left text-xs font-medium uppercase tracking-wider">
-                        Status
-                      </th>
-                      <th className="py-3 text-right text-xs font-medium uppercase tracking-wider">
-                        Action
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody className={theme === 'dark' ? 'divide-y divide-gray-700' : 'divide-y divide-gray-200'}>
-                    {invoices.map(invoice => <tr key={invoice.id}>
-                        <td className="py-4 text-sm">{invoice.id}</td>
-                        <td className="py-4 text-sm">
-                          {invoice.date.toLocaleDateString('en-US', {
-                        year: 'numeric',
-                        month: 'short',
-                        day: 'numeric'
-                      })}
-                        </td>
-                        <td className="py-4 text-sm">
-                          ${invoice.amount.toFixed(2)}
-                        </td>
-                        <td className="py-4 text-sm">
-                          <span className={`px-2 py-1 text-xs rounded-full ${invoice.status === 'paid' ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300' : invoice.status === 'pending' ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300' : 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300'}`}>
-                            {invoice.status === 'paid' ? 'Paid' : invoice.status === 'pending' ? 'Pending' : 'Failed'}
-                          </span>
-                        </td>
-                        <td className="py-4 text-sm text-right">
-                          <button className={`inline-flex items-center text-sm ${theme === 'dark' ? 'text-blue-400 hover:text-blue-300' : 'text-blue-600 hover:text-blue-800'}`}>
-                            <DownloadIcon size={16} className="mr-1" />
-                            PDF
-                          </button>
-                        </td>
-                      </tr>)}
-                  </tbody>
-                </table>
-              </div>
+              <h2 className="text-xl font-semibold mb-4">Subscriptions</h2>
+              {loading && <div>Loading billing data…</div>}
+              {error && <div className="text-sm text-red-600">{error}</div>}
+              {!loading && !error && <div className="space-y-4">
+                {subscriptions.length === 0 && <div className="text-sm text-gray-500">No subscriptions found.</div>}
+                {subscriptions.map((s:any) => <div key={s.subscription_id} className={`p-4 rounded-md ${theme === 'dark' ? 'bg-gray-700' : 'bg-gray-50'}`}>
+                    <div className="flex justify-between items-center">
+                      <div>
+                        <div className="font-medium">{s.plan?.name || s.plan?.plan_key}</div>
+                        <div className="text-sm text-gray-500">{s.billing_cycle} • {s.status}</div>
+                      </div>
+                      <div className="text-right text-sm">
+                        <div>${s.plan ? (s.billing_cycle === 'yearly' ? s.plan.yearly_price : s.plan.monthly_price) : '0'}</div>
+                        <div className="text-gray-500">Created {new Date(s.created_at).toLocaleDateString()}</div>
+                      </div>
+                    </div>
+                  </div>)}
+              </div>}
             </div>
           </div>
         </div>
@@ -309,20 +300,18 @@ export const BillingManagement: React.FC = () => {
             <div className="p-6">
               <h2 className="text-xl font-semibold mb-4">Payment Method</h2>
               <div className={`p-4 rounded-md mb-4 ${theme === 'dark' ? 'bg-gray-700' : 'bg-gray-100'}`}>
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center">
-                    <div className={`w-10 h-6 rounded ${theme === 'dark' ? 'bg-gray-800' : 'bg-gray-200'} mr-3`}></div>
-                    <div>
-                      <p className="font-medium">•••• •••• •••• 4242</p>
-                      <p className={`text-sm ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>
-                        Expires 12/2025
-                      </p>
+                <h3 className="text-sm font-medium mb-2">Saved Payment Methods</h3>
+                {!loading && paymentMethods.length === 0 && <div className="text-sm text-gray-500">No payment methods saved.</div>}
+                {!loading && paymentMethods.map(pm => <div key={pm.payment_method_id} className="flex items-center justify-between mb-3">
+                    <div className="flex items-center">
+                      <div className={`w-10 h-6 rounded ${theme === 'dark' ? 'bg-gray-800' : 'bg-gray-200'} mr-3`}></div>
+                      <div>
+                        <p className="font-medium">{pm.card_last4 ? `•••• •••• •••• ${pm.card_last4}` : pm.provider_payment_method_id}</p>
+                        <p className={`text-sm ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>{pm.provider}</p>
+                      </div>
                     </div>
-                  </div>
-                  <span className={`px-2 py-1 text-xs rounded-full bg-blue-100 text-blue-800 ${theme === 'dark' ? 'bg-blue-900 text-blue-300' : ''}`}>
-                    Default
-                  </span>
-                </div>
+                    {pm.is_default && <span className={`px-2 py-1 text-xs rounded-full bg-blue-100 text-blue-800 ${theme === 'dark' ? 'bg-blue-900 text-blue-300' : ''}`}>Default</span>}
+                  </div>)}
               </div>
               <button className={`w-full py-2 px-4 rounded-md font-medium ${theme === 'dark' ? 'bg-gray-700 hover:bg-gray-600 text-white' : 'bg-gray-200 hover:bg-gray-300 text-gray-800'}`}>
                 Update Payment Method
