@@ -220,6 +220,9 @@ async def create_or_update_progress_report(
     async with async_session() as session:
         # Get the student by ID
         result = await session.execute(
-            select(Student).where(Assignment.assignment_id == assignment_id)
+            select(Student).where(Student.student_id == student_id)
         )
-        assignment = result.scalar_one_or_none()
+        student = result.scalar_one_or_none()
+
+        if not student:
+            raise HTTPException(status_code=404, detail="Student not found")

@@ -26,19 +26,15 @@ const Login = () => {
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
-  e.preventDefault();
+    e.preventDefault();
 
-  if (validateForm()) {
+    if (!validateForm()) return;
+
     try {
       const response = await fetch("http://localhost:8000/login/", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          username: usernameOrEmail, // sending username or email
-          password,
-        }),
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ username: usernameOrEmail, password }),
       });
   if (!response.ok) {
         const data = await response.json(); // Fetch the error response
@@ -62,21 +58,15 @@ const Login = () => {
       } else if (role === "instructor") {
         navigate("/messaging");
       } else if (role === "student") {
-        navigate("/code-editor"); // Ensure this is the correct route for the code editor
+        navigate("/code-editor");
       } else {
-        navigate("/"); // Default redirect
+        navigate("/dashboard");
       }
-      console.log("Role:", role);
-      console.log("Navigating to:", role === "student" ? "/code-editor" : "/");
     } catch (err) {
       console.error(err);
-      setErrors({
-        ...errors,
-        usernameOrEmail: "Server error. Please try again.",
-      });
+      setErrors({ ...errors, usernameOrEmail: "Server error. Please try again." });
     }
-  }
-};
+  };
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8">

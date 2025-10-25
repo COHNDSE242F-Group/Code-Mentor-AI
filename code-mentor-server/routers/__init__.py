@@ -19,6 +19,7 @@ from .code_submit import router as code_submit_router
 from .assignment import router as assignment_router
 from .report import router as report_router
 from .student import router as student_router
+from .instructor import router as instructor_router
 from .public_lists import router as public_lists_router
 from .student_messaging import router as student_messaging_router
 from .settings import router as settings_router
@@ -46,4 +47,9 @@ routers = [
     public_lists_router,
     student_messaging_router,
     settings_router
+    student_router,
+    instructor_router,
+    reset_password_router,
+    report_router,
+    public_lists_router,
 ]
