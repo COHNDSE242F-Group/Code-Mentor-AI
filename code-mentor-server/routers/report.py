@@ -112,6 +112,14 @@ async def update_student_report_with_submission(submission_id: int):
 
         topic_data = {int(k): [int(v) for v in vals] for k, vals in topic_data.items()}
 
+        if "assignment_scores" not in report_data:
+            report_data["assignment_scores"] = []
+        
+        assignment_score = {
+            "assignment_id": submission.assignment_id,
+            "concept_scores": []
+        }
+
         for concept in concepts:
             new_topics = 0
             if concept["id"] in topic_data:
