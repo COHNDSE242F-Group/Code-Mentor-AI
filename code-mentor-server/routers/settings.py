@@ -4,8 +4,10 @@ from sqlalchemy.future import select
 from database import async_session
 from models import User, Instructor
 from auth.auth import verify_token
+from passlib.context import CryptContext
 
 router = APIRouter()
+pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 @router.get("/settings/profile")
 async def get_profile(token: dict = Depends(verify_token)):
@@ -56,7 +58,7 @@ async def update_profile(
         if not user:
             raise HTTPException(status_code=404, detail="User not found")
         user.username = profile_data.get("name", user.username)
-        user.bio = profile_data.get("bio", user.bio)
+        # Removed bio update since it doesn't exist in the User table
         session.add(user)
         await session.commit()
         return {"message": "Profile updated successfully"}
@@ -66,17 +68,28 @@ async def update_account(
     account_data: dict, token: dict = Depends(verify_token)
 ):
     """
-    Update the user's account settings (email and password).
+    Update the user's account settings (password).
     """
     user_id = token["user_id"]
     async with async_session() as session:
         user = await session.get(User, user_id)
         if not user:
             raise HTTPException(status_code=404, detail="User not found")
-        user.email = account_data.get("email", user.email)
-        # Handle password update securely (hashing, etc.)
+        
+        # Handle password update securely
+        new_password = account_data.get("password")
+        if not new_password or len(new_password) < 6:
+            raise HTTPException(status_code=400, detail="Password must be at least 6 characters long")
+        
+        hashed_password = pwd_context.hash(new_password)
+        user.password = hashed_password
+
         session.add(user)
-        await session.commit()
+        try:
+            await session.commit()
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=f"Failed to update account: {str(e)}")
+
         return {"message": "Account updated successfully"}
 
 @router.get("/settings/integrations")
@@ -85,12 +98,15 @@ async def get_integrations(token: dict = Depends(verify_token)):
     Fetch the user's connected integrations.
     """
     # Mocked integrations for now
-    return [
-        {"name": "GitHub", "connected": True},
-        {"name": "Google", "connected": False},
-        {"name": "Slack", "connected": False},
-        {"name": "Discord", "connected": True},
-    ]
+    try:
+        return [
+            {"name": "GitHub", "connected": True},
+            {"name": "Google", "connected": False},
+            {"name": "Slack", "connected": False},
+            {"name": "Discord", "connected": True},
+        ]
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error fetching integrations: {str(e)}")
 
 @router.put("/settings/instructor-profile")
 async def update_instructor_profile(
@@ -103,7 +119,7 @@ async def update_instructor_profile(
     async with async_session() as session:
         # Fetch the instructor based on user_id
         instructor = await session.execute(
-            select(Instructor).where(Instructor.user_id == user_id)
+            select(Instructor).where(Instructor.instructor_id == user_id)
         )
         instructor = instructor.scalar_one_or_none()
 

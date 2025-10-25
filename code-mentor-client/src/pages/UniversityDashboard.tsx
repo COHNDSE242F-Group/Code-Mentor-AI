@@ -1,4 +1,4 @@
-// @ts-nocheck
+
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { UserIcon, UsersIcon, BookOpenIcon, ServerIcon, CreditCardIcon, SettingsIcon, BellIcon, LogOutIcon, ChevronDownIcon, SearchIcon, BarChartIcon, PlusIcon, CalendarIcon } from 'lucide-react';

@@ -84,6 +84,7 @@ function App() {
         <Route path="/assignments" element={<Layout><AssignmentList /></Layout>} />
         <Route path="/assignments/:id" element={<Layout><AssignmentDetail /></Layout>} />
         <Route path="/settings" element={<Layout><Settings /></Layout>} />
+        <Route path="/reports" element={<Layout><Reports /></Layout>}/>
         
         {/* <Route path="/dashboard" element={<Layout><Dashboard /></Layout>} />
          <Route path="/assignments/:id" element={<Layout><AssignmentDetail /></Layout>} />
