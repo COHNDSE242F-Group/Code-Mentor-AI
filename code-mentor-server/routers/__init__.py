@@ -23,6 +23,7 @@ from .instructor import router as instructor_router
 from .public_lists import router as public_lists_router
 from .student_messaging import router as student_messaging_router
 from .settings import router as settings_router
+from .university_dashboard import router as university_dashboard_router
 
 routers = [
     
@@ -46,10 +47,15 @@ routers = [
     student_router,
     public_lists_router,
     student_messaging_router,
-    settings_router
+    settings_router,
     student_router,
     instructor_router,
-    reset_password_router,
+    #reset_password_router,
     report_router,
     public_lists_router,
+    university_dashboard_router,
+
+
+
+
 ]

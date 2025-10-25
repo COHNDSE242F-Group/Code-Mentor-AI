@@ -44,6 +44,8 @@ import ResetPassword from "./pages/auth/ResetPassword";
 import AccountDetails from "./pages/auth/AccountDetails";
 import Progress from "./pages/Progress";
 import StudentDashboard from "./pages/StudentDashboard";
+import UniversityDashboard from "./pages/UniversityDashboard";
+import AccountSetup from "./pages/AccountSetup";
 
 
 function App() {
@@ -62,7 +64,8 @@ function App() {
         <Route path="/reset-password" element={<ResetPassword />} />
 
 
-        
+        <Route path="/university-dashboard" element={<UniversityDashboard />} />
+        <Route path="/account-setup" element={<AccountSetup />} />
 
         {/*<Route path="/verify-email" element={<VerifyEmail />} /> */}
         
