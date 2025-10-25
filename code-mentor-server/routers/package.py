@@ -188,65 +188,103 @@ async def get_subscription(subscription_id: int):
         )
 
 
-    @router.get('/uni/{uni_id}/subscriptions', response_model=List[SubscriptionOut])
-    async def list_subscriptions_for_uni(uni_id: int):
-        async with async_session() as session:
-            result = await session.execute(select(Subscription).where(Subscription.uni_id == uni_id))
-            subs = result.scalars().all()
-            out = []
-            for sub in subs:
-                plan_res = await session.execute(select(Plan).where(Plan.plan_key == sub.plan_key))
-                plan = plan_res.scalar_one_or_none()
-                plan_detail = PlanDetail(
-                    plan_key=plan.plan_key,
-                    name=plan.name,
-                    description=plan.description,
-                    monthly_price=plan.monthly_price,
-                    yearly_price=plan.yearly_price,
-                    instructors=plan.instructors,
-                    students=plan.students,
-                    storage=plan.storage,
-                    features=plan.features
-                ) if plan else None
-                out.append(SubscriptionOut(
-                    subscription_id=sub.subscription_id,
-                    uni_id=sub.uni_id,
-                    plan=plan_detail,
-                    billing_cycle=sub.billing_cycle,
-                    status=sub.status,
-                    created_at=sub.created_at
-                ))
-            return out
+@router.get('/uni/{uni_id}/subscriptions', response_model=List[SubscriptionOut])
+async def list_subscriptions_for_uni(uni_id: int):
+    async with async_session() as session:
+        result = await session.execute(select(Subscription).where(Subscription.uni_id == uni_id))
+        subs = result.scalars().all()
+        out = []
+        for sub in subs:
+            plan_res = await session.execute(select(Plan).where(Plan.plan_key == sub.plan_key))
+            plan = plan_res.scalar_one_or_none()
+            plan_detail = PlanDetail(
+                plan_key=plan.plan_key,
+                name=plan.name,
+                description=plan.description,
+                monthly_price=plan.monthly_price,
+                yearly_price=plan.yearly_price,
+                instructors=plan.instructors,
+                students=plan.students,
+                storage=plan.storage,
+                features=plan.features
+            ) if plan else None
+            out.append(SubscriptionOut(
+                subscription_id=sub.subscription_id,
+                uni_id=sub.uni_id,
+                plan=plan_detail,
+                billing_cycle=sub.billing_cycle,
+                status=sub.status,
+                created_at=sub.created_at
+            ))
+        return out
 
 
-    class PaymentMethodOut(BaseModel):
-        payment_method_id: int
-        provider: str
-        provider_payment_method_id: str | None
-        type: str | None
-        card_brand: str | None
-        card_last4: str | None
-        is_default: bool | None
+class PaymentMethodOut(BaseModel):
+    payment_method_id: int
+    provider: str
+    provider_payment_method_id: str | None
+    type: str | None
+    card_brand: str | None
+    card_last4: str | None
+    is_default: bool | None
 
 
-    @router.get('/uni/{uni_id}/payment-methods', response_model=List[PaymentMethodOut])
-    async def list_payment_methods_for_uni(uni_id: int):
-        async with async_session() as session:
-            sql = text('SELECT payment_method_id, provider, provider_payment_method_id, type, card_brand, card_last4, is_default FROM payment_method WHERE uni_id = :uni_id ORDER BY created_at DESC')
-            res = await session.execute(sql, {'uni_id': uni_id})
-            rows = res.fetchall()
-            out = []
-            for r in rows:
-                out.append(PaymentMethodOut(
-                    payment_method_id=r[0],
-                    provider=r[1],
-                    provider_payment_method_id=r[2],
-                    type=r[3],
-                    card_brand=r[4],
-                    card_last4=r[5],
-                    is_default=r[6]
-                ))
-            return out
+@router.get('/uni/{uni_id}/payment-methods', response_model=List[PaymentMethodOut])
+async def list_payment_methods_for_uni(uni_id: int):
+    async with async_session() as session:
+        sql = text('SELECT payment_method_id, provider, provider_payment_method_id, type, card_brand, card_last4, is_default FROM payment_method WHERE uni_id = :uni_id ORDER BY created_at DESC')
+        res = await session.execute(sql, {'uni_id': uni_id})
+        rows = res.fetchall()
+        out = []
+        for r in rows:
+            out.append(PaymentMethodOut(
+                payment_method_id=r[0],
+                provider=r[1],
+                provider_payment_method_id=r[2],
+                type=r[3],
+                card_brand=r[4],
+                card_last4=r[5],
+                is_default=r[6]
+            ))
+        return out
+        return out
+
+
+class BillingProfileOut(BaseModel):
+    billing_profile_id: int
+    uni_id: int
+    contact_name: Optional[str]
+    contact_email: Optional[str]
+    address_line1: Optional[str]
+    address_line2: Optional[str]
+    city: Optional[str]
+    state_province: Optional[str]
+    postal_code: Optional[str]
+    country: Optional[str]
+    vat_number: Optional[str]
+
+
+@router.get('/uni/{uni_id}/billing-profile', response_model=BillingProfileOut)
+async def get_billing_profile_for_uni(uni_id: int):
+    async with async_session() as session:
+        sql = text('SELECT billing_profile_id, uni_id, contact_name, contact_email, address_line1, address_line2, city, state_province, postal_code, country, vat_number FROM billing_profile WHERE uni_id = :uni_id ORDER BY created_at DESC LIMIT 1')
+        res = await session.execute(sql, {'uni_id': uni_id})
+        row = res.fetchone()
+        if not row:
+            raise HTTPException(status_code=404, detail='Billing profile not found')
+        return BillingProfileOut(
+            billing_profile_id=row[0],
+            uni_id=row[1],
+            contact_name=row[2],
+            contact_email=row[3],
+            address_line1=row[4],
+            address_line2=row[5],
+            city=row[6],
+            state_province=row[7],
+            postal_code=row[8],
+            country=row[9],
+            vat_number=row[10]
+        )
 
 
 @router.post("/subscription/{subscription_id}/confirm")
@@ -325,7 +363,27 @@ async def confirm_subscription(subscription_id: int, payload: ConfirmIn | None =
                 if row2:
                     payment_method_id = row2[0]
 
-            # mark subscription active
+            # determine whether this will be the first active subscription for the university
+            try:
+                active_count_res = await session.execute(text("SELECT count(*) FROM subscription WHERE uni_id = :uni_id AND status = 'active'"), {'uni_id': sub.uni_id})
+                active_count_row = active_count_res.fetchone()
+                active_count = int(active_count_row[0]) if active_count_row else 0
+            except Exception:
+                active_count = 0
+            is_first_active = (active_count == 0)
+
+            # mark other active subscriptions for this university inactive
+            try:
+                await session.execute(text("""
+                    UPDATE subscription
+                    SET status = 'inactive'
+                    WHERE uni_id = :uni_id AND status = 'active' AND subscription_id != :sub_id
+                """), {'uni_id': sub.uni_id, 'sub_id': sub.subscription_id})
+            except Exception:
+                # if this update fails for any reason, continue; we'll still try to activate the current subscription
+                pass
+
+            # mark this subscription active
             sub.status = 'active'
             session.add(sub)
 
@@ -377,11 +435,13 @@ async def confirm_subscription(subscription_id: int, payload: ConfirmIn | None =
             features=getattr(plan, 'features', None)
         ) if plan else None
 
-        return SubscriptionOut(
-            subscription_id=sub.subscription_id,
-            uni_id=sub.uni_id,
-            plan=plan_detail,
-            billing_cycle=sub.billing_cycle,
-            status=sub.status,
-            created_at=sub.created_at
-        )
+        # Return subscription info and whether this is the first active subscription for this university
+        return {
+            'subscription_id': sub.subscription_id,
+            'uni_id': sub.uni_id,
+            'plan': plan_detail,
+            'billing_cycle': sub.billing_cycle,
+            'status': sub.status,
+            'created_at': sub.created_at,
+            'is_first_active': is_first_active
+        }

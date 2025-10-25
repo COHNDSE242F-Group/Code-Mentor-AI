@@ -65,3 +65,19 @@ async def register_university(payload: WelcomeCreate):
         university_id=new_uni.university_id,
         university_name=new_uni.university_name,
     )
+
+
+class UniLookupIn(BaseModel):
+    universityName: str
+    contactEmail: EmailStr
+
+
+@router.post('/lookup')
+async def lookup_university(payload: UniLookupIn):
+    """Lookup university by name + contact email. Returns university_id and name if found."""
+    async with async_session() as session:
+        q = await session.execute(select(University).where(University.university_name == payload.universityName).where(University.email == payload.contactEmail))
+        uni = q.scalar_one_or_none()
+        if not uni:
+            raise HTTPException(status_code=404, detail='University not found')
+        return {"university_id": uni.university_id, "university_name": uni.university_name}

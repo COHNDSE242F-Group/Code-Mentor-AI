@@ -102,7 +102,7 @@ export const Confirmation: React.FC = () => {
         </div>
         <div className="space-y-4">
           <div className="flex flex-col sm:flex-row space-y-4 sm:space-y-0 sm:space-x-4 justify-center">
-            <button onClick={() => navigate('/dashboard')} className="bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 px-6 rounded-md transition duration-300">
+            <button onClick={() => navigate('/university-dashboard')} className="bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 px-6 rounded-md transition duration-300">
               Go to Dashboard
             </button>
             <button onClick={() => navigate('/billing')} className={`py-3 px-6 rounded-md font-medium transition duration-300 ${theme === 'dark' ? 'bg-gray-700 hover:bg-gray-600 text-white' : 'bg-gray-200 hover:bg-gray-300 text-gray-800'}`}>
