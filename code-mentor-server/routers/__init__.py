@@ -24,6 +24,7 @@ from .public_lists import router as public_lists_router
 from .student_messaging import router as student_messaging_router
 from .settings import router as settings_router
 from .university_dashboard import router as university_dashboard_router
+from .admin_panel import router as admin_panel_router
 
 routers = [
     
@@ -54,6 +55,7 @@ routers = [
     report_router,
     public_lists_router,
     university_dashboard_router,
+    admin_panel_router
 
 
 

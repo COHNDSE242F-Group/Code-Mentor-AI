@@ -46,6 +46,7 @@ import Progress from "./pages/Progress";
 import StudentDashboard from "./pages/StudentDashboard";
 import UniversityDashboard from "./pages/UniversityDashboard";
 import AccountSetup from "./pages/AccountSetup";
+import AdminPanel from "./pages/AdminPanel";
 
 
 function App() {
@@ -66,6 +67,7 @@ function App() {
 
         <Route path="/university-dashboard" element={<UniversityDashboard />} />
         <Route path="/account-setup" element={<AccountSetup />} />
+        <Route path="/admin-panel" element={<AdminPanel />} />
 
         {/*<Route path="/verify-email" element={<VerifyEmail />} /> */}
         
