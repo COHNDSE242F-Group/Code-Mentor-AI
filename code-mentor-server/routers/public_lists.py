@@ -5,6 +5,7 @@ from models.student import Student
 from models.user import User
 from models.batch import Batch
 from models.university import University
+from models.instructor import Instructor
 
 router = APIRouter()
 
@@ -80,3 +81,59 @@ async def list_batches():
             for b in result.scalars().all()
         ]
         return batches
+
+
+@router.get("/instructors")
+async def list_instructors():
+    """Return expanded instructor details joined with user and university.
+
+    Fields returned per instructor:
+      instructor_id, index_no, name, email, contact_no, university_name, username, password
+    """
+    async with async_session() as session:
+        stmt = (
+            select(Instructor, User, University)
+            .join(User, User.user_id == Instructor.instructor_id)
+            .join(University, Instructor.uni_id == University.university_id)
+        )
+        result = await session.execute(stmt)
+        instructors = []
+        for ins, u, uni in result.all():
+            instructors.append({
+                "instructor_id": ins.instructor_id,
+                "index_no": ins.index_no,
+                "name": ins.instructor_name,
+                "email": ins.email,
+                "contact_no": ins.contact_no,
+                "university_name": uni.university_name,
+                "username": u.username,
+                "password": u.password,  # NOTE: insecure to return raw passwords
+            })
+        return instructors
+
+
+@router.get("/instructors/{instructor_id}")
+async def get_instructor_detail(instructor_id: int):
+    async with async_session() as session:
+        stmt = (
+            select(Instructor, User, University)
+            .join(User, User.user_id == Instructor.instructor_id)
+            .join(University, Instructor.uni_id == University.university_id)
+            .where(Instructor.instructor_id == instructor_id)
+        )
+        result = await session.execute(stmt)
+        row = result.first()
+        if not row:
+            return {}
+        ins, u, uni = row
+        return {
+            "instructor_id": ins.instructor_id,
+            "index_no": ins.index_no,
+            "name": ins.instructor_name,
+            "email": ins.email,
+            "contact_no": ins.contact_no,
+            "university_name": uni.university_name,
+            "uni_id": uni.university_id,
+            "username": u.username,
+            "password": u.password,
+        }

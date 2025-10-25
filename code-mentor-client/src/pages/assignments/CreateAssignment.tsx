@@ -23,9 +23,15 @@ const CreateAssignment = () => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   useEffect(() => {
-    fetch('http://localhost:8000/assignment/options')
+    const token = localStorage.getItem('token');
+    fetch('http://localhost:8000/assignment/options', { headers: { Authorization: token ? `Bearer ${token}` : '' } })
       .then(res => res.json())
-      .then(data => setBatches(data.batches || []));
+      .then(data => {
+        const items = data.batches || [];
+        setBatches(items);
+        // set default batch to first option if not already set
+        setForm(prev => ({ ...prev, batch: prev.batch || (items[0] || '') }));
+      });
     // Load draft if exists
     const draft = localStorage.getItem('assignmentDraft');
     if (draft) {
@@ -48,19 +54,52 @@ const CreateAssignment = () => {
     setSuccess('');
     setError('');
     // validation
-    if (!form.title || !form.language || !form.difficulty || !form.dueDate || !form.dueTime || !form.batch || !form.instructions) {
+    if (!form.title || !form.language || !form.difficulty || !form.dueDate || !form.batch || !form.instructions) {
+      // dueTime is optional on server; require other fields
       setError('Please fill in all required fields.');
       setTimeout(() => setError(''), 2000);
       return;
     }
+    const token = localStorage.getItem('token');
+    const payload = {
+      title: form.title,
+      language: form.language,
+      difficulty: form.difficulty,
+      dueDate: form.dueDate,
+      dueTime: form.dueTime,
+      batch: form.batch,
+      instructions: form.instructions,
+      aiEvaluation: form.aiEvaluation,
+      plagiarism: form.plagiarism,
+    };
+
     const res = await fetch('http://localhost:8000/assignment/create', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(form)
+      headers: { 'Content-Type': 'application/json', Authorization: token ? `Bearer ${token}` : '' },
+      body: JSON.stringify(payload)
     });
     if (res.ok) {
       setSuccess('Assignment created successfully!');
       setTimeout(() => setSuccess(''), 2000);
+      // optionally clear draft and form
+      localStorage.removeItem('assignmentDraft');
+      // keep form but reset title/instructions/files
+      setForm({
+        title: '',
+        language: form.language,
+        difficulty: form.difficulty,
+        dueDate: '',
+        dueTime: '',
+        batch: form.batch,
+        instructions: '',
+        aiEvaluation: false,
+        plagiarism: false
+      });
+      setSelectedFiles([]);
+    } else {
+      const body = await res.json().catch(() => null);
+      setError((body && body.detail) ? body.detail : 'Failed to create assignment');
+      setTimeout(() => setError(''), 3000);
     }
   };
 

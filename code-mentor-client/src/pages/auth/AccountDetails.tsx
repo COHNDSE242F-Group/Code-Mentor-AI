@@ -35,13 +35,34 @@ const AccountDetails = () => {
   useEffect(() => {
     async function fetchProfile() {
       try {
-        const res = await fetch('http://localhost:8000/account/profile');
-        if (!res.ok) throw new Error('Failed to fetch profile');
+        const token = localStorage.getItem('token');
+        const headers: Record<string,string> = {};
+        if (token) headers.Authorization = `Bearer ${token}`;
+        const res = await fetch('http://localhost:8000/account/profile', { headers });
+        if (res.status === 401) {
+          const body = await res.json().catch(() => null);
+          setErrorMessage((body && body.detail) ? String(body.detail) : 'Not authenticated. Please log in.');
+          return;
+        }
+        if (!res.ok) {
+          const body = await res.json().catch(() => null);
+          throw new Error((body && body.detail) ? String(body.detail) : 'Failed to fetch profile');
+        }
         const data = await res.json();
-        setProfile(data);
-        setFormData(data);
+        // normalize server response to ensure strings are present
+        const normalized: UserProfile = {
+          name: data?.name ?? '',
+          email: data?.email ?? '',
+          phone: data?.phone ?? '',
+          role: data?.role ?? '',
+          address: data?.address ?? '',
+          bio: data?.bio ?? '',
+          avatarUrl: data?.avatarUrl ?? null,
+        };
+        setProfile(normalized);
+        setFormData(normalized);
       } catch (err) {
-        setErrorMessage('Could not load profile.');
+        setErrorMessage(String(err) || 'Could not load profile.');
       }
     }
     fetchProfile();
@@ -70,11 +91,17 @@ const AccountDetails = () => {
     setIsSaving(true);
     setErrorMessage('');
     try {
+      const token = localStorage.getItem('token');
       const res = await fetch('http://localhost:8000/account/profile', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', Authorization: token ? `Bearer ${token}` : '' },
         body: JSON.stringify(formData)
       });
+      if (res.status === 401) {
+        setErrorMessage('Not authenticated. Please log in.');
+        setIsSaving(false);
+        return;
+      }
       if (!res.ok) throw new Error('Failed to update profile');
       const updated = await res.json();
       setProfile(updated);
@@ -113,8 +140,9 @@ const AccountDetails = () => {
               <div className="relative group">
                 <div className="w-32 h-32 rounded-full bg-[#0D47A1] flex items-center justify-center text-white text-4xl overflow-hidden">
                   {formData.avatarUrl ? <img src={formData.avatarUrl} alt={formData.name} className="w-full h-full object-cover" /> : <span>
-                      {formData.name.charAt(0)}
-                      {formData.name.split(' ')[1]?.charAt(0)}
+                      {/* safe initials: handle empty or single-word names */}
+                      {(((formData.name ?? '').split(' ')[0]) || '').charAt(0)}
+                      {(((formData.name ?? '').split(' ')[1]) || '').charAt(0)}
                     </span>}
                 </div>
                 {isEditing && <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-50 rounded-full cursor-pointer" onClick={() => fileInputRef.current?.click()}>
@@ -217,7 +245,7 @@ const AccountDetails = () => {
                   Last updated 3 months ago
                 </p>
               </div>
-              <Link to="/change-password" className="mt-2 md:mt-0 text-[#0D47A1] hover:text-blue-800 font-medium">
+              <Link to="/reset-password" className="mt-2 md:mt-0 text-[#0D47A1] hover:text-blue-800 font-medium">
                 Change password
               </Link>
             </div>

@@ -16,6 +16,8 @@ import AssignmentList from "./pages/assignments/AssignmentList";
 import AssignmentDetail from "./pages/assignments/AssignmentDetail";
 import AddStudent from "./pages/AddStudent";
 import EditStudent from "./pages/EditStudent";
+import EditInstructor from "./pages/EditInstructor";
+import AddInstructor from "./pages/AddInstructor";
 
 // // Submissions
 import SubmissionsList from "./pages/submissions/SubmissionsList";
@@ -32,6 +34,8 @@ import Messaging from "./pages/Messaging";
 import Login from "./pages/auth/Login"; 
 import Signup from "./pages/auth/Signup";
 import ForgotPassword from "./pages/auth/ForgotPassword";
+import ResetPassword from "./pages/auth/ResetPassword";
+// import VerifyEmail from "./pages/auth/VerifyEmail";
  //import ResetPassword from "./pages/auth/ResetPassword";
 //import VerifyEmail from "./pages/auth/VerifyEmail";
 import AccountDetails from "./pages/auth/AccountDetails";
@@ -51,6 +55,10 @@ function App() {
         
         "/signup" element={<Signup />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />
+        <Route path="/reset-password" element={<ResetPassword />} />
+
+        
+        {/*<Route path="/verify-email" element={<VerifyEmail />} /> */}
         
 
         {/*<Route path="/reset-password" element={<ResetPassword />}
@@ -71,14 +79,21 @@ function App() {
         <Route path="/assignments/create" element={<Layout><CreateAssignment /></Layout>} />
         <Route path="/assignments" element={<Layout><AssignmentList /></Layout>} />
         <Route path="/assignments/:id" element={<Layout><AssignmentDetail /></Layout>} />
-        {/* <Route path="/dashboard" element={<Layout><Dashboard /></Layout>} />
-         <Route path="/assignments/:id" element={<Layout><AssignmentDetail /></Layout>} />
-          <Route path="/dashboard" element={<Layout><Dashboard /></Layout>} />
-          <Route path="/reports" element={<Layout><Reports /></Layout>} />
-           <Route path="/batches" element={<Layout><BatchManagement /></Layout>} />
-
-           <Route path="/addstudent" element={<AddStudent />} />
+        <Route path="/dashboard" element={<Layout><Dashboard /></Layout>} />
+        <Route path="/batches" element={<Layout><BatchManagement /></Layout>} />
+         <Route path="/addstudent" element={<AddStudent />} />
+        <Route path="/addinstructor" element={<AddInstructor />} />
     <Route path="/students/:id/edit" element={<Layout><EditStudent /></Layout>} />
+        <Route path="/instructors/:id/edit" element={<Layout><EditInstructor /></Layout>} />
+         <Route path="/dashboard" element={<Layout><Dashboard /></Layout>} />
+          <Route path="/batches" element={<Layout><BatchManagement /></Layout>} />
+        {/* 
+         <Route path="/assignments/:id" element={<Layout><AssignmentDetail /></Layout>} />
+         
+          <Route path="/reports" element={<Layout><Reports /></Layout>} />
+           
+
+          
 
         {/*
         
@@ -87,7 +102,7 @@ function App() {
         
         
         <Route path="/ai-evaluation" element={<Layout><AIEvaluationBuilder /></Layout>} />
-        <Route path="/batches" element={<Layout><BatchManagement /></Layout>} />
+       
         <Route path="/reports" element={<Layout><Reports /></Layout>} />
         
         <Route path="/settings" element={<Layout><Settings /></Layout>} />

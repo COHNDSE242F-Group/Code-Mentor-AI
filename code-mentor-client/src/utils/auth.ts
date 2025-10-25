@@ -32,3 +32,36 @@ export async function fetchWithAuth(input: RequestInfo, init?: RequestInit, retr
 
   return res;
 }
+
+// JWT helpers for client-side UI decisions
+export function parseJwt(token: string | null) {
+  if (!token) return null;
+  try {
+    const parts = token.split('.');
+    if (parts.length < 2) return null;
+    const base64 = parts[1].replace(/-/g, '+').replace(/_/g, '/');
+    const json = decodeURIComponent(
+      atob(base64)
+        .split('')
+        .map(c => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2))
+        .join(''),
+    );
+    return JSON.parse(json);
+  } catch {
+    return null;
+  }
+}
+
+export function getUserIdFromToken(): number | null {
+  const token = localStorage.getItem('token');
+  const payload = parseJwt(token);
+  if (payload && payload.user_id) return Number(payload.user_id);
+  return null;
+}
+
+export function getUserRoleFromToken(): string | null {
+  const token = localStorage.getItem('token');
+  const payload = parseJwt(token);
+  if (payload && payload.role) return String(payload.role);
+  return null;
+}
