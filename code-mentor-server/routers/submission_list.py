@@ -134,5 +134,3 @@ async def get_submission_detail(submission_id: int, session: AsyncSession = Depe
         "grade": report.get("instructor-evaluation", {}).get("grade", "N/A")
 
     }
-
-

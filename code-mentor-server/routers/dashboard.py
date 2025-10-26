@@ -100,3 +100,55 @@ async def pending_reviews(session: AsyncSession = Depends(get_db)):
     except Exception as e:
         print(f"Error fetching pending review count: {e}")
         raise HTTPException(status_code=500, detail="Internal Server Error")
+
+@router.get("/upcoming-deadlines", response_model=List[AssignmentOut])
+async def get_upcoming_deadlines(session: AsyncSession = Depends(get_db)):
+    """Fetch assignments with upcoming deadlines."""
+    try:
+        today = datetime.now(timezone.utc).date()
+
+        result = await session.execute(
+            select(Assignment)
+            .where(Assignment.due_date > today)
+            .order_by(Assignment.due_date)
+        )
+        assignments = result.scalars().all()
+        return assignments
+    except Exception as e:
+        print(f"Error fetching upcoming deadlines: {e}")
+        raise HTTPException(status_code=500, detail="Internal Server Error")
+
+@router.get("/recent-submissions", response_model=List[SubmissionOut])
+async def get_recent_submissions(session: AsyncSession = Depends(get_db)):
+    """Fetch recent submissions."""
+    try:
+        result = await session.execute(
+            select(
+                Submission.submission_id,
+                Submission.submitted_at,
+                Submission.report,
+                Assignment.assignment_name,
+                Student.student_name
+            )
+            .join(Assignment, Submission.assignment_id == Assignment.assignment_id)
+            .join(Student, Submission.student_id == Student.student_id)
+            .order_by(Submission.submitted_at.desc())
+            .limit(10)
+        )
+        submissions = result.all()
+
+        # Format the submissions for the response
+        formatted_submissions = [
+            {
+                "submission_id": row.submission_id,
+                "assignment_name": row.assignment_name,
+                "student_name": row.student_name,
+                "status": row.report.get("instructor-evaluation", {}).get("status", "Pending"),
+                "submitted_at": row.submitted_at,
+            }
+            for row in submissions
+        ]
+        return formatted_submissions
+    except Exception as e:
+        print(f"Error fetching recent submissions: {e}")
+        raise HTTPException(status_code=500, detail="Internal Server Error")

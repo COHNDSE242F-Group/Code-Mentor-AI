@@ -18,7 +18,7 @@ interface Conversation {
 
 interface Message {
   id: number;
-  sender: string;
+  sender: number;
   text: string;
   time: string;
   isMe: boolean;
@@ -44,6 +44,7 @@ const Messaging: React.FC = () => {
   const [showNewMessageModal, setShowNewMessageModal] = useState(false);
 const [users, setUsers] = useState<{ id: number; name: string; role: string }[]>([]);
   const [searchQuery, setSearchQuery] = useState(''); // State for search input
+    const [userNames, setUserNames] = useState<{ [key: number]: string }>({}); // Store user names by ID
 
 
 useEffect(() => {
@@ -277,6 +278,34 @@ const NewMessageModal = () => (
     </button>
   </div>
 );
+
+ // Fetch user names for display
+  useEffect(() => {
+    const fetchUserNames = async () => {
+      try {
+        const res = await fetch("http://localhost:8000/users");
+        const usersData = await res.json();
+        const nameMap: { [key: number]: string } = {};
+        usersData.forEach((user: { id: number; name: string; role: string }) => {
+          nameMap[user.id] = user.name;
+        });
+        setUserNames(nameMap);
+      } catch (err) {
+        console.error("Failed to fetch users:", err);
+      }
+    };
+    fetchUserNames();
+  }, []);
+  // Get the first letter of sender's name for avatar
+  const getSenderInitial = (senderId: number) => {
+    const userName = userNames[senderId] || 'U'; // Default to 'U' if name not found
+    return userName.charAt(0).toUpperCase();
+  };
+
+  // Get sender's name for display
+  const getSenderName = (senderId: number) => {
+    return userNames[senderId] || 'Unknown User';
+  };
 return (
   <div className="w-full">
     <div className="mb-6">
@@ -350,59 +379,65 @@ return (
           </div>
         </div>
 
-        {/* Active Conversation */}
-        <div className="w-2/3 flex flex-col">
-          {activeConversation ? (
-            <>
-              <div className="p-4 border-b border-gray-200 flex justify-between items-center">
-                <div className="flex items-center">
-                  <div className="w-10 h-10 rounded-full bg-[#0D47A1] flex items-center justify-center text-white">
-                    {activeConversation.name ? activeConversation.name.charAt(0) : "?"}
-                  </div>
-                  <div>
-                    <h3 className="font-medium">{activeConversation.name}</h3>
-                    <p className={`text-xs ${activeConversation.online ? 'text-green-500' : 'text-gray-500'}`}>
-                      {activeConversation.online ? 'Online' : 'Offline'}
-                    </p>
-                  </div>
+        
+      {/* Active Conversation */}
+      <div className="w-2/3 flex flex-col">
+        {activeConversation ? (
+          <>
+            <div className="p-4 border-b border-gray-200 flex justify-between items-center">
+              <div className="flex items-center">
+                <div className="w-10 h-10 rounded-full bg-[#0D47A1] flex items-center justify-center text-white">
+                  {activeConversation.name ? activeConversation.name.charAt(0) : "?"}
                 </div>
-                <div className="flex space-x-2">
-                  <button className="p-2 rounded-full hover:bg-gray-100">
-                    <PhoneIcon size={18} className="text-gray-600" />
-                  </button>
-                  <button className="p-2 rounded-full hover:bg-gray-100">
-                    <VideoIcon size={18} className="text-gray-600" />
-                  </button>
-                  <button className="p-2 rounded-full hover:bg-gray-100">
-                    <SearchIcon size={18} className="text-gray-600" />
-                  </button>
+                <div>
+                  <h3 className="font-medium">{activeConversation.name}</h3>
+                  <p className={`text-xs ${activeConversation.online ? 'text-green-500' : 'text-gray-500'}`}>
+                    {activeConversation.online ? 'Online' : 'Offline'}
+                  </p>
                 </div>
               </div>
-              <div className="flex-1 p-4 overflow-y-auto bg-gray-50">
-                <div className="space-y-4">
-                  {messages.length > 0 ? (
-                    messages.map(message => (
-                      <div key={message.id} className={`flex ${message.isMe ? 'justify-end' : 'justify-start'}`}>
-                        {!message.isMe && (
-                          <div className="w-8 h-8 rounded-full bg-[#0D47A1] flex items-center justify-center text-white mr-2 mt-1">
-                            {message.sender.charAt(0)}
-                          </div>
-                        )}
-                        <div
-                          className={`max-w-xs md:max-w-md rounded-lg p-3 ${
-                            message.isMe ? 'bg-[#0D47A1] text-white' : 'bg-white border border-gray-200'
-                          }`}
-                        >
-                          <p className="text-sm">{message.text}</p>
-                          <p className={`text-xs mt-1 ${message.isMe ? 'text-blue-100' : 'text-gray-500'}`}>
-                            {message.time}
-                          </p>
+              <div className="flex space-x-2">
+                <button className="p-2 rounded-full hover:bg-gray-100">
+                  <PhoneIcon size={18} className="text-gray-600" />
+                </button>
+                <button className="p-2 rounded-full hover:bg-gray-100">
+                  <VideoIcon size={18} className="text-gray-600" />
+                </button>
+                <button className="p-2 rounded-full hover:bg-gray-100">
+                  <SearchIcon size={18} className="text-gray-600" />
+                </button>
+              </div>
+            </div>
+            <div className="flex-1 p-4 overflow-y-auto bg-gray-50">
+              <div className="space-y-4">
+                {messages.length > 0 ? (
+                  messages.map(message => (
+                    <div key={message.id} className={`flex ${message.isMe ? 'justify-end' : 'justify-start'}`}>
+                      {!message.isMe && (
+                        <div className="w-8 h-8 rounded-full bg-[#0D47A1] flex items-center justify-center text-white mr-2 mt-1">
+                          {getSenderInitial(message.sender)}
                         </div>
+                      )}
+                      <div
+                        className={`max-w-xs md:max-w-md rounded-lg p-3 ${
+                          message.isMe ? 'bg-[#0D47A1] text-white' : 'bg-white border border-gray-200'
+                        }`}
+                      >
+                        {!message.isMe && (
+                          <p className="text-xs font-medium text-gray-600 mb-1">
+                            {getSenderName(message.sender)}
+                          </p>
+                        )}
+                        <p className="text-sm">{message.text}</p>
+                        <p className={`text-xs mt-1 ${message.isMe ? 'text-blue-100' : 'text-gray-500'}`}>
+                          {new Date(message.time).toLocaleTimeString()}
+                        </p>
                       </div>
-                    ))
-                  ) : (
-                    <p className="text-gray-500 text-sm">No messages yet.</p>
-                  )}
+                    </div>
+                  ))
+                ) : (
+                  <p className="text-gray-500 text-sm">No messages yet.</p>
+                )}
                 </div>
               </div>
               <form onSubmit={handleSendMessage} className="p-4 border-t border-gray-200">
