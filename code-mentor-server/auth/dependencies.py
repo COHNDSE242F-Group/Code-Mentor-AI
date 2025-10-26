@@ -1,26 +1,33 @@
-# auth/dependencies.py
 from fastapi import Depends, HTTPException, status
-from auth.auth import verify_token  # your JWT verifier
-from models import User  # optional, if you need user info
+from typing import List
+from .auth import verify_token  # JWT verification function
 
-def login_required(token: str = Depends(verify_token)):
-    """Require the user to be logged in."""
-    if not token:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Login required")
-    return token
+def login_required(token_data: dict = Depends(verify_token)) -> dict:
+    """
+    Dependency to ensure the user is logged in.
+    Returns the decoded JWT payload (user_id, role, etc.).
+    Raises 401 if token is missing or invalid.
+    """
+    if not token_data:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Login required"
+        )
+    return token_data
 
 
-def role_required(allowed_roles: list[str]):
+def role_required(allowed_roles: List[str]):
     """
     Returns a dependency that ensures the user has one of the allowed roles.
-    Example: Depends(role_required(["admin", "instructor"]))
+    Usage:
+        @router.get("/admin-only", dependencies=[Depends(role_required(["admin"]))])
     """
-    def dependency(token_data: dict = Depends(verify_token)):
+    def dependency(token_data: dict = Depends(verify_token)) -> dict:
         user_role = token_data.get("role")
         if user_role not in allowed_roles:
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
-                detail=f"Access denied: {user_role} role not permitted"
+                detail=f"Access denied: role '{user_role}' not permitted"
             )
         return token_data
     return dependency
