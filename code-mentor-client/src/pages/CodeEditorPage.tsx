@@ -230,16 +230,11 @@ const CodeEditorPage: React.FC = () => {
     if (!ensureLoggedIn()) return;
 
     try {
-      // Submit the code and keystroke report to backend
+      // Submit code & keystroke report
       const submitRes = await fetchWithAuth("http://localhost:8000/submit", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          assignment_id: assignmentId,
-          report: keystrokeReport,
-        }),
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ assignment_id: assignmentId, report: keystrokeReport }),
       });
 
       if (!submitRes.ok) {
@@ -248,16 +243,28 @@ const CodeEditorPage: React.FC = () => {
       }
 
       const submitData = await submitRes.json();
+      const submission_id = submitData.submission_id;
+      console.log(submission_id);
+      if (!submission_id) throw new Error("No submission_id returned from submit");
+
       console.log("Submission successful:", submitData);
+
+      // Trigger AI evaluation (fire-and-forget)
+      fetchWithAuth(`http://localhost:8000/report/ai-evaluation?submission_id=${submission_id}`, {
+        method: "POST",
+      }).catch(err => console.warn("AI evaluation failed:", err));
+
+      // Trigger progress report (fire-and-forget)
+      fetchWithAuth(`http://localhost:8000/report/progress_report?submission_id=${submission_id}`, {
+        method: "POST",
+      }).catch(err => console.warn("Progress report failed:", err));
 
       // Clear the user's keystroke cache
       const token = localStorage.getItem("token");
       if (token) {
         const clearRes = await fetch("http://localhost:8000/keystroke/clear", {
           method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
+          headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ token }),
         });
 
@@ -272,6 +279,7 @@ const CodeEditorPage: React.FC = () => {
       alert("Code submitted successfully!");
       setShowSubmitModal(false);
       resetEditor();
+
     } catch (err) {
       console.error("Error submitting code:", err);
       alert("Submission failed. Please try again.");

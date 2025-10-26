@@ -5,9 +5,13 @@ from database import async_session
 from models.assignment import Assignment
 from pydantic import BaseModel
 from typing import List, Optional
-from datetime import date
+from datetime import date, time
 from auth.dependencies import login_required
 from models.student import Student
+from models.topic_map import TopicMap
+from sqlalchemy.orm import aliased
+from auth.dependencies import role_required
+from models import Submission
 
 router = APIRouter(
     prefix="/assignment",
@@ -17,17 +21,29 @@ router = APIRouter(
 # --------------------------
 # Pydantic schemas
 # --------------------------
+class AssignmentTopic(BaseModel):
+    concept_id: int
+    topic_id: int
+
 class AssignmentCreate(BaseModel):
     assignment_name: str
     description: Optional[dict] = None
     due_date: date
+    due_time: Optional[time] = None
+    difficulty: Optional[str] = None
     instructor_id: Optional[int] = None
     batch_id: Optional[int] = None
+
+class AssignmentRequest(BaseModel):
+    assignment: AssignmentCreate
+    assignment_topics: List[AssignmentTopic]
 
 class AssignmentUpdate(BaseModel):
     assignment_name: Optional[str] = None
     description: Optional[dict] = None
     due_date: Optional[date] = None
+    due_time: Optional[time] = None
+    difficulty: Optional[str] = None
     instructor_id: Optional[int] = None
     batch_id: Optional[int] = None
 
@@ -36,11 +52,19 @@ class AssignmentOut(BaseModel):
     assignment_name: str
     description: Optional[dict]
     due_date: date
+    due_time: Optional[time] = None
+    difficulty: Optional[str] = None
     instructor_id: Optional[int]
     batch_id: Optional[int]
 
-    class Config:
-        orm_mode = True
+    # ✅ Pydantic v2 uses model_config
+    model_config = {"from_attributes": True}
+
+class AssignmentAndSubmission(BaseModel):
+    Assignment: AssignmentOut
+    Submission_id: Optional[int] = None
+
+    model_config = {"from_attributes": True}
 
 # --------------------------
 # Endpoints
@@ -48,21 +72,39 @@ class AssignmentOut(BaseModel):
 
 # Create a new assignment
 @router.post("/", response_model=AssignmentOut)
-async def create_assignment(assignment: AssignmentCreate):
+async def create_assignment(assignmentRequest: AssignmentRequest):
     async with async_session() as session:
-        new_assignment = Assignment(**assignment.dict())
-        session.add(new_assignment)
-        await session.commit()
-        await session.refresh(new_assignment)
-        return new_assignment
+        try:
+            # Extract the assignment part
+            assignment_data = assignmentRequest.assignment.dict()
 
-# Get all assignments
-@router.get("/", response_model=List[AssignmentOut])
-async def get_assignments():
-    async with async_session() as session:
-        result = await session.execute(select(Assignment))
-        assignments = result.scalars().all()
-        return assignments
+            # Create the new Assignment row
+            new_assignment = Assignment(**assignment_data)
+            session.add(new_assignment)
+            await session.flush()  # Get assignment_id before commit
+
+            # 2️⃣ Build the topic map structure
+            topic_map_dict = {}
+            for topic in assignmentRequest.assignment_topics:
+                # Convert IDs to strings for consistent JSON keys
+                key = str(topic.concept_id)
+                topic_map_dict.setdefault(key, []).append(str(topic.topic_id))
+
+            # 3️⃣ Save to TopicMap table
+            topic_map_entry = TopicMap(
+                assignment_id=new_assignment.assignment_id,
+                content=topic_map_dict
+            )
+            session.add(topic_map_entry)
+
+            await session.commit()
+            await session.refresh(new_assignment)
+
+            return new_assignment
+
+        except Exception as e:
+            await session.rollback()
+            raise HTTPException(status_code=500, detail=f"Failed to create assignment: {str(e)}")
 
 # Get assignment by ID
 @router.get("/{assignment_id}", response_model=AssignmentOut)

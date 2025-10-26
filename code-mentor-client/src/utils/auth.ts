@@ -1,10 +1,20 @@
-export async function fetchWithAuth(input: RequestInfo, init?: RequestInit, retryIfExpired = true) {
+export async function fetchWithAuth(
+  input: RequestInfo,
+  init?: RequestInit,
+  retryIfExpired = true
+) {
   const getToken = () => localStorage.getItem("token");
 
   const makeRequest = async () => {
     const token = getToken();
     const headers = new Headers(init?.headers || {});
-    headers.set("Content-Type", "application/json");
+
+    // Only set Content-Type if the method usually has a body
+    const method = (init?.method || "GET").toUpperCase();
+    if (["POST", "PUT", "PATCH", "DELETE"].includes(method)) {
+      headers.set("Content-Type", "application/json");
+    }
+
     if (token) headers.set("Authorization", `Bearer ${token}`);
 
     const res = await fetch(input, { ...(init || {}), headers });
@@ -37,14 +47,14 @@ export async function fetchWithAuth(input: RequestInfo, init?: RequestInit, retr
 export function parseJwt(token: string | null) {
   if (!token) return null;
   try {
-    const parts = token.split('.');
+    const parts = token.split(".");
     if (parts.length < 2) return null;
-    const base64 = parts[1].replace(/-/g, '+').replace(/_/g, '/');
+    const base64 = parts[1].replace(/-/g, "+").replace(/_/g, "/");
     const json = decodeURIComponent(
       atob(base64)
-        .split('')
-        .map(c => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2))
-        .join(''),
+        .split("")
+        .map((c) => "%" + ("00" + c.charCodeAt(0).toString(16)).slice(-2))
+        .join("")
     );
     return JSON.parse(json);
   } catch {
@@ -53,14 +63,14 @@ export function parseJwt(token: string | null) {
 }
 
 export function getUserIdFromToken(): number | null {
-  const token = localStorage.getItem('token');
+  const token = localStorage.getItem("token");
   const payload = parseJwt(token);
   if (payload && payload.user_id) return Number(payload.user_id);
   return null;
 }
 
 export function getUserRoleFromToken(): string | null {
-  const token = localStorage.getItem('token');
+  const token = localStorage.getItem("token");
   const payload = parseJwt(token);
   if (payload && payload.role) return String(payload.role);
   return null;

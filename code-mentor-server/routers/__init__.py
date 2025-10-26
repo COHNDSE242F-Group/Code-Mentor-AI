@@ -23,9 +23,11 @@ from .student import router as student_router
 from .instructor import router as instructor_router
 from .public_lists import router as public_lists_router
 from .progress import router as progress_router
+from .batch import router as batch_router
+from .assignment_generate import router as assignment_generate_router
+from .student_assignment import router as student_assignment_router
 
 routers = [
-    
     code_runner_router,
     ai_chat_router,
     key_stroke_router,
@@ -46,6 +48,9 @@ routers = [
     instructor_router,
     reset_password_router,
     report_router,
-    public_lists_router,,
-    progress_router
+    public_lists_router,
+    progress_router,
+    batch_router,
+    assignment_generate_router,
+    student_assignment_router
 ]
