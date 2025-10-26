@@ -209,26 +209,27 @@ async def create_or_update_conceptual_map(
 
         try:
             # --- 2. Call Groq API directly inside the router ---
-            completion = groq_client.chat.completions.create(
-                model="openai/gpt-oss-20b",
-                messages=[
-                    {"role": "system", "content": "You are a helpful AI tutor who extracts relevant concepts IDs from assignments."},
-                    {"role": "user", "content": prompt}
-                ],
-                temperature=0,
-                max_completion_tokens=1500,
-                reasoning_effort="medium"
-            )
-
-            response_text = completion.choices[0].message.content
-
-            # --- Call Gemini ---
-            # response = gemini_client.models.generate_content(
-            #     model="gemini-2.5-flash",
-            #     contents=prompt
+            # completion = groq_client.chat.completions.create(
+            #     model="openai/gpt-oss-20b",
+            #     messages=[
+            #         {"role": "system", "content": "You are a helpful AI tutor who extracts relevant concepts IDs from assignments."},
+            #         {"role": "user", "content": prompt}
+            #     ],
+            #     temperature=0,
+            #     max_completion_tokens=1500,
+            #     reasoning_effort="medium"
             # )
 
-            # response_text = response.text.strip()
+            # response_text = completion.choices[0].message.content
+
+            # --- Call Gemini ---
+            response = gemini_client.models.generate_content(
+                model="gemini-2.5-flash",
+                contents=prompt
+            )
+
+            response_text = response.text.strip()
+            response_text = re.sub(r"^```json|```$", "", response_text, flags=re.MULTILINE).strip()
 
             # --- 3. Parse JSON safely ---
             try:
@@ -276,26 +277,27 @@ async def create_or_update_conceptual_map(
 
         try:
             # --- 2. Call Groq API directly inside the router ---
-            completion = groq_client.chat.completions.create(
-                model="openai/gpt-oss-20b",
-                messages=[
-                    {"role": "system", "content": "You are a helpful AI tutor who extracts relevant topic IDs from assignments."},
-                    {"role": "user", "content": prompt}
-                ],
-                temperature=0,
-                max_completion_tokens=1500,
-                reasoning_effort="medium"
-            )
-
-            response_text = completion.choices[0].message.content
-
-            # --- Call Gemini ---
-            # response = gemini_client.models.generate_content(
-            #     model="gemini-2.5-flash",
-            #     contents=prompt
+            # completion = groq_client.chat.completions.create(
+            #     model="openai/gpt-oss-20b",
+            #     messages=[
+            #         {"role": "system", "content": "You are a helpful AI tutor who extracts relevant topic IDs from assignments."},
+            #         {"role": "user", "content": prompt}
+            #     ],
+            #     temperature=0,
+            #     max_completion_tokens=1500,
+            #     reasoning_effort="medium"
             # )
 
-            # response_text = response.text.strip()
+            # response_text = completion.choices[0].message.content
+
+            # --- Call Gemini ---
+            response = gemini_client.models.generate_content(
+                model="gemini-2.5-flash",
+                contents=prompt
+            )
+
+            response_text = response.text.strip()
+            response_text = re.sub(r"^```json|```$", "", response_text, flags=re.MULTILINE).strip()
 
             # --- 3. Parse JSON safely ---
             try:

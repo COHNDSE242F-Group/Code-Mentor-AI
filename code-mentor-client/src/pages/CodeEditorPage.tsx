@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef, } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
 import CodeEditor from "../components/CodeEditor";
 import LanguageSwitcher from "../components/LanguageSwitcher";
@@ -16,6 +16,7 @@ import {
   TerminalIcon,
   ClipboardListIcon,
   BeakerIcon,
+  SparklesIcon, // ✅ added
 } from "lucide-react";
 
 const CodeEditorPage: React.FC = () => {
@@ -41,13 +42,19 @@ const CodeEditorPage: React.FC = () => {
   const [showPasteModal, setShowPasteModal] = useState(false);
   const editorRef = useRef<any>(null);
   const [showSubmitModal, setShowSubmitModal] = useState(false);
-  const [keystrokeReport, setKeystrokeReport] = useState<{code: string; paste: boolean} | null>(null);
+  const [keystrokeReport, setKeystrokeReport] = useState<{ code: string; paste: boolean } | null>(
+    null
+  );
+  const [aiEvaluating, setAiEvaluating] = useState(false); // ✅ new state
+  const [aiMessage, setAiMessage] = useState(""); // ✅ new state for final message
+
   const defaultCodeMap: Record<string, string> = {
     javascript: "// Write your solution here\nconsole.log('Hello, world!');",
     python: "# Write your solution here\nprint('Hello, world!')",
     c: "/* Write your solution here */\n#include <stdio.h>\nint main() {\n    printf(\"Hello, world!\\n\");\n    return 0;\n}",
   };
   const [problemData, setProblemData] = useState<any>(null);
+
   // ---------------------------
   // Auth & Page Setup
   // ---------------------------
@@ -62,7 +69,6 @@ const CodeEditorPage: React.FC = () => {
 
   useEffect(() => {
     const initializePage = async () => {
-      // Check for invalid cases: neither or both IDs provided
       if ((!assignmentId && !problemId) || (assignmentId && problemId)) {
         console.error("Invalid URL: must provide either assignmentId or problemId, not both.");
         navigate("/");
@@ -89,13 +95,11 @@ const CodeEditorPage: React.FC = () => {
           const assignmentData = await res.json();
           console.log("Assignment loaded:", assignmentData);
           setProblemData(assignmentData);
-
         } catch (err) {
           console.error("Error fetching assignment:", err);
           navigate("/");
         }
       } else if (problemId) {
-        // TODO: implement problem fetching logic later
         console.log("Problem mode, ID:", problemId);
       }
     };
@@ -109,7 +113,6 @@ const CodeEditorPage: React.FC = () => {
       const code = editorRef.current?.getValue() || "";
       const language = selectedLanguage;
 
-      // Prepare payload with token
       const payload = JSON.stringify({
         action: "exit",
         code,
@@ -120,18 +123,14 @@ const CodeEditorPage: React.FC = () => {
       const blob = new Blob([payload], { type: "application/json" });
       navigator.sendBeacon("http://localhost:8000/keystroke/clear", blob);
 
-      // Optional: show browser confirmation dialog
       e.preventDefault();
-      e.returnValue = ""; // required in Chrome
+      e.returnValue = "";
     };
 
     window.addEventListener("beforeunload", handleBeforeUnload);
     return () => window.removeEventListener("beforeunload", handleBeforeUnload);
   }, [selectedLanguage]);
 
-  // ---------------------------
-  // Helper: Auth headers
-  // ---------------------------
   const getAuthHeaders = (): HeadersInit => {
     const token = localStorage.getItem("token");
     return {
@@ -142,7 +141,7 @@ const CodeEditorPage: React.FC = () => {
 
   const handleUndo = () => {
     if (editorRef.current) {
-      editorRef.current.trigger('keyboard', 'undo', null);
+      editorRef.current.trigger("keyboard", "undo", null);
     }
     setShowPasteModal(false);
   };
@@ -151,15 +150,10 @@ const CodeEditorPage: React.FC = () => {
     setShowPasteModal(false);
 
     if (editorRef.current) {
-      // Trigger sending paste keystroke to backend
       editorRef.current.sendPasteEvent();
     }
   };
 
-
-  // ---------------------------
-  // Ensure user is logged in
-  // ---------------------------
   const ensureLoggedIn = (): boolean => {
     const token = localStorage.getItem("token");
     if (!token) {
@@ -169,17 +163,11 @@ const CodeEditorPage: React.FC = () => {
     return true;
   };
 
-  // ---------------------------
-  // Handle Code Change
-  // ---------------------------
   const handleCodeChange = (newCode: string, isPaste?: boolean) => {
     setCode(newCode);
     if (isPaste) setShowPasteModal(true);
   };
 
-  // ---------------------------
-  // Run Code
-  // ---------------------------
   const handleRunCode = async () => {
     if (!ensureLoggedIn()) return;
 
@@ -205,9 +193,6 @@ const CodeEditorPage: React.FC = () => {
     }
   };
 
-  // ---------------------------
-  // Submit Code
-  // ---------------------------
   const handleSubmitCode = async () => {
     if (!ensureLoggedIn()) return;
 
@@ -220,7 +205,7 @@ const CodeEditorPage: React.FC = () => {
 
       const report = await res.json();
       setKeystrokeReport(report);
-      setShowSubmitModal(true); // Show modal
+      setShowSubmitModal(true);
     } catch (err) {
       console.error("Failed to fetch keystroke report", err);
     }
@@ -230,7 +215,6 @@ const CodeEditorPage: React.FC = () => {
     if (!ensureLoggedIn()) return;
 
     try {
-      // Submit code & keystroke report
       const submitRes = await fetchWithAuth("http://localhost:8000/submit", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -244,60 +228,61 @@ const CodeEditorPage: React.FC = () => {
 
       const submitData = await submitRes.json();
       const submission_id = submitData.submission_id;
-      console.log(submission_id);
       if (!submission_id) throw new Error("No submission_id returned from submit");
 
       console.log("Submission successful:", submitData);
 
-      // Trigger AI evaluation (fire-and-forget)
-      fetchWithAuth(`http://localhost:8000/report/ai-evaluation?submission_id=${submission_id}`, {
-        method: "POST",
-      }).catch(err => console.warn("AI evaluation failed:", err));
+      // ✅ NEW: Show AI evaluation loading spinner
+      setAiEvaluating(true);
+      setAiMessage("");
 
-      // Trigger progress report (fire-and-forget)
-      fetchWithAuth(`http://localhost:8000/report/progress_report?submission_id=${submission_id}`, {
-        method: "POST",
-      }).catch(err => console.warn("Progress report failed:", err));
+      // Wait for AI evaluation
+      const aiEvalRes = await fetchWithAuth(
+        `http://localhost:8000/report/ai-evaluation?submission_id=${submission_id}`,
+        { method: "POST" }
+      );
 
-      // Clear the user's keystroke cache
+      if (!aiEvalRes.ok) throw new Error("AI evaluation failed");
+
+      setAiMessage("🎉 Your assignment is successfully submitted with AI evaluation!");
+      await new Promise((resolve) => setTimeout(resolve, 2000));
+
+      setAiEvaluating(false);
+      setShowSubmitModal(false);
+
+      // ✅ Navigate back after success
+      navigate(-1);
+
+      // Progress report (fire-and-forget)
+      fetchWithAuth(
+        `http://localhost:8000/report/progress_report?submission_id=${submission_id}`,
+        { method: "POST" }
+      ).catch((err) => console.warn("Progress report failed:", err));
+
+      // Clear keystrokes
       const token = localStorage.getItem("token");
       if (token) {
-        const clearRes = await fetch("http://localhost:8000/keystroke/clear", {
+        await fetch("http://localhost:8000/keystroke/clear", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ token }),
         });
-
-        if (!clearRes.ok) {
-          const clearErr = await clearRes.json();
-          console.warn("Failed to clear keystrokes:", clearErr.detail);
-        } else {
-          console.log("Keystrokes cleared successfully");
-        }
       }
 
-      alert("Code submitted successfully!");
-      setShowSubmitModal(false);
       resetEditor();
-
     } catch (err) {
       console.error("Error submitting code:", err);
       alert("Submission failed. Please try again.");
+      setAiEvaluating(false);
     }
   };
 
   const resetEditor = () => {
     const initialCode = defaultCodeMap[selectedLanguage];
-    
-    // Update the Monaco editor without triggering handleChange
     editorRef.current?.setValue(initialCode);
-
-    // Update internal lastCode so paste detection stays correct
     if (editorRef.current?.lastCode !== undefined) {
-      editorRef.current.lastCode = initialCode; // optional if you want to avoid paste detection
+      editorRef.current.lastCode = initialCode;
     }
-
-    // Reset other states in parent if needed
     setCode(initialCode);
     setPasteDetected(false);
     setConsoleOutput("");
@@ -305,20 +290,13 @@ const CodeEditorPage: React.FC = () => {
     setShowSubmitModal(false);
   };
 
-  // ---------------------------
-  // Hint Button
-  // ---------------------------
   const handleAskForHint = () => setShowHintButton(false);
 
-  // ---------------------------
-  // JSX Layout
-  // ---------------------------
   return (
     <div className="relative flex flex-col h-screen bg-gray-900 text-white overflow-hidden">
       <div className="flex flex-1 overflow-hidden relative min-h-0">
-        {/* ==================== Left Sidebar ==================== */}
+        {/* Sidebar */}
         <div className="flex h-full bg-[#1e1e2e] border-r border-[#313244] w-[320px] flex-shrink-0 min-h-0">
-          {/* Sidebar Icons */}
           <div className="w-14 bg-[#181825] border-r border-[#313244] flex flex-col items-center py-3 space-y-4">
             {[
               { tab: "description", icon: FileTextIcon, title: "Description" },
@@ -343,31 +321,20 @@ const CodeEditorPage: React.FC = () => {
             ))}
           </div>
 
-          {/* Problem Details Section */}
           <div className="flex-1 flex flex-col min-h-0">
             <div className="flex items-center justify-between px-4 py-3 bg-[#181825] border-b border-[#313244]">
-              <h2 className="font-semibold text-sm text-slate-200">
-                Problem Details
-              </h2>
+              <h2 className="font-semibold text-sm text-slate-200">Problem Details</h2>
             </div>
             <div className="flex-1 overflow-y-auto px-4 py-3 min-h-0">
-              <ProblemDetails
-                activeTab={activeTab}
-                setActiveTab={setActiveTab}
-                data={problemData}
-              />
+              <ProblemDetails activeTab={activeTab} setActiveTab={setActiveTab} data={problemData} />
             </div>
           </div>
         </div>
 
-        {/* ==================== Main Editor Area ==================== */}
+        {/* Main Editor */}
         <div className="flex flex-col border-r border-slate-700 w-[800px] flex-shrink-0 min-h-0">
-          {/* Toolbar */}
           <div className="flex items-center justify-between px-4 py-2 bg-slate-800 border-b border-slate-700">
-            <LanguageSwitcher
-              selectedLanguage={selectedLanguage}
-              onSelectLanguage={setSelectedLanguage}
-            />
+            <LanguageSwitcher selectedLanguage={selectedLanguage} onSelectLanguage={setSelectedLanguage} />
             <div className="flex space-x-2">
               <button
                 onClick={handleRunCode}
@@ -387,9 +354,7 @@ const CodeEditorPage: React.FC = () => {
             </div>
           </div>
 
-          {/* Code Editor & Output */}
           <div className="flex-1 flex flex-col overflow-hidden relative min-h-0">
-            {/* Paste alert */}
             {pasteDetected && (
               <div className="absolute top-2 right-2 flex items-center bg-amber-700 text-white px-3 py-2 rounded-md z-10 animate-fade-in-out">
                 <AlertTriangleIcon size={16} className="mr-2" />
@@ -399,7 +364,6 @@ const CodeEditorPage: React.FC = () => {
               </div>
             )}
 
-            {/* Code editor */}
             <div className="flex-1 overflow-auto bg-gray-800 min-h-0">
               <CodeEditor
                 ref={editorRef}
@@ -418,18 +382,13 @@ const CodeEditorPage: React.FC = () => {
               {showPasteModal && (
                 <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-60 z-50">
                   <div className="bg-white p-6 rounded-2xl shadow-lg max-w-md text-center space-y-4">
-                    <h2 className="text-lg font-semibold text-gray-800">
-                      Paste Detected
-                    </h2>
+                    <h2 className="text-lg font-semibold text-gray-800">Paste Detected</h2>
                     <p className="text-gray-600">
                       A paste action was detected. Do you want to undo the last action?
                     </p>
-
                     <label className="flex items-center gap-2 text-sm text-gray-600 justify-center">
-                      <input type="checkbox" required />
-                      I understand this will be recorded.
+                      <input type="checkbox" required /> I understand this will be recorded.
                     </label>
-
                     <div className="flex justify-center gap-4 pt-3">
                       <button
                         onClick={handleUndo}
@@ -449,7 +408,6 @@ const CodeEditorPage: React.FC = () => {
               )}
             </div>
 
-            {/* Hint button */}
             {showHintButton && (
               <button
                 onClick={handleAskForHint}
@@ -460,60 +418,67 @@ const CodeEditorPage: React.FC = () => {
               </button>
             )}
 
-            {/* Console output */}
             <div className="h-32 border-t border-slate-700 overflow-auto p-2 font-mono bg-gray-900 text-white whitespace-pre-wrap">
               {consoleOutput}
             </div>
           </div>
         </div>
 
-        {/* ==================== AI Tutor Chat ==================== */}
+        {/* AI Chat */}
         <div className="hidden lg:block">
           <div className="fixed top-0 right-0 h-full w-[400px] hover:w-[600px] transition-all duration-300 ease-in-out z-50 overflow-hidden shadow-xl bg-[#1e1e2e]">
-            <AiTutorChat />
+            <AiTutorChat currentCode={code} selectedLanguage={selectedLanguage} problemDetails={problemData} />
           </div>
         </div>
 
+        {/* Submit Modal */}
         {showSubmitModal && keystrokeReport && (
           <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-80 z-50">
             <div className="bg-white w-11/12 max-w-5xl h-4/5 p-8 rounded-3xl shadow-2xl flex flex-col space-y-6">
-              <h2 className="text-2xl font-bold text-gray-900 text-center">
-                Submit Code
-              </h2>
-
-              <div className="flex-1 overflow-auto bg-gray-100 p-4 rounded-lg border border-gray-300">
-                <pre className="whitespace-pre-wrap text-sm md:text-base text-gray-800 font-mono">
-                  {keystrokeReport.code}
-                </pre>
-              </div>
-
-              <p className="text-lg font-medium text-gray-800 text-center">
-                {keystrokeReport.paste ? "⚠️ Paste detected!" : "✅ No paste detected"}
-              </p>
-
-              <div className="flex justify-center gap-6">
-                <button
-                  onClick={() => {
-                    setShowSubmitModal(false);
-                    console.log("User canceled submission");
-                    // TODO: handle cancel logic
-                  }}
-                  className="px-6 py-3 bg-red-600 text-white font-semibold rounded-lg hover:bg-red-700 transition"
-                >
-                  Cancel
-                </button>
-
-                <button
-                  onClick={() => {
-                    if (problemData && problemData.assignment_id) {
-                      handleConfirmSubmit(problemData.assignment_id, keystrokeReport)
-                    }
-                  }}
-                  className="px-6 py-3 bg-green-600 text-white font-semibold rounded-lg hover:bg-green-700 transition"
-                >
-                  Submit
-                </button>
-              </div>
+              {!aiEvaluating ? (
+                <>
+                  <h2 className="text-2xl font-bold text-gray-900 text-center">Submit Code</h2>
+                  <div className="flex-1 overflow-auto bg-gray-100 p-4 rounded-lg border border-gray-300">
+                    <pre className="whitespace-pre-wrap text-sm md:text-base text-gray-800 font-mono">
+                      {keystrokeReport.code}
+                    </pre>
+                  </div>
+                  <p className="text-lg font-medium text-gray-800 text-center">
+                    {keystrokeReport.paste ? "⚠️ Paste detected!" : "✅ No paste detected"}
+                  </p>
+                  <div className="flex justify-center gap-6">
+                    <button
+                      onClick={() => {
+                        setShowSubmitModal(false);
+                        console.log("User canceled submission");
+                      }}
+                      className="px-6 py-3 bg-red-600 text-white font-semibold rounded-lg hover:bg-red-700 transition"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      onClick={() => {
+                        if (problemData && problemData.assignment_id) {
+                          handleConfirmSubmit(problemData.assignment_id, keystrokeReport);
+                        }
+                      }}
+                      className="px-6 py-3 bg-green-600 text-white font-semibold rounded-lg hover:bg-green-700 transition"
+                    >
+                      Submit
+                    </button>
+                  </div>
+                </>
+              ) : (
+                // ✅ AI Evaluation Loading State
+                <div className="flex flex-col items-center justify-center h-full space-y-6 text-gray-800">
+                  <div className="animate-spin text-teal-600">
+                    <SparklesIcon size={48} />
+                  </div>
+                  <h2 className="text-2xl font-semibold">
+                    {aiMessage || "✨ AI is evaluating your submission..."}
+                  </h2>
+                </div>
+              )}
             </div>
           </div>
         )}

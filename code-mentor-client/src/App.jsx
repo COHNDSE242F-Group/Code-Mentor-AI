@@ -107,6 +107,7 @@ function App() {
         <Route path="/reports" element={<Layout><Reports /></Layout>}/>
         <Route path="/dashboard" element={<Layout><Dashboard /></Layout>} />
         <Route path="/batches" element={<Layout><BatchManagement /></Layout>} />
+        <Route path="/assignments/generate" element={<Layout><AssignmentGeneratorPage /></Layout>} />
 
         {/* <Route path="/dashboard" element={<Layout><Dashboard /></Layout>} />
         <Route path="/dashboard" element={<Layout><Dashboard /></Layout>} />
@@ -117,7 +118,6 @@ function App() {
         <Route path="/instructors/:id/edit" element={<Layout><EditInstructor /></Layout>} />
          <Route path="/dashboard" element={<Layout><Dashboard /></Layout>} />
           <Route path="/batches" element={<Layout><BatchManagement /></Layout>} />
-          <Route path="/assignments/generate" element={<Layout><AssignmentGeneratorPage /></Layout>} />
         {/* 
          <Route path="/assignments/:id" element={<Layout><AssignmentDetail /></Layout>} />
          
