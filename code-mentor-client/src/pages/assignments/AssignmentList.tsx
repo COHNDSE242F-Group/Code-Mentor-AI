@@ -2,7 +2,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import Card from '../../components/ui/Card';
-import { PlusIcon, SearchIcon, FilterIcon, MoreHorizontalIcon } from 'lucide-react';
+import { PlusIcon, SearchIcon, FilterIcon, MoreHorizontalIcon, SparklesIcon } from 'lucide-react';
 const AssignmentList = () => {
   const [assignments, setAssignments] = React.useState<any[]>([]);
   const [loading, setLoading] = React.useState(true);
@@ -97,10 +97,22 @@ const AssignmentList = () => {
             Manage all your programming assignments
           </p>
         </div>
-        <Link to="/assignments/create" className="inline-flex items-center px-4 py-2 bg-[#0D47A1] text-white rounded-md hover:bg-blue-800">
-          <PlusIcon size={16} className="mr-2" />
-          Create Assignment
-        </Link>
+        <div className="flex space-x-2">
+          <Link
+            to="assignments/generate"
+            className="inline-flex items-center px-4 py-2 bg-gradient-to-r from-purple-600 to-indigo-600 text-white rounded-md hover:from-purple-700 hover:to-indigo-700 transition"
+          >
+            <SparklesIcon size={16} className="mr-2" />
+            Generate Assignment with AI
+          </Link>
+          <Link
+            to="/assignments/create"
+            className="inline-flex items-center px-4 py-2 bg-[#0D47A1] text-white rounded-md hover:bg-blue-800"
+          >
+            <PlusIcon size={16} className="mr-2" />
+            Create Assignment
+          </Link>
+        </div>
       </div>
       <Card>
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">

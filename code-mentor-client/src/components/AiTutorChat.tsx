@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { SendIcon, BotIcon, UserIcon } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
@@ -13,7 +13,20 @@ interface Message {
   timestamp: Date;
 }
 
-const AiTutorChat: React.FC = () => {
+interface AiTutorChatProps {
+  currentCode?: string;
+  selectedLanguage?: string;
+  problemDetails?: any;
+}
+
+// Cache for problem details to avoid resending
+let problemDetailsCache: string = '';
+
+const AiTutorChat: React.FC<AiTutorChatProps> = ({ 
+  currentCode = '', 
+  selectedLanguage = 'javascript', 
+  problemDetails = null 
+}) => {
   const [input, setInput] = useState('');
   const [messages, setMessages] = useState<Message[]>([
     {
@@ -25,14 +38,25 @@ const AiTutorChat: React.FC = () => {
   ]);
   const [loading, setLoading] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
+  const [sessionStarted, setSessionStarted] = useState(false);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
-  // ---------------------------
-  // Get auth headers
-  // ---------------------------
+  // Update cache when problem details change
+  useEffect(() => {
+    if (problemDetails && !sessionStarted) {
+      problemDetailsCache = JSON.stringify({
+        title: problemDetails.assignment_name || problemDetails.title,
+        description: problemDetails.description?.description || problemDetails.description,
+        constraints: problemDetails.description?.constraints,
+        examples: problemDetails.description?.examples?.slice(0, 2), // Limit examples
+        testcases: problemDetails.description?.testcases?.slice(0, 2), // Limit test cases
+      });
+    }
+  }, [problemDetails, sessionStarted]);
+
   const getAuthHeaders = () => {
     const token = localStorage.getItem("token");
     return {
@@ -40,6 +64,41 @@ const AiTutorChat: React.FC = () => {
       ...(token ? { Authorization: `Bearer ${token}` } : {})
     };
   };
+
+  // Optimized context preparation
+  const prepareContext = useCallback((userMessage: string) => {
+    const context: any = {
+      programming_language: selectedLanguage,
+    };
+
+    // Only send code if it's relevant to the question
+    const codeRelatedKeywords = ['code', 'function', 'implement', 'solution', 'error', 'bug', 'fix', 'write', 'program'];
+    const isCodeRelated = codeRelatedKeywords.some(keyword => 
+      userMessage.toLowerCase().includes(keyword)
+    );
+
+    if (isCodeRelated && currentCode && currentCode.length > 0) {
+      // Only send relevant portions of code (first 200 chars + last 100 chars as summary)
+      const codePreview = currentCode.length > 300 
+        ? `${currentCode.substring(0, 200)}...\n// ... ${currentCode.length - 300} more lines ...\n${currentCode.substring(currentCode.length - 100)}`
+        : currentCode;
+      
+      context.current_code = codePreview;
+    }
+
+    // Only send problem details for first message or when explicitly asked
+    const problemKeywords = ['problem', 'question', 'assignment', 'task', 'description', 'requirement'];
+    const isProblemRelated = problemKeywords.some(keyword => 
+      userMessage.toLowerCase().includes(keyword)
+    );
+
+    if ((!sessionStarted || isProblemRelated) && problemDetailsCache) {
+      context.problem_details = JSON.parse(problemDetailsCache);
+      setSessionStarted(true);
+    }
+
+    return context;
+  }, [currentCode, selectedLanguage, sessionStarted]);
 
   const handleSendMessage = async () => {
     if (!input.trim()) return;
@@ -56,17 +115,34 @@ const AiTutorChat: React.FC = () => {
     setLoading(true);
 
     try {
+      const context = prepareContext(input);
+
+      // Only send last 6 messages to avoid huge history
+      const recentHistory = messages.slice(-6).map(m => ({
+        role: m.sender === 'ai' ? 'assistant' : 'user',
+        content: m.text,
+      }));
+
+      const payload = {
+        message: input,
+        history: recentHistory,
+        context: Object.keys(context).length > 1 ? context : undefined, // Only send if we have context
+      };
+
+      // Remove empty context to save space
+      if (payload.context && Object.keys(payload.context).length === 1) {
+        delete payload.context;
+      }
+
       const response = await fetch('http://localhost:8000/ai-chat', {
         method: 'POST',
         headers: getAuthHeaders(),
-        body: JSON.stringify({
-          message: input,
-          history: messages.map(m => ({
-            role: m.sender === 'ai' ? 'assistant' : 'user',
-            content: m.text,
-          })),
-        }),
+        body: JSON.stringify(payload),
       });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
 
       const data = await response.json();
 
@@ -194,6 +270,11 @@ const AiTutorChat: React.FC = () => {
           >
             <SendIcon size={16} />
           </button>
+        </div>
+        
+        {/* Context indicator */}
+        <div className="text-xs text-gray-400 mt-2 text-center">
+          {sessionStarted ? "✓ Problem context loaded" : "Ready to help"}
         </div>
       </div>
     </div>
