@@ -14,12 +14,34 @@ interface AssignmentData {
     instructor_id?: number;
     batch_id?: number;
   };
-  Submission_id?: number | null;
+  Submission_id: number | null;
+}
+
+interface AiEvaluation {
+  errors: string[];
+  improvements: string[];
+  overall_score: number;
+  good_practices: string[];
+}
+
+interface InstructorEvaluation {
+  grade: string;
+  score: number;
+  status: string;
+  feedback: string[];
+}
+
+interface Report {
+  code: string;
+  paste: boolean;
+  "ai-evaluation"?: AiEvaluation;
+  "instructor-evaluation"?: InstructorEvaluation;
 }
 
 interface SubmissionDetails {
   submission_id: number;
-  content: string;
+  submitted_at: string;
+  report: Report | null;
 }
 
 const Assignments: React.FC = () => {
@@ -45,6 +67,7 @@ const Assignments: React.FC = () => {
       if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
 
       const data: AssignmentData[] = await res.json();
+      console.log(data);
       setAssignments(data);
     } catch (err) {
       console.error('Failed to fetch assignments:', err);
@@ -53,15 +76,43 @@ const Assignments: React.FC = () => {
     }
   };
 
-  const fetchSubmission = async (assignmentId: number) => {
+  const fetchSubmission = async (submissionId: number) => {
     try {
-      const res = await fetchWithAuth(`http://localhost:8000/submission/${assignmentId}`);
-      const data: SubmissionDetails = await res.json();
-      setSubmissionDetails(data);
+      // Clear previous submission while loading
+      setSubmissionDetails(null);
+
+      const res = await fetchWithAuth(
+        `http://localhost:8000/submission/${submissionId}`,
+        {
+          method: 'GET',
+        }
+      );
+
+      if (!res.ok) {
+        throw new Error(`Failed to fetch submission. Status: ${res.status}`);
+      }
+
+      const data: SubmissionDetails | null = await res.json();
+
+      if (!data) {
+        console.warn(`No submission found for assignment ID ${submissionId}`);
+        setSubmissionDetails(null);
+        return;
+      }
+
+      const filteredData = {
+        submission_id: data.submission_id,
+        submitted_at: data.submitted_at,
+        report: data.report ?? null, // in case report is missing
+      };
+
+      console.log(filteredData);
+      setSubmissionDetails(filteredData);
       setModalOpen(true);
     } catch (err) {
       console.error('Error fetching submission', err);
       setSubmissionDetails(null);
+      setModalOpen(false);
     }
   };
 
@@ -169,9 +220,9 @@ const Assignments: React.FC = () => {
                   )}
                 </div>
               </div>
-              {a.Submission_id && (
+              {a.Submission_id != null && (
                 <button
-                  onClick={() => fetchSubmission(a.Assignment.assignment_id)}
+                  onClick={() => fetchSubmission(a.Submission_id!)}
                   className="ml-4 mt-2 md:mt-0 px-4 py-2 bg-white text-black rounded-md hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-indigo-500"
                 >
                   View Submission
@@ -187,19 +238,81 @@ const Assignments: React.FC = () => {
       </div>
 
       {/* Submission modal */}
-      {modalOpen && submissionDetails && (
+        {modalOpen && submissionDetails && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-slate-800 rounded-md p-6 w-11/12 md:w-1/2 relative">
+          <div className="bg-slate-800 rounded-md p-6 w-11/12 md:w-3/4 relative max-h-[90vh] overflow-y-auto">
             <button
               onClick={() => setModalOpen(false)}
               className="absolute top-2 right-2 text-slate-400 hover:text-white"
             >
               <XIcon size={20} />
             </button>
-            <h3 className="text-lg font-bold text-white mb-4">Submission Details</h3>
-            <pre className="bg-slate-700 p-4 rounded text-slate-200 whitespace-pre-wrap overflow-x-auto">
-              {submissionDetails.content}
-            </pre>
+
+            <h3 className="text-2xl font-bold text-white mb-4">Submission Details</h3>
+
+            {/* Report */}
+            {submissionDetails.report && (
+              <div className="mb-4 p-4 bg-slate-700 rounded">
+                <h4 className="text-lg font-semibold text-white mb-2">Submission Report</h4>
+                
+                <div className="mb-2">
+                  <span className="font-medium text-slate-300">Code:</span>
+                  <pre className="bg-slate-800 p-2 rounded mt-1 overflow-x-auto text-slate-200 whitespace-pre-wrap">
+                    {submissionDetails.report.code}
+                  </pre>
+                </div>
+
+                {/* AI Evaluation */}
+                {submissionDetails.report["ai-evaluation"] && (
+                  <div className="mb-2">
+                    <h5 className="font-medium text-white mb-1">AI Evaluation</h5>
+                    <p><span className="font-medium text-slate-300">Overall Score:</span> {submissionDetails.report["ai-evaluation"].overall_score}</p>
+                    {submissionDetails.report["ai-evaluation"].errors.length > 0 && (
+                      <div className="mt-1">
+                        <p className="font-medium text-slate-300">Errors:</p>
+                        <ul className="list-disc list-inside text-slate-200">
+                          {submissionDetails.report["ai-evaluation"].errors.map((err: string, idx: number) => (
+                            <li key={idx}>{err}</li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+                    {submissionDetails.report["ai-evaluation"].improvements.length > 0 && (
+                      <div className="mt-1">
+                        <p className="font-medium text-slate-300">Improvements:</p>
+                        <ul className="list-disc list-inside text-slate-200">
+                          {submissionDetails.report["ai-evaluation"].improvements.map((imp: string, idx: number) => (
+                            <li key={idx}>{imp}</li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* Instructor Evaluation */}
+                {submissionDetails.report["instructor-evaluation"] && (
+                  <div className="mt-2">
+                    <h5 className="font-medium text-white mb-1">Instructor Evaluation</h5>
+                    <p><span className="font-medium text-slate-300">Grade:</span> {submissionDetails.report["instructor-evaluation"].grade}</p>
+                    <p><span className="font-medium text-slate-300">Score:</span> {submissionDetails.report["instructor-evaluation"].score}</p>
+                    <p><span className="font-medium text-slate-300">Status:</span> {submissionDetails.report["instructor-evaluation"].status}</p>
+                    {submissionDetails.report["instructor-evaluation"].feedback.length > 0 && (
+                      <div className="mt-1">
+                        <p className="font-medium text-slate-300">Feedback:</p>
+                        <ul className="list-disc list-inside text-slate-200">
+                          {submissionDetails.report["instructor-evaluation"].feedback.map((fb: string, idx: number) => (
+                            <li key={idx}>{fb}</li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
+
+            <p className="text-slate-400 text-sm mt-2">Submitted At: {new Date(submissionDetails.submitted_at).toLocaleString()}</p>
           </div>
         </div>
       )}

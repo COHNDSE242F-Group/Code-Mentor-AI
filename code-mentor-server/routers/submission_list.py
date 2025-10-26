@@ -7,6 +7,7 @@ from pydantic import BaseModel
 from typing import List, Optional
 from sqlalchemy.orm import joinedload
 from datetime import datetime,date
+from sqlalchemy.orm import selectinload
 
 
 router = APIRouter(
@@ -67,10 +68,14 @@ async def get_submissions():
 @router.get("/{submission_id}", response_model=SubmissionOut)
 async def get_submission(submission_id: int):
     async with async_session() as session:
-        result = await session.execute(select(Submission).where(Submission.submission_id == submission_id).options(
-            select(Submission.assignment),
-            select(Submission.student)
-        ))
+        result = await session.execute(
+            select(Submission)
+            .where(Submission.submission_id == submission_id)
+            .options(
+                selectinload(Submission.assignment),
+                selectinload(Submission.student)
+            )
+        )
         submission = result.scalar_one_or_none()
         if not submission:
             raise HTTPException(status_code=404, detail="Submission not found")
