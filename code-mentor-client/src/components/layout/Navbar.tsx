@@ -11,7 +11,7 @@ const Navbar: React.FC = () => {
     icon: <HomeIcon size={18} />
   }, {
     label: 'Assignments',
-    path: '/assignments',
+    path: '/student-assignment',
     icon: <BookOpenIcon size={18} />
   }, {
     label: 'Progress',

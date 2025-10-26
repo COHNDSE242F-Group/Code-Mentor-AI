@@ -3,6 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "dependencies": {
+    "@headlessui/react": "^2.2.9",
     "@hookform/resolvers": "^3.10.0",
     "@monaco-editor/react": "^4.7.0",
     "@testing-library/dom": "^10.4.0",
@@ -57,6 +58,7 @@
     ]
   },
   "devDependencies": {
+    "@types/axios": "^0.14.4",
     "@types/lodash.debounce": "^4.0.9",
     "@types/react": "^19.2.2",
     "@types/react-dom": "^19.2.2",

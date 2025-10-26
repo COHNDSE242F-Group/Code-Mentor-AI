@@ -3,6 +3,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import Card from '../../components/ui/Card';
 import { ArrowLeftIcon, PlusIcon } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { fetchWithAuth } from '../../utils/auth';
 const CreateAssignment = () => {
   const [batches, setBatches] = useState<string[]>([]);
   const [form, setForm] = useState({
@@ -79,6 +80,15 @@ const CreateAssignment = () => {
       body: JSON.stringify(payload)
     });
     if (res.ok) {
+      const newAssignment = await res.json();
+      const assignmentId = newAssignment.assignment_id; // Get newly created assignment_id
+
+      // 2️⃣ Fire-and-forget conceptual map call
+      fetchWithAuth(
+        `http://localhost:8000/report/conceptual_map?assignment_id=${assignmentId}`,
+        { method: 'POST' }
+      ).catch(err => console.warn('Conceptual map request failed', err));
+
       setSuccess('Assignment created successfully!');
       setTimeout(() => setSuccess(''), 2000);
       // optionally clear draft and form

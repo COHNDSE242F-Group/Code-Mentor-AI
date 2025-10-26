@@ -18,6 +18,8 @@ import AddStudent from "./pages/AddStudent";
 import EditStudent from "./pages/EditStudent";
 import EditInstructor from "./pages/EditInstructor";
 import AddInstructor from "./pages/AddInstructor";
+import AssignmentGeneratorPage from "./pages/assignments/AssignmentGeneratorPage";
+import Assignments from "./pages/Assignments";
 
 // // Submissions
 import SubmissionsList from "./pages/submissions/SubmissionsList";
@@ -96,6 +98,7 @@ function App() {
   <Route path="/billing" element={<BillingManagement />} />
         <Route path="/progress" element={<StudentLayout><Progress /></StudentLayout>} />
         <Route path="/student-dashboard" element={<StudentLayout><StudentDashboard /></StudentLayout>} />
+        <Route path="/student-assignment" element={<StudentLayout><Assignments /></StudentLayout>} />
        
 
         {/* Protected routes with layout */}
@@ -110,6 +113,7 @@ function App() {
         <Route path="/reports" element={<Layout><Reports /></Layout>}/>
         <Route path="/dashboard" element={<Layout><Dashboard /></Layout>} />
         <Route path="/batches" element={<Layout><BatchManagement /></Layout>} />
+        <Route path="/assignments/generate" element={<Layout><AssignmentGeneratorPage /></Layout>} />
 
         <Route path="/about" element={<About />} />
         <Route path="/privacy" element={<Privacy />} />

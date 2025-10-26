@@ -23,6 +23,10 @@ from .instructor import router as instructor_router
 from .welcome import router as welcome_router
 from .package import router as package_router
 from .public_lists import router as public_lists_router
+from .progress import router as progress_router
+from .batch import router as batch_router
+from .assignment_generate import router as assignment_generate_router
+from .student_assignment import router as student_assignment_router
 from .student_messaging import router as student_messaging_router
 from .settings import router as settings_router
 from .university_dashboard import router as university_dashboard_router
@@ -31,7 +35,6 @@ from .dashboard import router as dashboard_router
 from .submission_list_summary import router as submission_list_summary_router
 
 routers = [
-    
     code_runner_router,
     ai_chat_router,
     key_stroke_router,
@@ -58,15 +61,14 @@ routers = [
     #reset_password_router,
     welcome_router,
     package_router,
-
     report_router,
     public_lists_router,
+    progress_router,
+    batch_router,
+    assignment_generate_router,
+    student_assignment_router,
     university_dashboard_router,
     admin_panel_router,
     dashboard_router,
     submission_list_summary_router
-
-
-
-
 ]

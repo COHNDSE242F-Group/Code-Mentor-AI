@@ -17,6 +17,7 @@ import {
   TrendingUpIcon,
   CheckCircleIcon,
 } from "lucide-react";
+import { fetchWithAuth } from "../utils/auth";
 
 // --- Type Definitions ---
 interface ConceptPerformance {
@@ -87,50 +88,54 @@ const ConceptList = ({
       <h3 className="text-lg font-medium text-white ml-2">{title}</h3>
     </div>
     <div className="space-y-4">
-      {data.map((item) => (
-        <div
-          key={item.id}
-          className="flex items-center justify-between p-3 bg-slate-900 rounded-xl border border-slate-700 hover:border-slate-600 transition"
-        >
-          <div>
-            <p className="font-medium text-white">{item.name}</p>
+      {data.length === 0 ? (
+        <p className="text-slate-500 text-sm">No data available</p>
+      ) : (
+        data.map((item) => (
+          <div
+            key={item.id}
+            className="flex items-center justify-between p-3 bg-slate-900 rounded-xl border border-slate-700 hover:border-slate-600 transition"
+          >
+            <div>
+              <p className="font-medium text-white">{item.name}</p>
+              {type === "new" ? (
+                <p className="text-sm text-slate-400">Unlocks soon</p>
+              ) : (
+                <div className="mt-1 w-40 bg-slate-700 rounded-full h-2">
+                  <div
+                    className={`h-2 rounded-full ${
+                      type === "practice" ? "bg-amber-500" : "bg-teal-500"
+                    }`}
+                    style={{ width: `${item.score}%` }}
+                  ></div>
+                </div>
+              )}
+            </div>
+
             {type === "new" ? (
-              <p className="text-sm text-slate-400">Unlocks soon</p>
+              <span
+                className={`px-2 py-1 text-xs rounded-full ${
+                  item.difficulty === "Easy"
+                    ? "bg-emerald-900/50 text-emerald-300"
+                    : item.difficulty === "Medium"
+                    ? "bg-amber-900/50 text-amber-300"
+                    : "bg-red-900/50 text-red-300"
+                }`}
+              >
+                {item.difficulty}
+              </span>
             ) : (
-              <div className="mt-1 w-40 bg-slate-700 rounded-full h-2">
-                <div
-                  className={`h-2 rounded-full ${
-                    type === "practice" ? "bg-amber-500" : "bg-teal-500"
-                  }`}
-                  style={{ width: `${item.score}%` }}
-                ></div>
-              </div>
+              <span
+                className={`font-medium ${
+                  type === "practice" ? "text-amber-400" : "text-teal-400"
+                }`}
+              >
+                {item.score}%
+              </span>
             )}
           </div>
-
-          {type === "new" ? (
-            <span
-              className={`px-2 py-1 text-xs rounded-full ${
-                item.difficulty === "Easy"
-                  ? "bg-emerald-900/50 text-emerald-300"
-                  : item.difficulty === "Medium"
-                  ? "bg-amber-900/50 text-amber-300"
-                  : "bg-red-900/50 text-red-300"
-              }`}
-            >
-              {item.difficulty}
-            </span>
-          ) : (
-            <span
-              className={`font-medium ${
-                type === "practice" ? "text-amber-400" : "text-teal-400"
-              }`}
-            >
-              {item.score}%
-            </span>
-          )}
-        </div>
-      ))}
+        ))
+      )}
     </div>
   </div>
 );
@@ -144,44 +149,26 @@ const Progress: React.FC = () => {
   const [newConcepts, setNewConcepts] = useState<ConceptItem[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // Mock API fetch (replace with your real API later)
   useEffect(() => {
-    setTimeout(() => {
-      setPerformanceData([
-        { name: "Arrays", score: 85, avg: 70 },
-        { name: "Linked Lists", score: 78, avg: 65 },
-        { name: "Trees", score: 65, avg: 60 },
-        { name: "Graphs", score: 45, avg: 55 },
-        { name: "DP", score: 60, avg: 50 },
-        { name: "Sorting", score: 90, avg: 75 },
-        { name: "Searching", score: 82, avg: 72 },
-      ]);
-      setProgressOverTime([
-        { week: "Week 1", score: 60 },
-        { week: "Week 2", score: 65 },
-        { week: "Week 3", score: 68 },
-        { week: "Week 4", score: 72 },
-        { week: "Week 5", score: 75 },
-        { week: "Week 6", score: 78 },
-        { week: "Week 7", score: 83 },
-      ]);
-      setNeedsPractice([
-        { id: "graphs", name: "Graph Algorithms", score: 45 },
-        { id: "trees", name: "Binary Search Trees", score: 65 },
-        { id: "dp", name: "Dynamic Programming", score: 60 },
-      ]);
-      setMastered([
-        { id: "arrays", name: "Array Manipulation", score: 92 },
-        { id: "sorting", name: "Sorting Algorithms", score: 90 },
-        { id: "searching", name: "Binary Search", score: 88 },
-      ]);
-      setNewConcepts([
-        { id: "greedy", name: "Greedy Algorithms", difficulty: "Medium" },
-        { id: "backtracking", name: "Backtracking", difficulty: "Hard" },
-        { id: "hashing", name: "Hash Tables", difficulty: "Easy" },
-      ]);
-      setLoading(false);
-    }, 1000);
+    const fetchProgress = async () => {
+      try {
+        const res = await fetchWithAuth(`http://localhost:8000/progress`);
+        if (!res.ok) throw new Error(`Failed to fetch progress: ${res.status}`);
+        const data = await res.json();
+
+        setPerformanceData(data.performance || []);
+        setProgressOverTime(data.progress_over_time || []);
+        setNeedsPractice(data.needs_practice || []);
+        setMastered(data.mastered || []);
+        setNewConcepts(data.new_concepts || []);
+      } catch (err) {
+        console.error("Error loading progress:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchProgress();
   }, []);
 
   if (loading) return <p className="text-slate-400">Loading progress...</p>;
@@ -202,14 +189,21 @@ const Progress: React.FC = () => {
           bgColor="bg-indigo-500/20"
           textColor="text-indigo-400"
           label="Completed"
-          value="18 Problems"
+          value={`${performanceData.length} Concepts`}
         />
         <StatCard
           icon={<BrainIcon size={20} className="text-teal-400" />}
           bgColor="bg-teal-500/20"
           textColor="text-teal-400"
           label="Mastery Level"
-          value="Intermediate"
+          value={
+            performanceData.length
+              ? `${Math.round(
+                  performanceData.reduce((acc, c) => acc + c.score, 0) /
+                    performanceData.length
+                )}%`
+              : "0%"
+          }
         />
         <StatCard
           icon={<CodeIcon size={20} className="text-purple-400" />}
@@ -223,7 +217,7 @@ const Progress: React.FC = () => {
           bgColor="bg-amber-500/20"
           textColor="text-amber-400"
           label="Improvement"
-          value="+23% this month"
+          value="+15% this month"
         />
       </div>
 
