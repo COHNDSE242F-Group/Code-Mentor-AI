@@ -1,21 +1,25 @@
 import os
-import importlib
 import smtplib
 from email.message import EmailMessage
 from datetime import datetime, timedelta
 
+import jwt
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel, EmailStr
+from dotenv import load_dotenv
 
-# Try to load .env if available; not fatal if the editor/analyzer isn't using the venv
-try:
-    dotenv = importlib.import_module("dotenv")
-    load_dotenv = getattr(dotenv, "load_dotenv")
-    load_dotenv()
-except Exception:
-    pass
+# Load .env file
+load_dotenv()
 
 router = APIRouter(prefix="/auth", tags=["Password Reset"])
+
+# Get environment variables
+SECRET_KEY = os.getenv("SECRET_KEY")
+EMAIL_USER = os.getenv("EMAIL_USER")
+EMAIL_PASS = os.getenv("EMAIL_PASS")
+
+if not SECRET_KEY or not EMAIL_USER or not EMAIL_PASS:
+    raise RuntimeError("SECRET_KEY, EMAIL_USER, and EMAIL_PASS must be set in .env")
 
 # Request models
 class ForgotPasswordRequest(BaseModel):
@@ -28,36 +32,16 @@ class ResetPasswordRequest(BaseModel):
 # Temporary token store
 password_reset_tokens = {}
 
-
-def _get_jwt_module():
-    try:
-        return importlib.import_module("jwt")
-    except Exception:
-        try:
-            jose = importlib.import_module("jose")
-            return getattr(jose, "jwt")
-        except Exception:
-            raise RuntimeError("Missing JWT library: install 'PyJWT' or 'python-jose' in the environment")
-
 @router.post("/forgot-password")
 async def forgot_password(req: ForgotPasswordRequest):
     email = req.email
 
-    # Read environment and validate
-    SECRET_KEY = os.getenv("SECRET_KEY")
-    EMAIL_USER = os.getenv("EMAIL_USER")
-    EMAIL_PASS = os.getenv("EMAIL_PASS")
-
-    if not SECRET_KEY or not EMAIL_USER or not EMAIL_PASS:
-        raise HTTPException(status_code=500, detail="Server not configured for email or JWT")
-
-    # Dynamically load JWT module and create token valid for 15 minutes
-    try:
-        jwt_mod = _get_jwt_module()
-    except RuntimeError as e:
-        raise HTTPException(status_code=500, detail=str(e))
-
-    token = jwt_mod.encode({"email": email, "exp": datetime.utcnow() + timedelta(minutes=15)}, SECRET_KEY, algorithm="HS256")
+    # Generate JWT token valid for 15 minutes
+    token = jwt.encode(
+        {"email": email, "exp": datetime.utcnow() + timedelta(minutes=15)},
+        SECRET_KEY,
+        algorithm="HS256"
+    )
 
     password_reset_tokens[token] = email
     reset_link = f"http://localhost:5173/reset-password?token={token}"  # Your React page
@@ -88,16 +72,13 @@ async def reset_password(req: ResetPasswordRequest):
     token = req.token
     new_password = req.new_password
 
-    SECRET_KEY = os.getenv("SECRET_KEY")
-    if not SECRET_KEY:
-        raise HTTPException(status_code=500, detail="Server not configured for JWT")
-
     try:
-        jwt_mod = _get_jwt_module()
-        payload = jwt_mod.decode(token, SECRET_KEY, algorithms=["HS256"]) if hasattr(jwt_mod, "decode") else jwt_mod.decode(token, SECRET_KEY)
-        email = payload.get("email") if isinstance(payload, dict) else None
-    except Exception as e:
-        raise HTTPException(status_code=400, detail=f"Invalid or expired token: {str(e)}")
+        payload = jwt.decode(token, SECRET_KEY, algorithms=["HS256"])
+        email = payload.get("email")
+    except jwt.ExpiredSignatureError:
+        raise HTTPException(status_code=400, detail="Token expired")
+    except jwt.InvalidTokenError:
+        raise HTTPException(status_code=400, detail="Invalid token")
 
     if token not in password_reset_tokens or password_reset_tokens[token] != email:
         raise HTTPException(status_code=400, detail="Invalid token")

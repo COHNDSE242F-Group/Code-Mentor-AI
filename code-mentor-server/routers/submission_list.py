@@ -32,6 +32,7 @@ class StudentOut(BaseModel):
     email: str
     contact_no: Optional[str]
     batch_id: int
+    index_no: str  # Add this field
 
     class Config:
         orm_mode = True
@@ -51,8 +52,9 @@ class SubmissionOut(BaseModel):
     report: Optional[dict]
     submitted_at: Optional[datetime]
 
-    class Config:
-        orm_mode = True
+class GradeFeedback(BaseModel):
+    score: int
+    feedback: str
 
 # --------------------------
 # Endpoint

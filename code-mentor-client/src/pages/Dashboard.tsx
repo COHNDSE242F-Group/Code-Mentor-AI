@@ -1,5 +1,8 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import Card from '../components/ui/Card';
+import { CheckCircleIcon, ClockIcon, AlertTriangleIcon } from 'lucide-react';
+import { Link } from 'react-router-dom';
+
 import {
   BarChart,
   Bar,
@@ -12,8 +15,6 @@ import {
   Pie,
   Cell
 } from 'recharts';
-import { CheckCircleIcon, ClockIcon, AlertTriangleIcon } from 'lucide-react';
-import { Link } from 'react-router-dom';
 
 type PerformanceItem = {
   name: string;
@@ -41,14 +42,87 @@ const integrityData: IntegrityItem[] = [
 ];
 
 const COLORS = ['#0D47A1', '#FFC107', '#FF5252'];
-
 const Dashboard: React.FC = () => {
+  const [activeAssignments, setActiveAssignments] = useState([]);
+  const [pendingReviews, setPendingReviews] = useState<number>(0);
+  const [gradedSubmissions, setGradedSubmissions] = useState<number>(0);
+  const [loading, setLoading] = useState({
+    assignments: true,
+    pending: true,
+    graded: true
+  });
+ useEffect(() => {
+    const fetchActiveAssignments = async () => {
+      try {
+        const response = await fetch('http://localhost:8000/dashboard/active-assignments');
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        const data = await response.json();
+        console.log('Active Assignments Response:', data); // Debug log
+        setActiveAssignments(data);
+      } catch (error) {
+        console.error('Error fetching active assignments:', error);
+        setActiveAssignments([]);
+      } finally {
+        setLoading(prev => ({ ...prev, assignments: false }));
+      }
+    };
+
+  const fetchPendingReviews = async () => {
+      try {
+        const response = await fetch('http://localhost:8000/dashboard/get-pending-review');
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        const data = await response.json();
+        console.log('Pending Reviews Response:', data); // Debug log
+        // Make sure we're setting the count correctly
+        setPendingReviews(data.count || 0);
+      } catch (error) {
+        console.error('Error fetching pending reviews:', error);
+        setPendingReviews(0);
+      } finally {
+        setLoading(prev => ({ ...prev, pending: false }));
+      }
+    };
+
+  const fetchGradedSubmissions = async () => {
+      try {
+        const response = await fetch('http://localhost:8000/dashboard/graded-submissions');
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        const data = await response.json();
+        console.log('Graded Submissions Response:', data); // Debug log
+        // Make sure we're setting the count correctly
+        setGradedSubmissions(data.count || 0);
+      } catch (error) {
+        console.error('Error fetching graded submissions:', error);
+        setGradedSubmissions(0);
+      } finally {
+        setLoading(prev => ({ ...prev, graded: false }));
+      }
+    };
+  fetchActiveAssignments();
+  fetchPendingReviews();
+  fetchGradedSubmissions();
+}, []);
+
+// Debug: Log current state values
+  useEffect(() => {
+    console.log('Current State:', {
+      activeAssignments: activeAssignments.length,
+      pendingReviews,
+      gradedSubmissions
+    });
+  }, [activeAssignments, pendingReviews, gradedSubmissions]);
   return (
     <div className="w-full">
       <div className="mb-6">
         <h1 className="text-2xl font-bold text-gray-800">Instructor Dashboard</h1>
         <p className="text-gray-500">
-          Welcome back, John! Here's what's happening with your courses.
+          {/*Welcome back, John! Here's what's happening with your courses.*/}
         </p>
       </div>
 
@@ -59,37 +133,41 @@ const Dashboard: React.FC = () => {
               <FileIcon size={24} className="text-[#0D47A1]" />
             </div>
             <div>
-              <h3 className="text-lg font-bold text-gray-700">24</h3>
+              <h3 className="text-lg font-bold text-gray-700">{activeAssignments.length}</h3>
               <p className="text-sm text-gray-500">Active Assignments</p>
             </div>
           </Card>
         </Link>
 
-        <Link to="/submissions?status=pending" className="block transition-transform hover:scale-105">
+<Link to="/submissions?status=pending" className="block transition-transform hover:scale-105">
           <Card className="flex items-center cursor-pointer hover:shadow-md">
             <div className="rounded-full bg-yellow-100 p-3 mr-4">
               <ClockIcon size={24} className="text-[#FFC107]" />
             </div>
             <div>
-              <h3 className="text-lg font-bold text-gray-700">18</h3>
+              <h3 className="text-lg font-bold text-gray-700">
+                {loading.pending ? '...' : pendingReviews}
+              </h3>
               <p className="text-sm text-gray-500">Pending Reviews</p>
             </div>
           </Card>
         </Link>
 
-        <Link to="/submissions?status=graded" className="block transition-transform hover:scale-105">
+      <Link to="/submissions?status=graded" className="block transition-transform hover:scale-105">
           <Card className="flex items-center cursor-pointer hover:shadow-md">
             <div className="rounded-full bg-green-100 p-3 mr-4">
               <CheckCircleIcon size={24} className="text-green-500" />
             </div>
             <div>
-              <h3 className="text-lg font-bold text-gray-700">156</h3>
+              <h3 className="text-lg font-bold text-gray-700">
+                {loading.graded ? '...' : gradedSubmissions}
+              </h3>
               <p className="text-sm text-gray-500">Graded Submissions</p>
             </div>
           </Card>
         </Link>
 
-        <Link to="/submissions?status=flagged" className="block transition-transform hover:scale-105">
+       {/* <Link to="/submissions?status=flagged" className="block transition-transform hover:scale-105">
           <Card className="flex items-center cursor-pointer hover:shadow-md">
             <div className="rounded-full bg-red-100 p-3 mr-4">
               <AlertTriangleIcon size={24} className="text-red-500" />
@@ -99,7 +177,7 @@ const Dashboard: React.FC = () => {
               <p className="text-sm text-gray-500">Integrity Alerts</p>
             </div>
           </Card>
-        </Link>
+        </Link>*/}
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
