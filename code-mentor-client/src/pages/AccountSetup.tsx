@@ -1,8 +1,8 @@
-// @ts-nocheck
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { UploadIcon, PlusIcon, TrashIcon, UsersIcon, UserIcon, MailIcon } from 'lucide-react';
 import { useTheme } from '../context/ThemeContext';
+import axios from 'axios';
 interface Invitation {
   id: string;
   email: string;
@@ -10,27 +10,13 @@ interface Invitation {
   role: 'instructor' | 'student';
   status: 'pending' | 'sent';
 }
-export const AccountSetup: React.FC = () => {
-  const {
-    theme
-  } = useTheme();
+const AccountSetup: React.FC = () => {
+  const { theme } = useTheme(); // Correct destructuring
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<'instructors' | 'students'>('instructors');
   const [newEmail, setNewEmail] = useState('');
   const [newName, setNewName] = useState('');
-  const [invitations, setInvitations] = useState<Invitation[]>([{
-    id: '1',
-    email: 'professor@stanford.edu',
-    name: 'Dr. Jane Smith',
-    role: 'instructor',
-    status: 'pending'
-  }, {
-    id: '2',
-    email: 'instructor@stanford.edu',
-    name: 'John Davis',
-    role: 'instructor',
-    status: 'pending'
-  }]);
+  const [invitations, setInvitations] = useState<Invitation[]>([]);
   const [csvFile, setCsvFile] = useState<File | null>(null);
   // In a real app, this would come from your state management
   const plan = {
@@ -39,22 +25,47 @@ export const AccountSetup: React.FC = () => {
     instructorsInvited: 2,
     studentsInvited: 0
   };
-  const handleAddInvitation = () => {
-    if (newEmail.trim() === '' || newName.trim() === '') return;
-    const newInvitation: Invitation = {
-      id: Date.now().toString(),
-      email: newEmail,
-      name: newName,
-      role: activeTab,
-      status: 'pending'
-    };
-    setInvitations([...invitations, newInvitation]);
-    setNewEmail('');
-    setNewName('');
+  const handleAddInvitation = async () => {
+    try {
+      const token = localStorage.getItem("token");
+      if (!token) {
+        console.error("Token is missing.");
+        return;
+      }
+
+      const response = await axios.post(
+        "http://localhost:8000/invitations",
+        { email: newEmail, name: newName, role: activeTab },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+
+      setInvitations([...invitations, response.data.invitation]);
+      setNewEmail("");
+      setNewName("");
+    } catch (error) {
+      console.error("Error adding invitation:", error);
+    }
   };
-  const handleRemoveInvitation = (id: string) => {
-    setInvitations(invitations.filter(inv => inv.id !== id));
+  const handleRemoveInvitation = async (id: string) => {
+    try {
+      const token = localStorage.getItem("token");
+      if (!token) {
+        console.error("Token is missing.");
+        return;
+      }
+
+      await axios.delete(`http://localhost:8000/invitations/${id}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      setInvitations(invitations.filter((inv) => inv.id !== id));
+    } catch (error) {
+      console.error("Error removing invitation:", error);
+    }
   };
+
+  const role = activeTab === 'instructors' ? 'instructor' : 'student';
+
   const handleSendInvitations = () => {
     // In a real app, this would send the invitations
     setInvitations(invitations.map(inv => ({
@@ -66,6 +77,27 @@ export const AccountSetup: React.FC = () => {
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       setCsvFile(e.target.files[0]);
+    }
+  };
+  const handleProcessCSV = async () => {
+    try {
+      const token = localStorage.getItem("token");
+      if (!token || !csvFile) {
+        console.error("Token or CSV file is missing.");
+        return;
+      }
+
+      const formData = new FormData();
+      formData.append("csv_file", csvFile);
+
+      const response = await axios.post("http://localhost:8000/invitations/process-csv", formData, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      setInvitations([...invitations, ...response.data.invitations]);
+      setCsvFile(null);
+    } catch (error) {
+      console.error("Error processing CSV:", error);
     }
   };
   const getProgressPercentage = () => {
@@ -175,55 +207,68 @@ export const AccountSetup: React.FC = () => {
                     File selected: {csvFile.name}
                   </div>}
               </div>
-              <button className={`mt-4 inline-flex items-center py-2 px-4 rounded-md text-sm font-medium ${csvFile ? 'bg-blue-600 hover:bg-blue-700 text-white' : theme === 'dark' ? 'bg-gray-700 text-gray-400 cursor-not-allowed' : 'bg-gray-200 text-gray-500 cursor-not-allowed'}`} disabled={!csvFile}>
+              <button className={`mt-4 inline-flex items-center py-2 px-4 rounded-md text-sm font-medium ${csvFile ? 'bg-blue-600 hover:bg-blue-700 text-white' : theme === 'dark' ? 'bg-gray-700 text-gray-400 cursor-not-allowed' : 'bg-gray-200 text-gray-500 cursor-not-allowed'}`} disabled={!csvFile} onClick={handleProcessCSV}>
                 Process CSV
               </button>
             </div>
           </div>
           <div>
             <h2 className="text-lg font-semibold mb-4">Pending Invitations</h2>
-            {invitations.filter(inv => inv.role === activeTab).length === 0 ? <div className={`text-center py-8 ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>
-                No pending invitations yet.
-              </div> : <div className={`border rounded-md overflow-hidden ${theme === 'dark' ? 'border-gray-700' : 'border-gray-200'}`}>
-                <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-                  <thead className={theme === 'dark' ? 'bg-gray-700' : 'bg-gray-50'}>
-                    <tr>
-                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">
-                        Name
-                      </th>
-                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">
-                        Email
-                      </th>
-                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">
-                        Status
-                      </th>
-                      <th scope="col" className="px-6 py-3 text-right text-xs font-medium uppercase tracking-wider">
-                        Action
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody className={`divide-y ${theme === 'dark' ? 'divide-gray-700' : 'divide-gray-200'}`}>
-                    {invitations.filter(inv => inv.role === activeTab).map(invitation => <tr key={invitation.id}>
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            {invitation.name}
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            {invitation.email}
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <span className={`px-2 py-1 text-xs rounded-full ${invitation.status === 'sent' ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300' : 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300'}`}>
-                              {invitation.status === 'sent' ? 'Sent' : 'Pending'}
-                            </span>
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-right">
-                            <button onClick={() => handleRemoveInvitation(invitation.id)} className={`text-sm ${theme === 'dark' ? 'text-red-400 hover:text-red-300' : 'text-red-600 hover:text-red-800'}`}>
-                              <TrashIcon size={18} />
-                            </button>
-                          </td>
-                        </tr>)}
-                  </tbody>
-                </table>
-              </div>}
+
+{/* Use the mapped role for filtering */}
+{invitations.filter(inv => inv.role === role).length === 0 ? (
+  <div className={`text-center py-8 ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>
+    No pending invitations yet.
+  </div>
+) : (
+  <div className={`border rounded-md overflow-hidden ${theme === 'dark' ? 'border-gray-700' : 'border-gray-200'}`}>
+    <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+      <thead className={theme === 'dark' ? 'bg-gray-700' : 'bg-gray-50'}>
+        <tr>
+          <th scope="col" className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">
+            Name
+          </th>
+          <th scope="col" className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">
+            Email
+          </th>
+          <th scope="col" className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">
+            Status
+          </th>
+          <th scope="col" className="px-6 py-3 text-right text-xs font-medium uppercase tracking-wider">
+            Action
+          </th>
+        </tr>
+      </thead>
+      <tbody className={`divide-y ${theme === 'dark' ? 'divide-gray-700' : 'divide-gray-200'}`}>
+        {invitations.filter(inv => inv.role === role).map(invitation => (
+          <tr key={invitation.id}>
+            <td className="px-6 py-4 whitespace-nowrap">{invitation.name}</td>
+            <td className="px-6 py-4 whitespace-nowrap">{invitation.email}</td>
+            <td className="px-6 py-4 whitespace-nowrap">
+              <span
+                className={`px-2 py-1 text-xs rounded-full ${
+                  invitation.status === 'sent'
+                    ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300'
+                    : 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300'
+                }`}
+              >
+                {invitation.status === 'sent' ? 'Sent' : 'Pending'}
+              </span>
+            </td>
+            <td className="px-6 py-4 whitespace-nowrap text-right">
+              <button
+                onClick={() => handleRemoveInvitation(invitation.id)}
+                className={`text-sm ${theme === 'dark' ? 'text-red-400 hover:text-red-300' : 'text-red-600 hover:text-red-800'}`}
+              >
+                <TrashIcon size={18} />
+              </button>
+            </td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  </div>
+)}
           </div>
           <div className="mt-8 flex justify-end">
             <button onClick={() => navigate('/dashboard')} className={`mr-4 py-2 px-4 rounded-md font-medium ${theme === 'dark' ? 'bg-gray-700 hover:bg-gray-600 text-white' : 'bg-gray-200 hover:bg-gray-300 text-gray-800'}`}>
@@ -237,3 +282,5 @@ export const AccountSetup: React.FC = () => {
       </div>
     </div>;
 };
+
+export default AccountSetup;

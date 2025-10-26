@@ -6,12 +6,10 @@ from models.submission import Submission
 from pydantic import BaseModel
 from typing import List, Optional
 from sqlalchemy.orm import joinedload
-from datetime import datetime,date
-from sqlalchemy.orm import selectinload
 from datetime import datetime, date
 
 router = APIRouter(
-    prefix="/submission",
+    prefix="/submissionlist-summary",
     tags=["submission"]
 )
 
@@ -73,30 +71,38 @@ class GradeFeedback(BaseModel):
 # --------------------------
 
 
-
-
-@router.get("/", response_model=List[SubmissionListOut])
-async def get_submissions():
-    async with async_session() as session:
-        result = await session.execute(
+@router.get("/graded-count")
+async def get_graded_count():
+    """Fetch the count of submissions with 'Graded' status."""
+    try:
+        result = await async_session().execute(
             select(Submission)
-            .options(joinedload(Submission.assignment), joinedload(Submission.student))
+            .where(Submission.report["instructor-evaluation"].has_key("status"))
+            .where(Submission.report["instructor-evaluation"]["status"].astext == "Graded")
         )
         submissions = result.scalars().all()
+        print(f"Graded Submissions: {submissions}")  # Debugging log
+        count = len(submissions)
+        print(f"Graded Count: {count}")  # Debugging log
+        return {"count": count}
+    except Exception as e:
+        print(f"Error fetching graded count: {e}")  # Debugging log
+        raise HTTPException(status_code=500, detail="Internal Server Error")
 
-# Get a single submission by ID with related data
-@router.get("/{submission_id}", response_model=SubmissionOut)
-async def get_submission(submission_id: int):
-    async with async_session() as session:
-        result = await session.execute(
+
+@router.get("/pending-review-count")
+async def get_pending_review_count():
+    """Fetch the count of submissions with 'Pending' status."""
+    try:
+        result = await async_session().execute(
             select(Submission)
-            .where(Submission.submission_id == submission_id)
-            .options(
-                selectinload(Submission.assignment),
-                selectinload(Submission.student)
-            )
+            .where(Submission.report["instructor-evaluation"].has_key("status"))
+            .where(Submission.report["instructor-evaluation"]["status"].astext == "Pending")
         )
-        submission = result.scalar_one_or_none()
-        if not submission:
-            raise HTTPException(status_code=404, detail="Submission not found")
-        return submission
+        submissions = result.scalars().all()  # Convert the iterable to a list
+        count = len(submissions)  # Use len() to count the items
+        print(f"Pending Review Count: {count}")  # Debugging log
+        return {"count": count}
+    except Exception as e:
+        print(f"Error fetching pending review count: {e}")  # Debugging log
+        raise HTTPException(status_code=500, detail="Internal Server Error")
