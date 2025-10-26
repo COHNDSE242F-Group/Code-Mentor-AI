@@ -2,8 +2,9 @@ from fastapi import APIRouter, HTTPException, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from database import async_session, get_db
-from models import Admin, Instructor, Student, Assignment
+from models import Admin, Instructor, Student, Assignment,University,Batch
 from auth.auth import verify_token
+
 
 
 router = APIRouter()
@@ -110,3 +111,33 @@ async def get_university_stats(token: dict = Depends(verify_token), db: AsyncSes
         }
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+@router.get("/university/details")
+async def get_university_details(token: dict = Depends(verify_token)):
+    user_id = token["user_id"]  # Extract admin_id from token
+    async with async_session() as session:
+        # Fetch admin details to find university_id
+        admin_result = await session.execute(
+            select(Admin).where(Admin.admin_id == user_id)
+        )
+        admin = admin_result.scalar_one_or_none()
+        
+        if not admin:
+            raise HTTPException(status_code=404, detail="Admin not found")
+        
+        # Fetch university details using admin's university_id
+        university_result = await session.execute(
+            select(University).where(University.university_id == admin.uni_id)
+        )
+        university = university_result.scalar_one_or_none()
+        
+        if not university:
+            raise HTTPException(status_code=404, detail="University not found")
+        
+        return {
+            "university_id": university.university_id,
+            "university_name": university.university_name,
+            "address": university.address,
+            "email": university.email,
+            "contact_no": university.contact_no
+        }

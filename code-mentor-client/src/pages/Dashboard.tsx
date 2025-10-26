@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import Card from '../components/ui/Card';
 import { CheckCircleIcon, ClockIcon, AlertTriangleIcon } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import CalendarView from '../components/CalendarView';
 
 import {
   BarChart,
@@ -27,6 +28,22 @@ type IntegrityItem = {
   value: number;
 };
 
+type DeadlineItem = {
+  assignment_id: number;
+  assignment_name: string;
+  due_date: string;
+  batch_name: string; // Add batch_name if needed
+};
+
+
+type SubmissionItem = {
+  submission_id: number;
+  assignment_name: string;
+  student_name: string;
+  status: string;
+  submitted_at: string;
+};
+
 const performanceData: PerformanceItem[] = [
   { name: 'Python', students: 85, average: 78 },
   { name: 'JavaScript', students: 75, average: 72 },
@@ -43,15 +60,21 @@ const integrityData: IntegrityItem[] = [
 
 const COLORS = ['#0D47A1', '#FFC107', '#FF5252'];
 const Dashboard: React.FC = () => {
+  const [recentSubmissions, setRecentSubmissions] = useState<SubmissionItem[]>([]);
+    const [loadingSubmissions, setLoadingSubmissions] = useState<boolean>(true);
+
   const [activeAssignments, setActiveAssignments] = useState([]);
+  const [upcomingDeadlines, setUpcomingDeadlines] = useState<DeadlineItem[]>([]);
   const [pendingReviews, setPendingReviews] = useState<number>(0);
   const [gradedSubmissions, setGradedSubmissions] = useState<number>(0);
+  const [loadingDeadlines, setLoadingDeadlines] = useState<boolean>(true);
   const [loading, setLoading] = useState({
-    assignments: true,
     pending: true,
     graded: true
   });
- useEffect(() => {
+  const [showCalendar, setShowCalendar] = useState(false);
+
+  useEffect(() => {
     const fetchActiveAssignments = async () => {
       try {
         const response = await fetch('http://localhost:8000/dashboard/active-assignments');
@@ -69,7 +92,7 @@ const Dashboard: React.FC = () => {
       }
     };
 
-  const fetchPendingReviews = async () => {
+    const fetchPendingReviews = async () => {
       try {
         const response = await fetch('http://localhost:8000/dashboard/get-pending-review');
         if (!response.ok) {
@@ -87,7 +110,7 @@ const Dashboard: React.FC = () => {
       }
     };
 
-  const fetchGradedSubmissions = async () => {
+    const fetchGradedSubmissions = async () => {
       try {
         const response = await fetch('http://localhost:8000/dashboard/graded-submissions');
         if (!response.ok) {
@@ -104,10 +127,52 @@ const Dashboard: React.FC = () => {
         setLoading(prev => ({ ...prev, graded: false }));
       }
     };
-  fetchActiveAssignments();
-  fetchPendingReviews();
-  fetchGradedSubmissions();
-}, []);
+    fetchActiveAssignments();
+    fetchPendingReviews();
+    fetchGradedSubmissions();
+  }, []);
+
+  useEffect(() => {
+    const fetchUpcomingDeadlines = async () => {
+      try {
+        const response = await fetch('http://localhost:8000/dashboard/upcoming-deadlines');
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        const data = await response.json();
+        console.log('Upcoming Deadlines Response:', data); // Debug log
+        setUpcomingDeadlines(data);
+      } catch (error) {
+        console.error('Error fetching upcoming deadlines:', error);
+        setUpcomingDeadlines([]);
+      } finally {
+        setLoadingDeadlines(false);
+      }
+    };
+
+    fetchUpcomingDeadlines();
+  }, []);
+
+  useEffect(() => {
+    const fetchRecentSubmissions = async () => {
+      try {
+        const response = await fetch('http://localhost:8000/dashboard/recent-submissions');
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        const data = await response.json();
+        console.log('Recent Submissions Response:', data); // Debug log
+        setRecentSubmissions(data);
+      } catch (error) {
+        console.error('Error fetching recent submissions:', error);
+        setRecentSubmissions([]);
+      } finally {
+        setLoadingSubmissions(false);
+      }
+    };
+
+    fetchRecentSubmissions();
+  }, []);
 
 // Debug: Log current state values
   useEffect(() => {
@@ -139,7 +204,7 @@ const Dashboard: React.FC = () => {
           </Card>
         </Link>
 
-<Link to="/submissions?status=pending" className="block transition-transform hover:scale-105">
+        <Link to="/submissions?status=pending" className="block transition-transform hover:scale-105">
           <Card className="flex items-center cursor-pointer hover:shadow-md">
             <div className="rounded-full bg-yellow-100 p-3 mr-4">
               <ClockIcon size={24} className="text-[#FFC107]" />
@@ -153,7 +218,7 @@ const Dashboard: React.FC = () => {
           </Card>
         </Link>
 
-      <Link to="/submissions?status=graded" className="block transition-transform hover:scale-105">
+        <Link to="/submissions?status=graded" className="block transition-transform hover:scale-105">
           <Card className="flex items-center cursor-pointer hover:shadow-md">
             <div className="rounded-full bg-green-100 p-3 mr-4">
               <CheckCircleIcon size={24} className="text-green-500" />
@@ -244,13 +309,16 @@ const Dashboard: React.FC = () => {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <Card className="lg:col-span-2">
-          <div className="flex justify-between items-center mb-4">
-            <h2 className="text-lg font-bold text-gray-800">Recent Submissions</h2>
-            <button className="text-[#0D47A1] text-sm font-medium">View All</button>
-          </div>
+      <Card className="lg:col-span-2">
+        <div className="flex justify-between items-center mb-4">
+          <h2 className="text-lg font-bold text-gray-800">Recent Submissions</h2>
+          <button className="text-[#0D47A1] text-sm font-medium">View All</button>
+        </div>
 
-          <div className="overflow-x-auto">
+        <div className="overflow-x-auto">
+          {loadingSubmissions ? (
+            <p className="text-gray-500">Loading...</p>
+          ) : recentSubmissions.length > 0 ? (
             <table className="min-w-full">
               <thead>
                 <tr className="border-b border-gray-200">
@@ -260,19 +328,14 @@ const Dashboard: React.FC = () => {
                   <th className="py-3 text-left text-sm font-medium text-gray-500">STATUS</th>
                 </tr>
               </thead>
-
               <tbody>
-                {[
-                  { student: 'Alex Johnson', assignment: 'Python Loops', time: '2 hours ago', status: 'Pending' },
-                  { student: 'Maria Garcia', assignment: 'JavaScript Arrays', time: '5 hours ago', status: 'Graded' },
-                  { student: 'James Smith', assignment: 'SQL Queries', time: '1 day ago', status: 'Graded' },
-                  { student: 'Sarah Williams', assignment: 'Java Classes', time: '1 day ago', status: 'Pending' },
-                  { student: 'David Lee', assignment: 'C++ Pointers', time: '2 days ago', status: 'Flagged' }
-                ].map((submission, i) => (
+                   {recentSubmissions.map((submission, i) => (
                   <tr key={i} className="border-b border-gray-100 hover:bg-gray-50">
-                    <td className="py-3 text-sm">{submission.student}</td>
-                    <td className="py-3 text-sm">{submission.assignment}</td>
-                    <td className="py-3 text-sm text-gray-500">{submission.time}</td>
+                    <td className="py-3 text-sm">{submission.student_name}</td>
+                    <td className="py-3 text-sm">{submission.assignment_name}</td>
+                    <td className="py-3 text-sm text-gray-500">
+                      {new Date(submission.submitted_at).toLocaleString()}
+                    </td>
                     <td className="py-3 text-sm">
                       <span
                         className={`px-2 py-1 rounded-full text-xs ${
@@ -290,33 +353,47 @@ const Dashboard: React.FC = () => {
                 ))}
               </tbody>
             </table>
-          </div>
-        </Card>
-
-        <Card>
+          ) : (
+            <p className="text-gray-500">No recent submissions.</p>
+          )}
+        </div>
+      </Card>
+         <Card>
           <div className="flex justify-between items-center mb-4">
             <h2 className="text-lg font-bold text-gray-800">Upcoming Deadlines</h2>
-            <button className="text-[#0D47A1] text-sm font-medium">View Calendar</button>
+            <button
+              className="text-[#0D47A1] text-sm font-medium"
+              onClick={() => setShowCalendar(!showCalendar)}
+            >
+              {showCalendar ? 'Hide Calendar' : 'View Calendar'}
+            </button>
           </div>
 
-          <div className="space-y-4">
-            {[
-              { title: 'Python Data Structures', batch: 'Batch A', date: 'Tomorrow, 11:59 PM' },
-              { title: 'JavaScript DOM Manipulation', batch: 'Batch B', date: 'Oct 15, 11:59 PM' },
-              { title: 'SQL Advanced Joins', batch: 'Batch C', date: 'Oct 18, 11:59 PM' },
-              { title: 'Java Inheritance', batch: 'Batch A', date: 'Oct 20, 11:59 PM' }
-            ].map((deadline, i) => (
-              <div key={i} className="flex items-center p-3 border border-gray-100 rounded-lg">
-                <div className="flex-1">
-                  <h4 className="font-medium">{deadline.title}</h4>
-                  <p className="text-sm text-gray-500">{deadline.batch}</p>
-                </div>
-                <div className="text-right">
-                  <div className="text-sm font-medium">{deadline.date}</div>
-                </div>
-              </div>
-            ))}
-          </div>
+          {showCalendar ? (
+            <CalendarView deadlines={upcomingDeadlines} />
+          ) : (
+            <div className="space-y-4">
+              {loadingDeadlines ? (
+                <p className="text-gray-500">Loading...</p>
+              ) : upcomingDeadlines.length > 0 ? (
+                upcomingDeadlines.map((deadline, i) => (
+                  <div key={i} className="flex items-center p-3 border border-gray-100 rounded-lg">
+                    <div className="flex-1">
+                      <h4 className="font-medium">{deadline.assignment_name}</h4>
+                      <p className="text-sm text-gray-500">{deadline.batch_name || 'Batch Unknown'}</p>
+                    </div>
+                    <div className="text-right">
+                      <div className="text-sm font-medium">
+                        {new Date(deadline.due_date).toLocaleDateString()}
+                      </div>
+                    </div>
+                  </div>
+                ))
+              ) : (
+                <p className="text-gray-500">No upcoming deadlines.</p>
+              )}
+            </div>
+          )}
         </Card>
       </div>
     </div>

@@ -64,10 +64,10 @@ const Home: React.FC = () => {
           </p>
           <div className="mt-10 flex flex-wrap justify-center gap-4">
             <Link
-              to="/signup"
+              to="/welcome"
               className="px-8 py-3 bg-[#0D47A1] text-white rounded-lg hover:bg-blue-800 transition-colors font-medium flex items-center"
             >
-              Get Started
+              University Portal
               <ArrowRightIcon size={18} className="ml-2" />
             </Link>
             <a
@@ -165,7 +165,7 @@ const Home: React.FC = () => {
                   </li>
                 </ul>
                 <Link
-                  to="/signup?role=instructor"
+                  to="/login"
                   className="block w-full py-2 bg-white border border-[#0D47A1] text-[#0D47A1] rounded-lg hover:bg-blue-50 transition-colors font-medium"
                 >
                   Join as Instructor
@@ -206,7 +206,7 @@ const Home: React.FC = () => {
                   </li>
                 </ul>
                 <Link
-                  to="/signup?role=student"
+                  to="/login"
                   className="block w-full py-2 bg-[#0D47A1] text-white rounded-lg hover:bg-blue-800 transition-colors font-medium"
                 >
                   Join as Student
@@ -281,7 +281,7 @@ const Home: React.FC = () => {
                   JM
                 </div>
                 <div>
-                  <p className="font-medium">Dr. Jane Mitchell</p>
+                  <p className="font-medium">Dr. K.Wijewardhana</p>
                   <p className="text-sm text-gray-500">
                     Computer Science Professor
                   </p>
@@ -303,7 +303,7 @@ const Home: React.FC = () => {
                   AK
                 </div>
                 <div>
-                  <p className="font-medium">Alex Kim</p>
+                  <p className="font-medium">Janaka Peris</p>
                   <p className="text-sm text-gray-500">
                     Computer Engineering Student
                   </p>
@@ -325,7 +325,7 @@ const Home: React.FC = () => {
                   RP
                 </div>
                 <div>
-                  <p className="font-medium">Rachel Patel</p>
+                  <p className="font-medium">Sanjaya Edirisinghe</p>
                   <p className="text-sm text-gray-500">Self-taught Developer</p>
                 </div>
               </div>
@@ -353,36 +353,36 @@ const Home: React.FC = () => {
               <h4 className="font-medium mb-4">Product</h4>
               <ul className="space-y-2">
                 <li>
-                  <a
-                    href="#"
+                  <Link
+                    to="/features"
                     className="text-gray-400 hover:text-white transition-colors"
                   >
                     Features
-                  </a>
+                  </Link>
                 </li>
                 <li>
-                  <a
-                    href="#"
+                  <Link
+                    to="/pricing"
                     className="text-gray-400 hover:text-white transition-colors"
                   >
                     Pricing
-                  </a>
+                  </Link>
                 </li>
                 <li>
-                  <a
-                    href="#"
+                  <Link
+                    to="/testimonials"
                     className="text-gray-400 hover:text-white transition-colors"
                   >
                     Testimonials
-                  </a>
+                  </Link>
                 </li>
                 <li>
-                  <a
-                    href="#"
+                  <Link
+                    to="/faq"
                     className="text-gray-400 hover:text-white transition-colors"
                   >
                     FAQ
-                  </a>
+                  </Link>
                 </li>
               </ul>
             </div>
@@ -390,36 +390,36 @@ const Home: React.FC = () => {
               <h4 className="font-medium mb-4">Resources</h4>
               <ul className="space-y-2">
                 <li>
-                  <a
-                    href="#"
+                  <Link
+                    to="/documentation"
                     className="text-gray-400 hover:text-white transition-colors"
                   >
                     Documentation
-                  </a>
+                  </Link>
                 </li>
                 <li>
-                  <a
-                    href="#"
+                  <Link
+                    to="/tutorials"
                     className="text-gray-400 hover:text-white transition-colors"
                   >
                     Tutorials
-                  </a>
+                  </Link>
                 </li>
                 <li>
-                  <a
-                    href="#"
+                  <Link
+                    to="/blog"
                     className="text-gray-400 hover:text-white transition-colors"
                   >
                     Blog
-                  </a>
+                  </Link>
                 </li>
                 <li>
-                  <a
-                    href="#"
+                  <Link
+                    to="/support"
                     className="text-gray-400 hover:text-white transition-colors"
                   >
                     Support
-                  </a>
+                  </Link>
                 </li>
               </ul>
             </div>
@@ -427,43 +427,43 @@ const Home: React.FC = () => {
               <h4 className="font-medium mb-4">Company</h4>
               <ul className="space-y-2">
                 <li>
-                  <a
-                    href="#"
+                  <Link
+                    to="/about"
                     className="text-gray-400 hover:text-white transition-colors"
                   >
                     About
-                  </a>
+                  </Link>
                 </li>
                 <li>
-                  <a
-                    href="#"
+                  <Link
+                    to="/company"
                     className="text-gray-400 hover:text-white transition-colors"
                   >
-                    Careers
-                  </a>
+                    Compnay Details
+                  </Link>
                 </li>
                 <li>
-                  <a
-                    href="#"
+                  <Link
+                    to="/privacy"
                     className="text-gray-400 hover:text-white transition-colors"
                   >
                     Privacy Policy
-                  </a>
+                  </Link>
                 </li>
                 <li>
-                  <a
-                    href="#"
+                  <Link
+                    to="/terms"
                     className="text-gray-400 hover:text-white transition-colors"
                   >
                     Terms of Service
-                  </a>
+                  </Link>
                 </li>
               </ul>
             </div>
           </div>
           <div className="mt-12 pt-8 border-t border-gray-700 flex flex-col md:flex-row justify-between items-center">
             <p className="text-gray-400">
-              © 2023 CodeMentorAI. All rights reserved.
+              © 2025 CodeMentorAI. All rights reserved.
             </p>
             <div className="flex space-x-4 mt-4 md:mt-0">
               <a
@@ -479,7 +479,7 @@ const Home: React.FC = () => {
                 <LinkedinIcon size={20} />
               </a>
               <a
-                href="#"
+                href="https://github.com/COHNDSE242F-Group/Code-Mentor-AI"
                 className="text-gray-400 hover:text-white transition-colors"
               >
                 <GithubIcon size={20} />

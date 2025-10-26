@@ -56,7 +56,7 @@ const Login = () => {
       if (role === "admin") {
         navigate("/university-dashboard");
       } else if (role === "instructor") {
-        navigate("/messaging");
+        navigate("/dashboard");
       } else if (role === "student") {
         navigate("/code-editor");
       } else {

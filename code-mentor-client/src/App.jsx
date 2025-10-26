@@ -54,6 +54,12 @@ import StudentDashboard from "./pages/StudentDashboard";
 import UniversityDashboard from "./pages/UniversityDashboard";
 import AccountSetup from "./pages/AccountSetup";
 import AdminPanel from "./pages/AdminPanel";
+import About from "./pages/About";
+import Privacy from "./pages/Privacy";
+import Terms from "./pages/Terms";  
+import Company from "./pages/Company";
+import ScrollToTop from './components/ScrollToTop'; 
+
 
 
 function App() {
@@ -108,6 +114,11 @@ function App() {
         <Route path="/dashboard" element={<Layout><Dashboard /></Layout>} />
         <Route path="/batches" element={<Layout><BatchManagement /></Layout>} />
         <Route path="/assignments/generate" element={<Layout><AssignmentGeneratorPage /></Layout>} />
+
+        <Route path="/about" element={<About />} />
+        <Route path="/privacy" element={<Privacy />} />
+        <Route path="/terms" element={<Terms />} />
+        <Route path="/company" element={<Company />} />
 
         {/* <Route path="/dashboard" element={<Layout><Dashboard /></Layout>} />
         <Route path="/dashboard" element={<Layout><Dashboard /></Layout>} />
