@@ -33,7 +33,7 @@ const Sidebar = () => {
   }, {
     icon: <SettingsIcon size={20} />,
     label: 'Settings',
-    path: '/settings'
+    path: '/account'
   }];
   const isActive = (path: string) => {
     if (path === '/dashboard') return location.pathname === '/dashboard';
