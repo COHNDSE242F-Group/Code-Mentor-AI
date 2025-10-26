@@ -102,7 +102,9 @@ function App() {
         <Route path="/assignments/:id" element={<Layout><AssignmentDetail /></Layout>} />
         <Route path="/settings" element={<Layout><Settings /></Layout>} />
         <Route path="/reports" element={<Layout><Reports /></Layout>}/>
-        
+        <Route path="/dashboard" element={<Layout><Dashboard /></Layout>} />
+        <Route path="/batches" element={<Layout><BatchManagement /></Layout>} />
+
         {/* <Route path="/dashboard" element={<Layout><Dashboard /></Layout>} />
         <Route path="/dashboard" element={<Layout><Dashboard /></Layout>} />
         <Route path="/batches" element={<Layout><BatchManagement /></Layout>} />

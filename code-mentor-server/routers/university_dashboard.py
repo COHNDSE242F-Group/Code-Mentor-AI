@@ -5,6 +5,7 @@ from database import async_session, get_db
 from models import Admin, Instructor, Student, Assignment
 from auth.auth import verify_token
 
+
 router = APIRouter()
 
 @router.get("/university/dashboard", summary="Fetch university dashboard data")

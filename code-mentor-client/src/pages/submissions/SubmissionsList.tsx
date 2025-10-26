@@ -3,27 +3,11 @@ import { Link } from 'react-router-dom';
 import Card from '../../components/ui/Card';
 import { SearchIcon, FilterIcon, ChevronDownIcon, ChevronUpIcon, EyeIcon } from 'lucide-react';
 
-
-
-interface Assignment {
-  assignment_id: number;
-  assignment_name: string;
-  due_date: string;
-  batch_id: number;
-  instructor_id: number;
-}
-interface Student {
-  student_id: number;
-  student_name: string;
-  email: string;
-  contact_no: string | null;
-  batch_id: number;
-}
-
 interface Submission {
   id: number;
-  student: Student; // Update to match the API response
-  assignment: Assignment; // Update to match the API response
+  student: string; // Now it's a string, not an object
+  studentId: string;
+  assignment: string; // Now it's a string, not an object
   submittedAt: string;
   status: string;
   score: number | null;
@@ -35,62 +19,80 @@ const SubmissionsList = () => {
     key: 'submittedAt',
     direction: 'desc'
   });
-   const [submissions, setSubmissions] = useState<Submission[]>([]);
-const [loading, setLoading] = useState(true);
- useEffect(() => {
-  setLoading(true); // Set loading to true before fetching data
-  fetch("http://localhost:8000/submission")
-    .then((res) => {
-      if (!res.ok) {
-        throw new Error("Failed to fetch submissions");
-      }
-      return res.json();
-    })
-    .then((data) => {
-      if (Array.isArray(data)) {
-        setSubmissions(data); // Ensure data is an array
-      } else {
-        console.error("API response is not an array:", data);
-        setSubmissions([]); // Fallback to an empty array
-      }
-    })
-    .catch((err) => {
-      console.error("Failed to fetch submissions:", err);
-      setSubmissions([]); // Fallback to an empty array
-    })
-    .finally(() => {
-      setLoading(false); // Ensure loading is set to false after fetch
-    });
-}, []);
+  const [submissions, setSubmissions] = useState<Submission[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [pendingReviewCount, setPendingReviewCount] = useState(0);
+  const [gradedCount, setGradedCount] = useState(0);
+
+  useEffect(() => {
+    setLoading(true);
+    fetch("http://localhost:8000/submission/")
+      .then((res) => {
+        if (!res.ok) {
+          throw new Error("Failed to fetch submissions");
+        }
+        return res.json();
+      })
+      .then((data) => {
+        if (Array.isArray(data)) {
+          setSubmissions(data);
+        } else {
+          console.error("API response is not an array:", data);
+          setSubmissions([]);
+        }
+      })
+      .catch((err) => {
+        console.error("Failed to fetch submissions:", err);
+        setSubmissions([]);
+      })
+      .finally(() => {
+        setLoading(false);
+      });
+  }, []);
+  
+  useEffect(() => {
+    // Fetch pending review count
+    fetch("http://localhost:8000/submissionlist-summary/pending-review-count")
+      .then((res) => res.json())
+      .then((data) => setPendingReviewCount(data.count))
+      .catch((err) => console.error("Failed to fetch pending review count:", err));
+
+    // Fetch graded count
+    fetch("http://localhost:8000/submissionlist-summary/graded-count")
+      .then((res) => res.json())
+      .then((data) => setGradedCount(data.count))
+      .catch((err) => console.error("Failed to fetch graded count:", err));
+  }, []);
 
   const requestSort = (key: string) => {
-  let direction = 'asc';
-  if (sortConfig.key === key && sortConfig.direction === 'asc') {
-    direction = 'desc';
-  }
-  setSortConfig({
-    key,
-    direction,
-  });
-};
+    let direction = 'asc';
+    if (sortConfig.key === key && sortConfig.direction === 'asc') {
+      direction = 'desc';
+    }
+    setSortConfig({
+      key,
+      direction,
+    });
+  };
 
   const sortedSubmissions = [...submissions].sort((a: Submission, b: Submission) => {
-  const aValue = a[sortConfig.key as keyof Submission];
-  const bValue = b[sortConfig.key as keyof Submission];
+    const aValue = a[sortConfig.key as keyof Submission];
+    const bValue = b[sortConfig.key as keyof Submission];
 
-  // Handle null or undefined values
-  if (aValue == null) return 1; // Place `null` or `undefined` values at the end
-  if (bValue == null) return -1;
+    // Handle null or undefined values
+    if (aValue == null) return 1;
+    if (bValue == null) return -1;
 
-  if (aValue < bValue) {
-    return sortConfig.direction === 'asc' ? -1 : 1;
-  }
-  if (aValue > bValue) {
-    return sortConfig.direction === 'asc' ? 1 : -1;
-  }
-  return 0;
-});
- const getSortIcon = (name: string) => {
+    if (aValue < bValue) {
+      return sortConfig.direction === 'asc' ? -1 : 1;
+    }
+    if (aValue > bValue) {
+      return sortConfig.direction === 'asc' ? 1 : -1;
+    }
+    return 0;
+  });
+
+  const getSortIcon = (name: string) => {
     if (sortConfig.key === name) {
       return sortConfig.direction === 'asc' ? <ChevronUpIcon size={16} /> : <ChevronDownIcon size={16} />;
     }
@@ -105,17 +107,19 @@ const [loading, setLoading] = useState(true);
     return <div>No submissions found.</div>;
   }
 
-  return <div className="w-full">
+
+ return (
+    <div className="w-full">
       <div className="mb-6">
         <h1 className="text-2xl font-bold text-gray-800">Submissions</h1>
         <p className="text-gray-500">View and manage student submissions</p>
       </div>
-      <div className="mb-6 grid grid-cols-1 md:grid-cols-4 gap-4">
+       <div className="mb-6 grid grid-cols-1 md:grid-cols-4 gap-4">
         <Card className="md:col-span-1 bg-blue-50 border-l-4 border-[#0D47A1]">
           <div className="flex justify-between items-center">
             <div>
               <p className="text-sm text-gray-500">Pending Review</p>
-              <h3 className="text-2xl font-bold text-gray-800">18</h3>
+              <h3 className="text-2xl font-bold text-gray-800">{pendingReviewCount}</h3>
             </div>
             <div className="rounded-full bg-blue-100 p-3">
               <ClockIcon size={24} className="text-[#0D47A1]" />
@@ -126,7 +130,7 @@ const [loading, setLoading] = useState(true);
           <div className="flex justify-between items-center">
             <div>
               <p className="text-sm text-gray-500">Graded</p>
-              <h3 className="text-2xl font-bold text-gray-800">156</h3>
+              <h3 className="text-2xl font-bold text-gray-800">{gradedCount}</h3>
             </div>
             <div className="rounded-full bg-green-100 p-3">
               <CheckCircleIcon size={24} className="text-green-500" />
@@ -144,7 +148,7 @@ const [loading, setLoading] = useState(true);
             </div>
           </div>
         </Card>
-        <Card className="md:col-span-1 bg-red-50 border-l-4 border-red-500">
+        {/*<Card className="md:col-span-1 bg-red-50 border-l-4 border-red-500">
           <div className="flex justify-between items-center">
             <div>
               <p className="text-sm text-gray-500">Flagged</p>
@@ -154,12 +158,16 @@ const [loading, setLoading] = useState(true);
               <AlertTriangleIcon size={24} className="text-red-500" />
             </div>
           </div>
-        </Card>
+        </Card>*/}
       </div>
-      <Card>
+       <Card>
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
           <div className="relative w-full md:w-64">
-            <input type="text" placeholder="Search submissions..." className="w-full pl-10 pr-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-[#0D47A1] focus:border-transparent" />
+            <input 
+              type="text" 
+              placeholder="Search submissions..." 
+              className="w-full pl-10 pr-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-[#0D47A1] focus:border-transparent" 
+            />
             <SearchIcon size={18} className="absolute left-3 top-2.5 text-gray-400" />
           </div>
           <div className="flex items-center space-x-4 w-full md:w-auto">
@@ -182,6 +190,7 @@ const [loading, setLoading] = useState(true);
             </select>
           </div>
         </div>
+
         <div className="overflow-x-auto">
           <table className="min-w-full">
             <thead>
@@ -219,23 +228,33 @@ const [loading, setLoading] = useState(true);
                 <th className="py-3 px-4 text-center text-sm font-medium text-gray-500">
                   ACTIONS
                 </th>
-              </tr>
+
+               </tr>
             </thead>
             <tbody>
-              {sortedSubmissions.map(submission => <tr key={submission.id} className="border-b border-gray-100 hover:bg-gray-50">
-                 <td className="py-3 px-4">
-             <Link to={`/submissions/${submission.id}`} className="font-medium text-[#0D47A1] hover:underline">
-  {submission.student.student_name} {/* Access student_name */}
-</Link>
-             <div className="text-xs text-gray-500">  
-            {submission.student.student_id} {/* Access student_id */}
-          </div>
-            </td>
-                <td className="py-3 px-4 text-sm">{submission.assignment.assignment_name}</td>                  <td className="py-3 px-4 text-sm text-gray-500">
+              {sortedSubmissions.map(submission => (
+                <tr key={submission.id} className="border-b border-gray-100 hover:bg-gray-50">
+                  <td className="py-3 px-4">
+                    <Link 
+                      to={`/submissions/${submission.id}`} 
+                      className="font-medium text-[#0D47A1] hover:underline"
+                    >
+                      {submission.student}
+                    </Link>
+                    <div className="text-xs text-gray-500">  
+                      {submission.studentId}
+                    </div>
+                  </td>
+                  <td className="py-3 px-4 text-sm">{submission.assignment}</td>
+                  <td className="py-3 px-4 text-sm text-gray-500">
                     {submission.submittedAt}
                   </td>
                   <td className="py-3 px-4">
-                    <span className={`px-2 py-1 rounded-full text-xs ${submission.status === 'Pending' ? 'bg-yellow-100 text-yellow-800' : submission.status === 'Graded' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
+                    <span className={`px-2 py-1 rounded-full text-xs ${
+                      submission.status === 'Pending' ? 'bg-yellow-100 text-yellow-800' : 
+                      submission.status === 'Graded' ? 'bg-green-100 text-green-800' : 
+                      'bg-red-100 text-red-800'
+                    }`}>
                       {submission.status}
                     </span>
                   </td>
@@ -244,38 +263,43 @@ const [loading, setLoading] = useState(true);
                   </td>
                   <td className="py-3 px-4 text-sm">{submission.batch}</td>
                   <td className="py-3 px-4 text-center">
-                    <Link to={`/submissions/${submission.id}`} className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-gray-100 hover:bg-blue-50 text-gray-600 hover:text-[#0D47A1]">
+                    <Link 
+                      to={`/submissions/${submission.id}`} 
+                      className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-gray-100 hover:bg-blue-50 text-gray-600 hover:text-[#0D47A1]"
+                    >
                       <EyeIcon size={16} />
                     </Link>
                   </td>
-                </tr>)}
+                </tr>
+              ))}
             </tbody>
           </table>
+
         </div>
         <div className="flex justify-between items-center mt-6">
           <div className="text-sm text-gray-500">
-            Showing 1-8 of 186 submissions
+            
           </div>
           <div className="flex space-x-2">
             <button className="px-3 py-1 border border-gray-300 rounded-md bg-white text-gray-700 disabled:opacity-50">
-              Previous
+              {/* Previous */}
             </button>
             <button className="px-3 py-1 bg-[#0D47A1] text-white rounded-md hover:bg-blue-800">
-              1
+              {/* 1 */}
             </button>
             <button className="px-3 py-1 border border-gray-300 rounded-md bg-white text-gray-700">
-              2
+              {/* 2 */}
             </button>
             <button className="px-3 py-1 border border-gray-300 rounded-md bg-white text-gray-700">
-              3
+              {/* 3 */}
             </button>
             <button className="px-3 py-1 border border-gray-300 rounded-md bg-white text-gray-700">
-              Next
+              {/* Next */}
             </button>
           </div>
         </div>
       </Card>
-    </div>;
+    </div>);
 };
 const ClockIcon = ({ size, className }: { size: number; className?: string }) => (
   <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>

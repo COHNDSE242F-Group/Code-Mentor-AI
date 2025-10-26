@@ -27,6 +27,8 @@ from .student_messaging import router as student_messaging_router
 from .settings import router as settings_router
 from .university_dashboard import router as university_dashboard_router
 from .admin_panel import router as admin_panel_router
+from .dashboard import router as dashboard_router
+from .submission_list_summary import router as submission_list_summary_router
 
 routers = [
     
@@ -56,11 +58,13 @@ routers = [
     #reset_password_router,
     welcome_router,
     package_router,
-    reset_password_router,
+
     report_router,
     public_lists_router,
     university_dashboard_router,
-    admin_panel_router
+    admin_panel_router,
+    dashboard_router,
+    submission_list_summary_router
 
 
 
