@@ -33,6 +33,7 @@ from .university_dashboard import router as university_dashboard_router
 from .admin_panel import router as admin_panel_router
 from .dashboard import router as dashboard_router
 from .submission_list_summary import router as submission_list_summary_router
+from .student_submission import router as student_submission_router
 
 routers = [
     code_runner_router,
@@ -70,5 +71,6 @@ routers = [
     university_dashboard_router,
     admin_panel_router,
     dashboard_router,
-    submission_list_summary_router
+    submission_list_summary_router,
+    student_submission_router
 ]

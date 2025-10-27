@@ -262,12 +262,12 @@ async def ai_chat(req: ChatRequest, user: dict = Depends(login_required)):
                 )
 
                 reply_text = completion.choices[0].message.content
-                print(f"🤖 Raw AI response: {reply_text[:200]}...")
+                print(f"Raw AI response: {reply_text[:200]}...")
                 
                 # Ensure the response follows appropriate guidance policy
                 guided_reply = enforce_guidance_policy(reply_text, req.message, req.context)
 
-                print(f"✅ Response generated using {model}")
+                print(f"Response generated using {model}")
                 return {"reply": guided_reply}
 
             except Exception as e:
