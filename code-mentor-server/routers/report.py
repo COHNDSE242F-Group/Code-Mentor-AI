@@ -342,7 +342,7 @@ async def update_progress_report(
 async def create_or_update_progress_report(
     data: ConceptCreate,
     background_tasks: BackgroundTasks,
-    token_data: dict = Depends(role_required(["student"]))
+    token_data: dict = Depends(role_required(["instructor"]))
 ):
     async with async_session() as session:
         # Get the student by ID
@@ -407,6 +407,12 @@ async def create_or_update_progress_report(
             await session.commit()
 
             asyncio.create_task(update_all_student_reports(data.batch_id, concept_json))
+
+            return {
+                "concept": concept_json["name"],
+                "description": concept_json["description"],
+                "topics": topics
+            }
         except Exception as e:
             print("❌ Error generating topics:", e)
             traceback.print_exc()

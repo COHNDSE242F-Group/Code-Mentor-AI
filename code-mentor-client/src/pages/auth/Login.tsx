@@ -58,7 +58,7 @@ const Login = () => {
       } else if (role === "instructor") {
         navigate("/dashboard");
       } else if (role === "student") {
-        navigate("/code-editor");
+        navigate("/student-dashboard");
       } else {
         navigate("/dashboard");
       }
