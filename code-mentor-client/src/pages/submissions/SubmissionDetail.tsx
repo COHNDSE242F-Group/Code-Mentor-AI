@@ -60,48 +60,52 @@ const SubmissionDetail = () => {
       .finally(() => setLoading(false));
   }, [submissionId]);
 
-  const handleSaveGrade = () => {
-    if (!submissionId || isNaN(Number(submissionId))) {
-      alert('Invalid submission ID');
-      return;
-    }
+const handleSaveGrade = () => {
+  if (!submissionId || isNaN(Number(submissionId))) {
+    alert('Invalid submission ID');
+    return;
+  }
 
-    const scoreValue = parseInt(score, 10);
-    if (isNaN(scoreValue) || scoreValue < 0 || scoreValue > 100) {
-      alert('Please enter a valid score between 0 and 100');
-      return;
-    }
+  const scoreValue = parseInt(score, 10);
+  if (isNaN(scoreValue) || scoreValue < 0 || scoreValue > 100) {
+    alert('Please enter a valid score between 0 and 100');
+    return;
+  }
 
-    // Use the correct endpoint - remove "_save"
-    fetch(`http://localhost:8000/save_submissions/${submissionId}/grade`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        score: scoreValue,
-        feedback: feedback,
-      }),
+  console.log('Saving grade with data:', {
+    score: scoreValue,
+    feedback: feedback
+  });
+
+  fetch(`http://localhost:8000/submissions/${submissionId}/grade`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      score: scoreValue,
+      feedback: feedback,
+    }),
+  })
+    .then(res => {
+      console.log('Response status:', res.status);
+      if (!res.ok) {
+        throw new Error(`Failed to save grade: ${res.status}`);
+      }
+      return res.json();
     })
-      .then(res => {
-        if (!res.ok) {
-          throw new Error(`Failed to save grade: ${res.status}`);
-        }
-        return res.json();
-      })
-      .then(updatedData => {
-        console.log('Updated submission data:', updatedData); // Debug log
-        alert('Grade and feedback saved successfully');
-        setSubmission(updatedData);
-        // Update form fields with new data
-        setScore(updatedData.score?.toString() || '');
-        setFeedback(updatedData.instructor_feedback?.join('\n') || '');
-      })
-      .catch(err => {
-        console.error('Error saving grade:', err);
-        alert('Failed to save grade and feedback');
-      });
-  };
+    .then(updatedData => {
+      console.log('Successfully updated submission:', updatedData);
+      
+      setSubmission(updatedData);
+      setScore(updatedData.score?.toString() || '');
+      setFeedback(updatedData.instructor_feedback?.join('\n') || '');
+    })
+    .catch(err => {
+      console.error('Error saving grade:', err);
+      alert('Failed to save grade and feedback');
+    });
+};
 
   if (loading) return <div className="p-8 text-center">Loading...</div>;
   if (error) return <div className="p-8 text-center text-red-600">{error}</div>;
