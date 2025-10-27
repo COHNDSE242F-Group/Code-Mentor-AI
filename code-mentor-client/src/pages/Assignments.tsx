@@ -82,7 +82,7 @@ const Assignments: React.FC = () => {
       setSubmissionDetails(null);
 
       const res = await fetchWithAuth(
-        `http://localhost:8000/submission/${submissionId}`,
+        `http://localhost:8000/student_submission/${submissionId}`,
         {
           method: 'GET',
         }
