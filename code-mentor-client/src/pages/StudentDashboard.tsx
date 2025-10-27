@@ -1,12 +1,104 @@
-import React from 'react';
-import { Link } from 'react-router-dom';
-import { PlayIcon, MessageSquareIcon, BookOpenIcon, ClockIcon, CheckCircleIcon, AlertTriangleIcon } from 'lucide-react';
+import React, { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
+import { PlayIcon, MessageSquareIcon, BookOpenIcon, ClockIcon, CheckCircleIcon } from "lucide-react";
+import { fetchWithAuth } from "../utils/auth";
+
+interface Assignment {
+  Assignment: {
+    assignment_id: number;
+    assignment_name: string;
+    description: any;
+    due_date: string;
+    due_time: string;
+    difficulty: string;
+    instructor_id: number;
+    batch_id: number;
+  };
+  Submission_id: number | null;
+}
+
+interface PerformanceItem {
+  name: string;
+  score: number;
+  avg: number;
+}
+
+interface ProgressData {
+  performance?: PerformanceItem[];
+}
+
 const StudentDashboard: React.FC = () => {
-  return <div className="space-y-6">
+  const [assignments, setAssignments] = useState<Assignment[]>([]);
+  const [progress, setProgress] = useState<ProgressData | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const loadData = async () => {
+      try {
+        // Load assignments
+        const assignmentsRes = await fetchWithAuth("http://localhost:8000/student_assignment", {
+          method: "GET",
+        });
+        
+        if (!assignmentsRes.ok) throw new Error(`HTTP ${assignmentsRes.status} - ${assignmentsRes.statusText}`);
+        
+        const assignmentsData: Assignment[] = await assignmentsRes.json();
+        setAssignments(assignmentsData);
+
+        // Load performance data (if needed for concept mastery rings)
+        const progressRes = await fetchWithAuth("http://localhost:8000/progress/", {
+          method: "GET",
+        });
+        
+        if (progressRes.ok) {
+          const progressData: ProgressData = await progressRes.json();
+          setProgress(progressData);
+        }
+
+      } catch (err: any) {
+        console.error("Failed to fetch data:", err);
+        setError(err.message || "Failed to load data");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadData();
+  }, []);
+
+  // Calculate summary statistics from assignments
+  const calculateSummary = () => {
+    const totalAssigned = assignments.length;
+    const submittedCount = assignments.filter(assignment => assignment.Submission_id !== null).length;
+    const pendingCount = totalAssigned - submittedCount;
+    
+    // Calculate due this week (assuming current week logic)
+    const now = new Date();
+    const oneWeekFromNow = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
+    
+    const dueThisWeek = assignments.filter(assignment => {
+      const dueDate = new Date(assignment.Assignment.due_date);
+      return dueDate <= oneWeekFromNow && dueDate >= now;
+    }).length;
+
+    return {
+      totalAssigned,
+      submittedCount,
+      pendingCount,
+      dueThisWeek
+    };
+  };
+
+  const summary = calculateSummary();
+  const ringColors = ["#6366f1", "#14b8a6", "#a855f7", "#f59e0b", "#ef4444", "#3b82f6"];
+
+  return (
+    <div className="space-y-6">
       {/* Welcome section */}
       <div className="flex flex-col md:flex-row md:items-center md:justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-white">Welcome back, John!</h1>
+          <h1 className="text-2xl font-bold text-white">Welcome back</h1>
           <p className="text-slate-400 mt-1">
             Your learning journey continues. Here's what's new today.
           </p>
@@ -22,220 +114,137 @@ const StudentDashboard: React.FC = () => {
           </Link>
         </div>
       </div>
-      {/* Stats cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div className="card p-6">
-          <div className="flex items-center justify-between">
-            <h3 className="text-lg font-medium text-white">
-              Assigned Problems
-            </h3>
-            <div className="w-10 h-10 rounded-full bg-indigo-500/20 flex items-center justify-center">
-              <BookOpenIcon size={20} className="text-indigo-400" />
-            </div>
-          </div>
-          <p className="text-3xl font-bold mt-4 text-white">7</p>
-          <div className="flex items-center mt-2 text-sm">
-            <span className="text-indigo-400">3 due this week</span>
-            <span className="mx-2 text-slate-600">•</span>
-            <span className="text-slate-400">4 upcoming</span>
-          </div>
-        </div>
-        <div className="card p-6">
-          <div className="flex items-center justify-between">
-            <h3 className="text-lg font-medium text-white">
-              Completed Concepts
-            </h3>
-            <div className="w-10 h-10 rounded-full bg-teal-500/20 flex items-center justify-center">
-              <CheckCircleIcon size={20} className="text-teal-400" />
-            </div>
-          </div>
-          <p className="text-3xl font-bold mt-4 text-white">12</p>
-          <div className="flex items-center mt-2 text-sm">
-            <span className="text-teal-400">+3 this week</span>
-            <span className="mx-2 text-slate-600">•</span>
-            <span className="text-slate-400">75% complete</span>
-          </div>
-        </div>
-        <div className="card p-6">
-          <div className="flex items-center justify-between">
-            <h3 className="text-lg font-medium text-white">
-              Upcoming Deadlines
-            </h3>
-            <div className="w-10 h-10 rounded-full bg-amber-500/20 flex items-center justify-center">
-              <ClockIcon size={20} className="text-amber-400" />
-            </div>
-          </div>
-          <p className="text-3xl font-bold mt-4 text-white">2</p>
-          <div className="flex items-center mt-2 text-sm">
-            <span className="text-amber-400">Next: Binary Search Tree</span>
-            <span className="mx-2 text-slate-600">•</span>
-            <span className="text-slate-400">Tomorrow</span>
-          </div>
-        </div>
-      </div>
-      {/* Progress section */}
-      <div className="card p-6">
-        <h3 className="text-lg font-medium text-white mb-4">Concept Mastery</h3>
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-          {/* Progress rings */}
-          <div className="flex flex-col items-center">
-            <div className="relative w-28 h-28">
-              <svg className="w-full h-full" viewBox="0 0 100 100">
-                <circle cx="50" cy="50" r="40" fill="none" stroke="#1e293b" strokeWidth="10" />
-                <circle cx="50" cy="50" r="40" fill="none" stroke="#6366f1" strokeWidth="10" strokeDasharray="251.2" strokeDashoffset="62.8" strokeLinecap="round" transform="rotate(-90 50 50)" />
-                <text x="50" y="50" dominantBaseline="middle" textAnchor="middle" className="text-2xl font-bold fill-white">
-                  75%
-                </text>
-              </svg>
-              <p className="text-center mt-2 text-slate-300">Algorithms</p>
-            </div>
-          </div>
-          <div className="flex flex-col items-center">
-            <div className="relative w-28 h-28">
-              <svg className="w-full h-full" viewBox="0 0 100 100">
-                <circle cx="50" cy="50" r="40" fill="none" stroke="#1e293b" strokeWidth="10" />
-                <circle cx="50" cy="50" r="40" fill="none" stroke="#14b8a6" strokeWidth="10" strokeDasharray="251.2" strokeDashoffset="50.24" strokeLinecap="round" transform="rotate(-90 50 50)" />
-                <text x="50" y="50" dominantBaseline="middle" textAnchor="middle" className="text-2xl font-bold fill-white">
-                  80%
-                </text>
-              </svg>
-              <p className="text-center mt-2 text-slate-300">Data Structures</p>
-            </div>
-          </div>
-          <div className="flex flex-col items-center">
-            <div className="relative w-28 h-28">
-              <svg className="w-full h-full" viewBox="0 0 100 100">
-                <circle cx="50" cy="50" r="40" fill="none" stroke="#1e293b" strokeWidth="10" />
-                <circle cx="50" cy="50" r="40" fill="none" stroke="#a855f7" strokeWidth="10" strokeDasharray="251.2" strokeDashoffset="125.6" strokeLinecap="round" transform="rotate(-90 50 50)" />
-                <text x="50" y="50" dominantBaseline="middle" textAnchor="middle" className="text-2xl font-bold fill-white">
-                  50%
-                </text>
-              </svg>
-              <p className="text-center mt-2 text-slate-300">Recursion</p>
-            </div>
-          </div>
-          <div className="flex flex-col items-center">
-            <div className="relative w-28 h-28">
-              <svg className="w-full h-full" viewBox="0 0 100 100">
-                <circle cx="50" cy="50" r="40" fill="none" stroke="#1e293b" strokeWidth="10" />
-                <circle cx="50" cy="50" r="40" fill="none" stroke="#f59e0b" strokeWidth="10" strokeDasharray="251.2" strokeDashoffset="87.92" strokeLinecap="round" transform="rotate(-90 50 50)" />
-                <text x="50" y="50" dominantBaseline="middle" textAnchor="middle" className="text-2xl font-bold fill-white">
-                  65%
-                </text>
-              </svg>
-              <p className="text-center mt-2 text-slate-300">
-                Dynamic Programming
-              </p>
-            </div>
-          </div>
-        </div>
-      </div>
-      {/* Recent assignments */}
-      <div>
-        <div className="flex items-center justify-between mb-4">
-          <h3 className="text-lg font-medium text-white">Recent Assignments</h3>
-          <Link to="/assignments" className="text-indigo-400 hover:text-indigo-300 text-sm font-medium">
-            View all
-          </Link>
-        </div>
-        <div className="space-y-4">
-          {/* Assignment cards */}
-          <div className="card flex flex-col md:flex-row md:items-center justify-between p-4">
-            <div className="flex items-start space-x-4">
-              <div className="w-10 h-10 rounded-md bg-indigo-500/20 flex items-center justify-center flex-shrink-0">
+
+      {/* Dynamic summary cards */}
+      {loading ? (
+        <p className="text-slate-400">Loading summary...</p>
+      ) : error ? (
+        <p className="text-red-400">⚠️ {error}</p>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          {/* Assigned Problems */}
+          <div className="card p-6">
+            <div className="flex items-center justify-between">
+              <h3 className="text-lg font-medium text-white">Assigned Problems</h3>
+              <div className="w-10 h-10 rounded-full bg-indigo-500/20 flex items-center justify-center">
                 <BookOpenIcon size={20} className="text-indigo-400" />
               </div>
-              <div>
-                <h4 className="text-white font-medium">
-                  Binary Search Tree Validation
-                </h4>
-                <div className="flex flex-wrap gap-2 mt-2">
-                  <span className="px-2 py-1 bg-slate-700 text-xs rounded-full text-slate-300">
-                    Data Structures
-                  </span>
-                  <span className="px-2 py-1 bg-slate-700 text-xs rounded-full text-slate-300">
-                    Trees
-                  </span>
-                  <span className="px-2 py-1 bg-amber-900/50 text-xs rounded-full text-amber-300">
-                    Medium
-                  </span>
-                </div>
-              </div>
             </div>
-            <div className="mt-4 md:mt-0 flex items-center">
-              <div className="flex items-center mr-4">
-                <ClockIcon size={16} className="text-amber-400 mr-1" />
-                <span className="text-sm text-slate-300">Due tomorrow</span>
-              </div>
-              <Link to="/editor/bst-validation" className="button-primary">
-                Resume
-              </Link>
+            <p className="text-3xl font-bold mt-4 text-white">
+              {summary.totalAssigned}
+            </p>
+            <div className="flex items-center mt-2 text-sm">
+              <span className="text-indigo-400">
+                {summary.dueThisWeek} due this week
+              </span>
+              <span className="mx-2 text-slate-600">•</span>
+              <span className="text-slate-400">{summary.pendingCount} pending</span>
             </div>
           </div>
-          <div className="card flex flex-col md:flex-row md:items-center justify-between p-4">
-            <div className="flex items-start space-x-4">
-              <div className="w-10 h-10 rounded-md bg-teal-500/20 flex items-center justify-center flex-shrink-0">
+
+          {/* Completed Problems */}
+          <div className="card p-6">
+            <div className="flex items-center justify-between">
+              <h3 className="text-lg font-medium text-white">Completed Problems</h3>
+              <div className="w-10 h-10 rounded-full bg-teal-500/20 flex items-center justify-center">
                 <CheckCircleIcon size={20} className="text-teal-400" />
               </div>
-              <div>
-                <h4 className="text-white font-medium">Two Sum Problem</h4>
-                <div className="flex flex-wrap gap-2 mt-2">
-                  <span className="px-2 py-1 bg-slate-700 text-xs rounded-full text-slate-300">
-                    Algorithms
-                  </span>
-                  <span className="px-2 py-1 bg-slate-700 text-xs rounded-full text-slate-300">
-                    Arrays
-                  </span>
-                  <span className="px-2 py-1 bg-emerald-900/50 text-xs rounded-full text-emerald-300">
-                    Easy
-                  </span>
-                </div>
-              </div>
             </div>
-            <div className="mt-4 md:mt-0 flex items-center">
-              <div className="flex items-center mr-4">
-                <CheckCircleIcon size={16} className="text-teal-400 mr-1" />
-                <span className="text-sm text-slate-300">Completed</span>
-              </div>
-              <Link to="/editor/two-sum" className="button-outline">
-                Review
-              </Link>
+            <p className="text-3xl font-bold mt-4 text-white">
+              {summary.submittedCount}
+            </p>
+            <div className="flex items-center mt-2 text-sm">
+              <span className="text-teal-400">
+                {summary.totalAssigned > 0 
+                  ? Math.round((summary.submittedCount / summary.totalAssigned) * 100)
+                  : 0}% complete
+              </span>
+              <span className="mx-2 text-slate-600">•</span>
+              <span className="text-slate-400">{summary.pendingCount} remaining</span>
             </div>
           </div>
-          <div className="card flex flex-col md:flex-row md:items-center justify-between p-4">
-            <div className="flex items-start space-x-4">
-              <div className="w-10 h-10 rounded-md bg-red-500/20 flex items-center justify-center flex-shrink-0">
-                <AlertTriangleIcon size={20} className="text-red-400" />
-              </div>
-              <div>
-                <h4 className="text-white font-medium">Graph Traversal</h4>
-                <div className="flex flex-wrap gap-2 mt-2">
-                  <span className="px-2 py-1 bg-slate-700 text-xs rounded-full text-slate-300">
-                    Algorithms
-                  </span>
-                  <span className="px-2 py-1 bg-slate-700 text-xs rounded-full text-slate-300">
-                    Graphs
-                  </span>
-                  <span className="px-2 py-1 bg-red-900/50 text-xs rounded-full text-red-300">
-                    Hard
-                  </span>
-                </div>
+
+          {/* Upcoming Deadlines */}
+          <div className="card p-6">
+            <div className="flex items-center justify-between">
+              <h3 className="text-lg font-medium text-white">Upcoming Deadlines</h3>
+              <div className="w-10 h-10 rounded-full bg-amber-500/20 flex items-center justify-center">
+                <ClockIcon size={20} className="text-amber-400" />
               </div>
             </div>
-            <div className="mt-4 md:mt-0 flex items-center">
-              <div className="flex items-center mr-4">
-                <ClockIcon size={16} className="text-red-400 mr-1" />
-                <span className="text-sm text-slate-300">
-                  Overdue by 2 days
-                </span>
-              </div>
-              <Link to="/editor/graph-traversal" className="button-primary">
-                Start
-              </Link>
+            <p className="text-3xl font-bold mt-4 text-white">
+              {summary.dueThisWeek}
+            </p>
+            <div className="flex items-center mt-2 text-sm">
+              <span className="text-amber-400">
+                Next: {assignments.length > 0 ? assignments[0].Assignment.assignment_name : "N/A"}
+              </span>
+              <span className="mx-2 text-slate-600">•</span>
+              <span className="text-slate-400">
+                {assignments.length > 0 ? assignments[0].Assignment.due_date : "N/A"}
+              </span>
             </div>
           </div>
         </div>
-      </div>
-    </div>;
+      )}
+
+      {/* Concept Mastery Rings - stays the same */}
+      {progress?.performance?.length ? (
+        <div className="card p-6">
+          <h3 className="text-lg font-medium text-white mb-4">Concept Mastery</h3>
+          <div className="grid grid-cols-1 md:grid-cols-4 lg:grid-cols-4 gap-6">
+            {progress.performance.map((concept, idx) => {
+              const percent = Math.round(concept.score);
+              const radius = 45;
+              const strokeWidth = 10;
+              const circumference = 2 * Math.PI * radius;
+              const offset = circumference - (percent / 100) * circumference;
+              const color = ringColors[idx % ringColors.length];
+
+              return (
+                <div key={idx} className="flex flex-col items-center">
+                  <div className="relative w-40 h-40">
+                    <svg className="w-full h-full" viewBox="0 0 100 100">
+                      <circle
+                        cx="50"
+                        cy="50"
+                        r={radius}
+                        fill="none"
+                        stroke="#1e293b"
+                        strokeWidth={strokeWidth}
+                      />
+                      <circle
+                        cx="50"
+                        cy="50"
+                        r={radius}
+                        fill="none"
+                        stroke={color}
+                        strokeWidth={strokeWidth}
+                        strokeDasharray={circumference}
+                        strokeDashoffset={offset}
+                        strokeLinecap="round"
+                        transform="rotate(-90 50 50)"
+                      />
+                      <text
+                        x="50"
+                        y="50"
+                        dominantBaseline="middle"
+                        textAnchor="middle"
+                        className="text-2xl font-bold fill-white"
+                      >
+                        {percent}%
+                      </text>
+                    </svg>
+                  </div>
+                  <p className="text-center mt-2 text-slate-300">{concept.name}</p>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      ) : null}
+    </div>
+  );
 };
+
 export default StudentDashboard;

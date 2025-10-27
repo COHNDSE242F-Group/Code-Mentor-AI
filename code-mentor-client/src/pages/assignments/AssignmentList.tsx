@@ -99,7 +99,7 @@ const AssignmentList = () => {
         </div>
         <div className="flex space-x-2">
           <Link
-            to="assignments/generate"
+            to="/assignments/generate"
             className="inline-flex items-center px-4 py-2 bg-gradient-to-r from-purple-600 to-indigo-600 text-white rounded-md hover:from-purple-700 hover:to-indigo-700 transition"
           >
             <SparklesIcon size={16} className="mr-2" />
