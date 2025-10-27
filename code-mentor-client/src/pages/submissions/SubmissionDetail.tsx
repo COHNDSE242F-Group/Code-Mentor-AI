@@ -27,6 +27,12 @@ const SubmissionDetail = () => {
     ai_feedback?: string[];
     instructor_feedback?: string[];
     grade?: string;
+    ai_evaluation?: {
+      errors?: string[];
+      improvements?: string[];
+      overall_score?: number;
+      good_practices?: string[];
+    };
   }
 
   useEffect(() => {
@@ -72,8 +78,12 @@ const SubmissionDetail = () => {
       return;
     }
 
-    // Use the correct endpoint - remove "_save"
-    fetch(`http://localhost:8000/save_submissions/${submissionId}/grade`, {
+    console.log('Saving grade with data:', {
+      score: scoreValue,
+      feedback: feedback
+    });
+
+    fetch(`http://localhost:8000/submissions/${submissionId}/grade`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -84,16 +94,16 @@ const SubmissionDetail = () => {
       }),
     })
       .then(res => {
+        console.log('Response status:', res.status);
         if (!res.ok) {
           throw new Error(`Failed to save grade: ${res.status}`);
         }
         return res.json();
       })
       .then(updatedData => {
-        console.log('Updated submission data:', updatedData); // Debug log
-        alert('Grade and feedback saved successfully');
+        console.log('Successfully updated submission:', updatedData);
+        
         setSubmission(updatedData);
-        // Update form fields with new data
         setScore(updatedData.score?.toString() || '');
         setFeedback(updatedData.instructor_feedback?.join('\n') || '');
       })
@@ -179,6 +189,63 @@ const SubmissionDetail = () => {
               </button>
             </div>
           </Card>
+
+          {/* AI Evaluation Card */}
+          <Card>
+            <h2 className="text-lg font-bold text-gray-800 mb-4">AI Evaluation</h2>
+            {submission.ai_evaluation ? (
+              <div className="space-y-4">
+                {/* Overall Score */}
+                <div className="bg-blue-50 p-4 rounded-md">
+                  <h3 className="font-semibold text-blue-800 mb-2">Overall Score</h3>
+                  <div className="text-2xl font-bold text-blue-600">
+                    {submission.ai_evaluation.overall_score || 'N/A'} / 100
+                  </div>
+                </div>
+
+                {/* Errors */}
+                {submission.ai_evaluation.errors && submission.ai_evaluation.errors.length > 0 && (
+                  <div className="bg-red-50 p-4 rounded-md">
+                    <h3 className="font-semibold text-red-800 mb-2">Errors Found</h3>
+                    <ul className="list-disc list-inside space-y-1">
+                      {submission.ai_evaluation.errors.map((error, index) => (
+                        <li key={index} className="text-red-700 text-sm">{error}</li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+
+                {/* Improvements */}
+                {submission.ai_evaluation.improvements && submission.ai_evaluation.improvements.length > 0 && (
+                  <div className="bg-yellow-50 p-4 rounded-md">
+                    <h3 className="font-semibold text-yellow-800 mb-2">Suggested Improvements</h3>
+                    <ul className="list-disc list-inside space-y-1">
+                      {submission.ai_evaluation.improvements.map((improvement, index) => (
+                        <li key={index} className="text-yellow-700 text-sm">{improvement}</li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+
+                {/* Good Practices */}
+                {submission.ai_evaluation.good_practices && submission.ai_evaluation.good_practices.length > 0 && (
+                  <div className="bg-green-50 p-4 rounded-md">
+                    <h3 className="font-semibold text-green-800 mb-2">Good Practices</h3>
+                    <ul className="list-disc list-inside space-y-1">
+                      {submission.ai_evaluation.good_practices.map((practice, index) => (
+                        <li key={index} className="text-green-700 text-sm">{practice}</li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <div className="text-gray-500 text-center py-4">
+                No AI evaluation available
+              </div>
+            )}
+          </Card>
+
           <Card>
             <h2 className="text-lg font-bold text-gray-800 mb-4">Paste Detection</h2>
             <div className="bg-gray-100 p-4 rounded-md font-mono text-sm overflow-auto" style={{ maxHeight: '200px' }}>

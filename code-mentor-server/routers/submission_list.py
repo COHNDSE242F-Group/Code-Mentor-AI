@@ -1,12 +1,12 @@
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
-from sqlalchemy.orm import selectinload
-from typing import Optional
-from datetime import datetime, date
-from pydantic import BaseModel
 from database import async_session
 from models.submission import Submission
+from pydantic import BaseModel
+from typing import List, Optional
+from sqlalchemy.orm import joinedload
+from datetime import datetime, date
 
 router = APIRouter(
     prefix="/submission",
@@ -36,53 +36,102 @@ class StudentOut(BaseModel):
     class Config:
         orm_mode = True
 
-class SubmissionOut(BaseModel):
-    submission_id: int
+class SubmissionListOut(BaseModel):
+    id: int
+    assignment: str
+    student: str
+    studentId: str
+    submittedAt: str
+    status: str
+    score: Optional[int]
+    batch: str
 
-    # Nested objects (preferred)
-    assignment: Optional[AssignmentOut]
-    student: Optional[StudentOut]
-
-    # Flat fields (fallback for older data)
-    assignment_name: Optional[str]
-    student_name: Optional[str]
-    studentId: Optional[str]
-
-    report: Optional[dict]
-    submitted_at: Optional[datetime]
+class SubmissionDetailOut(BaseModel):
+    id: int
+    assignment: str
+    student: str
+    studentId: str
+    submittedAt: str
+    code: str
+    paste: bool
+    output: str
+    status: str
+    score: Optional[int]
+    batch: str
+    plagiarism: Optional[dict]
+    ai_feedback: Optional[list]
 
     class Config:
         orm_mode = True
 
 # --------------------------
-# Endpoint
+# Endpoints
 # --------------------------
-@router.get("/{submission_id}", response_model=SubmissionOut)
-async def get_submission(submission_id: int):
+
+
+
+
+@router.get("/", response_model=List[SubmissionListOut])
+async def get_submissions():
     async with async_session() as session:
-        result = await session.execute(
-            select(Submission)
-            .where(Submission.submission_id == submission_id)
-            .options(
-                selectinload(Submission.assignment),
-                selectinload(Submission.student)
+        try:
+            result = await session.execute(
+                select(Submission)
+                .options(joinedload(Submission.assignment), joinedload(Submission.student))
             )
-        )
-        submission = result.scalar_one_or_none()
+            submissions = result.scalars().all()
 
-        if not submission:
-            raise HTTPException(status_code=404, detail="Submission not found")
+            submissions_list = []
+            for submission in submissions:
+                report = submission.report or {}
+                submissions_list.append({
+                    "id": submission.submission_id,
+                    "assignment": submission.assignment.assignment_name,
+                    "student": submission.student.student_name,
+                    "studentId": submission.student.index_no,
+                    "submittedAt": submission.submitted_at.strftime("%b %d, %Y - %I:%M %p") if submission.submitted_at else "Not submitted",
+                    "status": report.get("instructor-evaluation", {}).get("status", report.get("status", "Pending")),
+                    "score": report.get("instructor-evaluation", {}).get("score", report.get("score")),
+                    "batch": str(submission.student.batch_id),
+                })
+            return submissions_list
+        except Exception as e:
+            print(f"Error fetching submissions: {e}")
+            raise HTTPException(status_code=500, detail="Internal Server Error")
 
-        # Map to unified schema
-        submission_data = {
-            "submission_id": submission.submission_id,
-            "assignment": submission.assignment if hasattr(submission, "assignment") else None,
-            "student": submission.student if hasattr(submission, "student") else None,
-            "assignment_name": submission.assignment.assignment_name if submission.assignment else None,
-            "student_name": submission.student.student_name if submission.student else None,
-            "studentId": str(submission.student.student_id) if submission.student else None,
-            "report": getattr(submission, "report", None),
-            "submitted_at": getattr(submission, "submitted_at", None),
-        }
 
-        return submission_data
+@router.get("/{submission_id}", response_model=SubmissionDetailOut)
+async def get_submission_detail(submission_id: int):
+    async with async_session() as session:
+        try:
+            result = await session.execute(
+                select(Submission)
+                .where(Submission.submission_id == submission_id)
+                .options(
+                    joinedload(Submission.assignment),
+                    joinedload(Submission.student)
+                )
+            )
+            submission = result.scalar_one_or_none()
+            if not submission:
+                raise HTTPException(status_code=404, detail="Submission not found")
+
+            report = submission.report or {}
+            return {
+                "id": submission.submission_id,
+                "assignment": submission.assignment.assignment_name,
+                "student": submission.student.student_name,
+                "studentId": submission.student.index_no,
+                "submittedAt": submission.submitted_at.strftime("%b %d, %Y - %I:%M %p") if submission.submitted_at else "Not submitted",
+                "code": report.get("code", ""),
+                "paste": report.get("paste", False),
+                "output": report.get("output", ""),
+                "status": report.get("instructor-evaluation", {}).get("status", report.get("status", "Pending")),
+                "score": report.get("instructor-evaluation", {}).get("score", report.get("score")),
+                "batch": str(submission.student.batch_id),
+                "feedback": report.get("instructor-evaluation", {}).get("feedback", []),
+                "grade": report.get("instructor-evaluation", {}).get("grade", "N/A"),
+            }
+        except Exception as e:
+            print(f"Error fetching submission detail: {e}")
+            raise HTTPException(status_code=500, detail="Internal Server Error")

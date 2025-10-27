@@ -84,19 +84,40 @@ async def get_active_assignments(session: AsyncSession = Depends(get_db)):
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error fetching active assignments: {str(e)}")
 
+
 @router.get("/get-pending-review")
-async def pending_reviews(session: AsyncSession = Depends(get_db)):
-    """Fetch the count of submissions with 'Pending' status."""
+async def pending_reviews():
+    """Fetch the count of submissions that are pending review."""
     try:
-        result = await session.execute(
-            select(Submission)
-            .where(Submission.report["instructor-evaluation"].has_key("status"))
-            .where(Submission.report["instructor-evaluation"]["status"].astext == "Pending")
-        )
-        submissions = result.scalars().all()
-        count = len(submissions)
-        print(f"Pending Review Count: {count}")
-        return {"count": count}
+        async with async_session() as session:
+            # Count submissions that are NOT graded (pending)
+            # This includes:
+            # 1. Submissions with no instructor-evaluation at all
+            # 2. Submissions with instructor-evaluation but no status field
+            # 3. Submissions with instructor-evaluation.status = "Pending"
+            # 4. Submissions with instructor-evaluation.status != "Graded"
+            
+            # First, get total submissions
+            total_result = await session.execute(select(Submission))
+            total_submissions = total_result.scalars().all()
+            
+            # Then get graded submissions
+            graded_result = await session.execute(
+                select(Submission).where(
+                    Submission.report["instructor-evaluation"]["status"].astext == "Graded"
+                )
+            )
+            graded_submissions = graded_result.scalars().all()
+            
+            # Pending = Total - Graded
+            pending_count = len(total_submissions) - len(graded_submissions)
+            
+            print(f"Total Submissions: {len(total_submissions)}")
+            print(f"Graded Submissions: {len(graded_submissions)}")
+            print(f"Pending Review Count: {pending_count}")
+            
+            return {"count": pending_count}
+            
     except Exception as e:
         print(f"Error fetching pending review count: {e}")
         raise HTTPException(status_code=500, detail="Internal Server Error")

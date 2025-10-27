@@ -469,13 +469,13 @@ const BatchManagement: React.FC = () => {
                 ))}
               </select>
 
-              <button
+              {/*<button
                 onClick={() => navigate('/addinstructor')}
                 className="inline-flex items-center px-4 py-2 bg-[#0D47A1] text-white rounded-md hover:bg-blue-800"
               >
                 <PlusIcon size={16} className="mr-2" />
                 Add Instructor
-              </button>
+              </button>*/}
             </div>
           </div>
 
