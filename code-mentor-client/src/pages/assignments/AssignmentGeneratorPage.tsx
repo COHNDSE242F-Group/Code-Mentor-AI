@@ -58,6 +58,12 @@ const AssignmentGeneratorPage: React.FC = () => {
   const [addSuccess, setAddSuccess] = useState<string | null>(null);
   const [addError, setAddError] = useState<string | null>(null);
 
+  const [showConceptModal, setShowConceptModal] = useState(false);
+  const [conceptName, setConceptName] = useState('');
+  const [conceptDescription, setConceptDescription] = useState('');
+  const [loadingTopics, setLoadingTopics] = useState(false);
+  const [generatedTopics, setGeneratedTopics] = useState<string[]>([]);
+
   // Load batches when component mounts
   useEffect(() => {
     const loadBatches = async () => {
@@ -288,6 +294,12 @@ const AssignmentGeneratorPage: React.FC = () => {
                 ))}
               </select>
             </div>
+            <button
+              onClick={() => setShowConceptModal(true)}
+              className="flex items-center gap-2 bg-[#0D47A1] text-white px-4 py-2 rounded-lg shadow hover:bg-[#1565C0] transition-all"
+            >
+              <span>Add Concept</span>
+            </button>
 
             {/* Difficulty selector */}
             <div className="flex items-center gap-3">
@@ -557,6 +569,132 @@ const AssignmentGeneratorPage: React.FC = () => {
           </div>
         </div>
       </Card>
+      {showConceptModal && (
+      <div className="fixed inset-0 bg-black bg-opacity-40 flex justify-center items-center z-50">
+        <div className="bg-white rounded-2xl shadow-lg w-full max-w-lg p-6 relative">
+          <button
+            onClick={() => {
+              setShowConceptModal(false);
+              setGeneratedTopics([]);
+              setConceptName('');
+              setConceptDescription('');
+            }}
+            className="absolute top-3 right-3 text-gray-400 hover:text-gray-600"
+          >
+            ✕
+          </button>
+
+          <h2 className="text-xl font-bold mb-4 text-gray-800">Add New Concept</h2>
+
+          <div className="space-y-3">
+            {/* Concept Name */}
+            <div>
+              <label className="text-sm text-gray-600">Concept Name</label>
+              <input
+                type="text"
+                value={conceptName}
+                onChange={(e) => setConceptName(e.target.value)}
+                className="w-full border rounded-lg px-3 py-2 mt-1 focus:outline-none focus:ring-2 focus:ring-blue-400"
+                placeholder="e.g. Object-Oriented Programming"
+              />
+            </div>
+
+            {/* Description */}
+            <div>
+              <label className="text-sm text-gray-600">Description (optional)</label>
+              <textarea
+                value={conceptDescription}
+                onChange={(e) => setConceptDescription(e.target.value)}
+                className="w-full border rounded-lg px-3 py-2 mt-1 focus:outline-none focus:ring-2 focus:ring-blue-400"
+                rows={3}
+                placeholder="Briefly describe this concept..."
+              />
+            </div>
+
+            {/* Generate Button */}
+            <button
+              onClick={async () => {
+                if (!conceptName.trim()) {
+                  alert('Please enter a concept name.');
+                  return;
+                }
+
+                setLoadingTopics(true);
+                setGeneratedTopics([]);
+
+                try {
+                  const res = await fetchWithAuth(
+                    'http://localhost:8000/report/concept', // Instructor endpoint
+                    {
+                      method: 'POST',
+                      body: JSON.stringify({
+                        concept: conceptName,
+                        description: conceptDescription,
+                        batch_id: selectedBatch, // set in state
+                      }),
+                    }
+                  );
+
+                  if (!res.ok) throw new Error('API request failed');
+
+                  const data = await res.json();
+
+                  // Backend returns { concept, description, topics: [{id, name}, ...] }
+                  setGeneratedTopics(data.topics.map((t: any) => t.name));
+                } catch (err) {
+                  console.error('Error generating topics:', err);
+                  alert('Failed to generate topics.');
+                } finally {
+                  setLoadingTopics(false);
+                }
+              }}
+              disabled={loadingTopics}
+              className="bg-[#0D47A1] text-white px-4 py-2 rounded-lg shadow hover:bg-[#1565C0] w-full transition-all"
+            >
+              {loadingTopics ? 'Generating...' : 'Generate Topics'}
+            </button>
+          </div>
+
+          {/* Generated Topics Section */}
+          <div className="mt-6">
+            {loadingTopics ? (
+              <div className="flex flex-col items-center justify-center text-gray-500">
+                <svg
+                  className="animate-spin h-6 w-6 text-[#0D47A1] mb-2"
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                >
+                  <circle
+                    className="opacity-25"
+                    cx="12"
+                    cy="12"
+                    r="10"
+                    stroke="currentColor"
+                    strokeWidth="4"
+                  ></circle>
+                  <path
+                    className="opacity-75"
+                    fill="currentColor"
+                    d="M4 12a8 8 0 018-8v4l3-3-3-3v4a8 8 0 00-8 8h4z"
+                  ></path>
+                </svg>
+                <span>✨ Generating topics...</span>
+              </div>
+            ) : generatedTopics.length > 0 ? (
+              <div>
+                <h3 className="text-lg font-semibold mb-2 text-gray-800">Generated Topics:</h3>
+                <ul className="list-disc pl-5 space-y-1 text-gray-700">
+                  {generatedTopics.map((topic, index) => (
+                    <li key={index}>{topic}</li>
+                  ))}
+                </ul>
+              </div>
+            ) : null}
+          </div>
+        </div>
+      </div>
+    )}
     </div>
   );
 };

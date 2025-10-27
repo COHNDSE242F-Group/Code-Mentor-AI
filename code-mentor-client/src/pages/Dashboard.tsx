@@ -73,6 +73,11 @@ const Dashboard: React.FC = () => {
     graded: true
   });
   const [showCalendar, setShowCalendar] = useState(false);
+  const [showConceptModal, setShowConceptModal] = useState(false);
+  const [conceptName, setConceptName] = useState('');
+  const [conceptDescription, setConceptDescription] = useState('');
+  const [loadingTopics, setLoadingTopics] = useState(false);
+  const [generatedTopics, setGeneratedTopics] = useState<string[]>([]);
 
   useEffect(() => {
     const fetchActiveAssignments = async () => {
@@ -184,11 +189,16 @@ const Dashboard: React.FC = () => {
   }, [activeAssignments, pendingReviews, gradedSubmissions]);
   return (
     <div className="w-full">
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold text-gray-800">Instructor Dashboard</h1>
-        <p className="text-gray-500">
-          {/*Welcome back, John! Here's what's happening with your courses.*/}
-        </p>
+      <div className="flex justify-between items-center mb-6">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-800">Instructor Dashboard</h1>
+        </div>
+        <button
+          onClick={() => setShowConceptModal(true)}
+          className="flex items-center gap-2 bg-[#0D47A1] text-white px-4 py-2 rounded-lg shadow hover:bg-[#1565C0] transition-all"
+        >
+          <span>Add Concept</span>
+        </button>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5 mb-6">
@@ -396,6 +406,114 @@ const Dashboard: React.FC = () => {
           )}
         </Card>
       </div>
+      {showConceptModal && (
+  <div className="fixed inset-0 bg-black bg-opacity-40 flex justify-center items-center z-50">
+    <div className="bg-white rounded-2xl shadow-lg w-full max-w-lg p-6 relative">
+      <button
+        onClick={() => {
+          setShowConceptModal(false);
+          setGeneratedTopics([]);
+          setConceptName('');
+          setConceptDescription('');
+        }}
+        className="absolute top-3 right-3 text-gray-400 hover:text-gray-600"
+      >
+        ✕
+      </button>
+
+      <h2 className="text-xl font-bold mb-4 text-gray-800">Add New Concept</h2>
+
+      <div className="space-y-3">
+        <div>
+          <label className="text-sm text-gray-600">Concept Name</label>
+          <input
+            type="text"
+            value={conceptName}
+            onChange={(e) => setConceptName(e.target.value)}
+            className="w-full border rounded-lg px-3 py-2 mt-1 focus:outline-none focus:ring-2 focus:ring-blue-400"
+            placeholder="e.g. Object-Oriented Programming"
+          />
+        </div>
+
+        <div>
+          <label className="text-sm text-gray-600">Description (optional)</label>
+          <textarea
+            value={conceptDescription}
+            onChange={(e) => setConceptDescription(e.target.value)}
+            className="w-full border rounded-lg px-3 py-2 mt-1 focus:outline-none focus:ring-2 focus:ring-blue-400"
+            rows={3}
+            placeholder="Briefly describe this concept..."
+          />
+        </div>
+
+        <button
+          onClick={async () => {
+            if (!conceptName.trim()) {
+              alert('Please enter a concept name.');
+              return;
+            }
+            setLoadingTopics(true);
+            setGeneratedTopics([]);
+            try {
+              const res = await fetch('http://localhost:8000/ai/generate-topics', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  concept_name: conceptName,
+                  description: conceptDescription,
+                }),
+              });
+
+              if (!res.ok) throw new Error('API request failed');
+              const data = await res.json();
+              // Assuming API returns something like: { topics: ["Encapsulation", "Inheritance", ...] }
+              setGeneratedTopics(data.topics || []);
+            } catch (err) {
+              console.error('Error generating topics:', err);
+              alert('Failed to generate topics.');
+            } finally {
+              setLoadingTopics(false);
+            }
+          }}
+          disabled={loadingTopics}
+          className="bg-[#0D47A1] text-white px-4 py-2 rounded-lg shadow hover:bg-[#1565C0] w-full transition-all"
+        >
+          {loadingTopics ? 'Generating...' : 'Generate Topics'}
+        </button>
+      </div>
+
+      <div className="mt-6">
+        {loadingTopics ? (
+          <div className="flex flex-col items-center justify-center text-gray-500">
+            <svg
+              className="animate-spin h-6 w-6 text-[#0D47A1] mb-2"
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+            >
+              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+              <path
+                className="opacity-75"
+                fill="currentColor"
+                d="M4 12a8 8 0 018-8v4l3-3-3-3v4a8 8 0 00-8 8h4z"
+              ></path>
+            </svg>
+            <span>✨ Generating topics...</span>
+          </div>
+        ) : generatedTopics.length > 0 ? (
+          <div>
+            <h3 className="text-lg font-semibold mb-2 text-gray-800">Generated Topics:</h3>
+            <ul className="list-disc pl-5 space-y-1 text-gray-700">
+              {generatedTopics.map((topic, index) => (
+                <li key={index}>{topic}</li>
+              ))}
+            </ul>
+          </div>
+        ) : null}
+      </div>
+    </div>
+  </div>
+)}
     </div>
   );
 };
