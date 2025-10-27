@@ -137,7 +137,7 @@ const SubmissionsList = () => {
             </div>
           </div>
         </Card>
-        <Card className="md:col-span-1 bg-yellow-50 border-l-4 border-[#FFC107]">
+        {/*<Card className="md:col-span-1 bg-yellow-50 border-l-4 border-[#FFC107]">
           <div className="flex justify-between items-center">
             <div>
               <p className="text-sm text-gray-500">Late Submissions</p>
@@ -147,7 +147,7 @@ const SubmissionsList = () => {
               <AlertCircleIcon size={24} className="text-[#FFC107]" />
             </div>
           </div>
-        </Card>
+        </Card>*/}
         {/*<Card className="md:col-span-1 bg-red-50 border-l-4 border-red-500">
           <div className="flex justify-between items-center">
             <div>

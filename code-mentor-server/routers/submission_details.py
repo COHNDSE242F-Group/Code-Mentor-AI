@@ -6,8 +6,18 @@ from models.submission import Submission
 from pydantic import BaseModel
 from typing import Optional, List
 from sqlalchemy.orm import joinedload
+from typing import Optional, List, Dict, Any
+
 
 router = APIRouter()
+
+
+
+class AIEvaluation(BaseModel):
+    errors: Optional[List[str]] = []
+    improvements: Optional[List[str]] = []
+    overall_score: Optional[int] = None
+    good_practices: Optional[List[str]] = []
 
 class SubmissionDetail(BaseModel):
     id: int
@@ -23,6 +33,8 @@ class SubmissionDetail(BaseModel):
     output: Optional[str] = ""
     instructor_feedback: Optional[List[str]] = []
     grade: Optional[str] = ""
+    ai_evaluation: Optional[AIEvaluation] = None
+
 
 class GradeFeedback(BaseModel):
     score: int
@@ -64,7 +76,14 @@ async def get_submission_detail(submission_id: int, session: AsyncSession = Depe
         "paste": report.get("paste", False),
         "output": report.get("output", ""),
         "instructor_feedback": instructor_eval.get("feedback", []),
-        "grade": instructor_eval.get("grade", "")
+        "grade": instructor_eval.get("grade", ""),
+        # Add AI evaluation data
+        "ai_evaluation": {
+            "errors": ai_eval.get("errors", []),
+            "improvements": ai_eval.get("improvements", []),
+            "overall_score": ai_eval.get("overall_score"),
+            "good_practices": ai_eval.get("good_practices", [])
+        } if ai_eval else None
     }
 @router.post("/submissions/{submission_id}/grade")
 async def save_grade_feedback(
