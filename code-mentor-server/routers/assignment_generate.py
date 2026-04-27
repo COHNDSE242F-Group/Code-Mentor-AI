@@ -54,7 +54,7 @@ class AssignmentGenerateRequest(BaseModel):
 class ConceptsResponse(BaseModel):
     concepts: List[ConceptOut] = []
 
-gemini_client = genai.Client(api_key="AIzaSyDyoJx9LuWa8VMO_5yosmJJhAR6OpXxYhg")
+gemini_client = genai.Client(api_key="")
 
 # --------------------------
 # Endpoints

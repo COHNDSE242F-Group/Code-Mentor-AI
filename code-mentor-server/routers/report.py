@@ -53,7 +53,7 @@ class ConceptCreate(BaseModel):
     description: str
 
 groq_client = Groq(api_key=os.getenv("GROQ_API_KEY"))
-gemini_client = genai.Client(api_key="AIzaSyDyoJx9LuWa8VMO_5yosmJJhAR6OpXxYhg")
+gemini_client = genai.Client(api_key="")
 
 async def update_all_student_reports(batch_id: int, concept: dict):
     async with async_session() as session:
